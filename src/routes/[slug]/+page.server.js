@@ -7,13 +7,16 @@ export const actions = {
             const formData = await request.formData();
             const email = formData.get("to");
             // const subject = formData.get("subject");
-            let html = `<h2>Hi!</h2><pre>TESTTT</pre>`;
+            const userId = 'H78KF';
+            const uniqueCode = 'k8d1d21hen1w43d';
+            const link = `http://localhost:5173/${userId}/${uniqueCode}`;
+            let html = `<h2>Hi!</h2><p>Click the following link to access the form: <a href="${link}">${link}</a></p>`;
 
             const message = {
-                from: '"Kurator.id" <fotoarchive8@gmail.com>',
+                from: '"pkpu.co.id" <fotoarchive8@gmail.com>',
                 to: email,
-                bcc: "www.kurator.id",
-                subject: 'Link to access Kurator.id',
+                bcc: "www.pkpu.co.id",
+                subject: 'Link to access Form Tagihan',
                 text: 'INI BODY',
                 html: html,
                 
