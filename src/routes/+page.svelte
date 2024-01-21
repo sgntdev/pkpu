@@ -12,7 +12,7 @@
         <td>1</td>
         <td>PT ABC</td>
         <td>4 Januari 2024</td>
-        <td>Jakart</td>
+        <td>Jakarta</td>
         <td><a href="/pt-abc">PT ABC</a></td>
     </tr>
 </table>

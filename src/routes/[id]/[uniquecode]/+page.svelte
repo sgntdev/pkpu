@@ -5,19 +5,85 @@
 			dokumen: []
 		}
 	];
-	let modal = false;
-	let kurator = '';
-	let filteredKuratorOptions = [];
-	let kuratorOptions = [
-		'PT AHA',
-		'Kurator2',
-		'Kurator3',
-		'Kurator4',
-		'Kurator5',
-		'Kurator6',
-		'Kurator7',
-		'Kurator8'
+	let kreditors = [
+		{
+			nama: 'Kreditor 1',
+			alamat:
+				'WISMA GKBI, Lt. 39 (d/a CEO SUITE) Jl. Jend Sudirman Kav 28, RT. 14, RW. 1, Bendungan Hilir',
+			no_telp: '081…',
+			email: 'xxx@hhh.com'
+		},
+		{
+			nama: 'Kreditor 2',
+			alamat:
+				'WISMA GKBI, Lt. 39 (d/a CEO SUITE) Jl. Jend Sudirman Kav 28, RT. 14, RW. 1, Bendungan Hilir',
+			no_telp: '081…',
+			email: 'xxx@hhh.com'
+		},
+		{
+			nama: 'Kreditor 3',
+			alamat:
+				'WISMA GKBI, Lt. 39 (d/a CEO SUITE) Jl. Jend Sudirman Kav 28, RT. 14, RW. 1, Bendungan Hilir',
+			no_telp: '081…',
+			email: 'xxx@hhh.com'
+		}
 	];
+	let selectedKreditor = '';
+
+	$: selectedKreditorData = kreditors.find((kreditor) => kreditor.nama === selectedKreditor);
+
+	let jumlahTagihan = {
+		pertanggal: '',
+		hutangPokok: '',
+		bunga: '',
+		denda: '',
+		totalTagihan: ''
+	};
+	const tagihanOption = {
+		Separatis: {
+			dokumen: [
+				'Perjanjian Kredit',
+				'Sertifikat hak Tanggungan (Fidusia / Hipotik)',
+				'Dokumen Kepemilikan (Jaminan)',
+				'IMB (Ijin mendirikan Bangunan)',
+				'PBB (Pajak Bumi Bangunan)',
+				'Somasi',
+				'Akte Pendirian Perusahaan',
+				'Identitas Direktur',
+				'Surat Kuasa'
+			]
+		},
+		Konkuren: {
+			dokumen: [
+				'Rincian Tagihan (Invoice)',
+				'Faktur',
+				'Purchase Order (PO)',
+				'Kartu Advokat (Foto Copy)',
+				'Bukti Transfer',
+				'Perjanjian Hutang/Piutang/Pernyataan Hutang'
+			]
+		},
+		Preferent: {
+			dokumen: [
+				'Slip Gaji (bagi karyawan)',
+				'Perjanjian Kontrak Kerja',
+				'ID Card',
+				'Bukti Potong PPH / SPT',
+				'Bukti BPJS'
+			]
+		}
+	};
+	let sifatTagihan = {
+		sifat: '',
+		jumlahTagihan: ''
+	};
+	let kurunTunggakan = {
+		mulaiTertunggak: '',
+		jumlahHari: ''
+	};
+	const jumlahTagihanOption = ['Dijamin', 'Tidak Dijamin'];
+
+	//inputan dinamis
 	const handleAddTagihan = () => {
 		tagihan = [...tagihan, { nama_tagihan: '', dokumen: [] }];
 	};
@@ -40,86 +106,173 @@
 		tagihan = list;
 	};
 
-	const handleKurator = () => {
-		if (kurator.trim() === '') {
-			filteredKuratorOptions = [];
-		} else {
-			filteredKuratorOptions = kuratorOptions.filter((option) =>
-				option.toLowerCase().includes(kurator.toLowerCase())
-			);
-		}
-	};
-
 	const handleSubmit = () => {
 		const data = {
-			kurator,
+			selectedKreditor,
+			jumlahTagihan,
+			sifatTagihan,
+			kurunTunggakan,
 			tagihan
 		};
 
 		console.log('Data yang akan dikirim:', data);
-	};
-	const showModal = () => {
-		modal = true;
 	};
 
 	export let data;
 </script>
 
 {#if data.status == 200}
-	<h1>Form Registrasi</h1>
-	<form>
-		<label for="kurator">Data Kurator</label>
-		<input type="text" name="kurator" id="kurator" bind:value={kurator} on:input={handleKurator} />
-		{#if kurator.trim() !== '' && filteredKuratorOptions.length === 0}
-			<p>Kurator tidak ditemukan. Silahkan tambahkan kurator terlebih dahulu.</p>
-			<button on:click={showModal}>+ Tambah kurator</button>
-		{/if}
-		{#if filteredKuratorOptions.length > 0}
-			<ul>
-				{#each filteredKuratorOptions as option (option)}
-					<li>{option}</li>
-				{/each}
-			</ul>
-		{/if}
-		<br />
-		<label for="tagihan">Data Tagihan</label>
-		<br />
-		{#each tagihan as data, index (data)}
-			<div>
-				<div>
-					<input
-						type="text"
-						name="tagihan"
-						id="tagihan"
-						placeholder="Tagihan"
-						bind:value={data.nama_tagihan}
-					/>
-					{#if tagihan.length !== 1}
-						<button type="button" on:click={() => handleRemoveTagihan(index)}>-</button>
-					{/if}
-					{#if tagihan.length - 1 === index}
-						<button type="button" on:click={() => handleAddTagihan()}>+ Tambah Tagihan</button>
-					{/if}
-				</div>
-				{#each data.dokumen as dokumen, indexdokumen (dokumen)}
+	{#if data.body.role === 'admin'}
+		<h1>Home</h1>
+		<h3>List Kreditor</h3>
+		<table border="1px solid">
+			<tr>
+				<th>No</th>
+				<th>Nama</th>
+				<th>Alamat</th>
+				<th>No. Telepon</th>
+				<th>Email</th>
+				<th>Dokumen</th>
+				<th>Aksi</th>
+			</tr>
+			<tr>
+				<td>1</td>
+				<td>Kreditor 1</td>
+				<td
+					>WISMA GKBI, Lt. 39 (d/a CEO SUITE) Jl. Jend Sudirman Kav 28, RT. 14, RW. 1, Bendungan
+					Hilir</td
+				>
+				<td>08128392983</td>
+				<td>dummy@gmail.com</td>
+				<td><a href={`${data.body.uniquecode}/kreditor1`}>Lihat Dokumen</a></td>
+				<td><button>Kirim Email</button></td>
+			</tr>
+		</table>
+	{:else}
+		<h1>Form Tagihan</h1>
+		<form>
+			<h3 for="kreditor">IDENTITAS KREDITOR</h3>
+			<div style="border: 1px solid; padding: 12px;">
+				<select bind:value={selectedKreditor}>
+					<option value="" disabled selected>Pilih Kreditor</option>
+					{#each kreditors as kreditor}
+						<option value={kreditor.nama}>{kreditor.nama}</option>
+					{/each}
+				</select>
+				{#if selectedKreditorData}
 					<div>
-						<input
-							type="text"
-							name="nama_dokumen"
-							bind:value={dokumen.nama_dokumen}
-							placeholder="Nama Dokumen"
-						/>
-						<button type="button" on:click={() => handleRemoveDokumen(indexdokumen, index)}
-							>-</button
-						>
+						<p>Nama : {selectedKreditorData.nama}</p>
+						<p>Alamat : {selectedKreditorData.alamat}</p>
+						<p>No. Telepon : {selectedKreditorData.no_telp}</p>
+						<p>Email : {selectedKreditorData.email}</p>
+					</div>
+				{/if}
+			</div>
+			<h3>JUMLAH TAGIHAN</h3>
+			<div style="border: 1px solid; padding: 12px;">
+				<label for="pertanggal">Pertanggal : </label>
+				<input
+					type="date"
+					name="pertanggal"
+					id="pertanggal"
+					bind:value={jumlahTagihan.pertanggal}
+				/>
+				<br />
+				<label for="hutangPokok">Hutang Pokok : Rp.</label>
+				<input
+					type="text"
+					name="hutangPokok"
+					id="hutangPokok"
+					bind:value={jumlahTagihan.hutangPokok}
+				/>
+				<br />
+				<label for="bunga">Bunga : Rp.</label>
+				<input type="text" name="bunga" id="bunga" bind:value={jumlahTagihan.bunga} />
+				<br />
+				<label for="denda">Denda : Rp.</label>
+				<input type="text" name="denda" id="denda" bind:value={jumlahTagihan.denda} />
+				<br />
+				<label for="total">Total : Rp.</label>
+				<input type="text" name="total" id="total" bind:value={jumlahTagihan.totalTagihan} />
+			</div>
+			<h3>SIFAT/GOLONGAN TAGIHAN</h3>
+			<div style="border: 1px solid; padding: 12px;">
+				<label for="sifatTagihan">Sifat/Golongan Tagihan : </label>
+				<select name="sifatTagihan" id="sifatTagihan" bind:value={sifatTagihan.sifat}>
+					<option value="" disabled selected>Pilih Sifat Tagihan</option>
+					{#each Object.keys(tagihanOption) as sifatTagihan}
+						<option value={sifatTagihan}>{sifatTagihan}</option>
+					{/each}
+				</select>
+				<br />
+				<label for="jumlahTagihan">Jumlah Tagihan Seluruhnya : </label>
+				<select name="jumlahTagihan" id="jumlahTagihan" bind:value={sifatTagihan.jumlahTagihan}>
+					<option value="" disabled selected>Pilih Jumlah Tagihan Seluruhnya</option>
+					{#each jumlahTagihanOption as jumlahTagihan (jumlahTagihan)}
+						<option value={jumlahTagihan}>{jumlahTagihan}</option>
+					{/each}
+				</select>
+			</div>
+			<h3>KURUN TUNGGAKAN</h3>
+			<div style="border: 1px solid; padding: 12px;">
+				<label for="mulaiTertunggak">Mulai Tertunggak sejak : </label>
+				<input
+					type="date"
+					name="mulaiTertunggak"
+					id="mulaiTertunggak"
+					bind:value={kurunTunggakan.mulaiTertunggak}
+				/>
+				<br />
+				<label for="jumlahHari">Jumlah Hari Tunggakan : </label>
+				<input
+					type="text"
+					name="jumlahHari"
+					id="jumlahHari"
+					bind:value={kurunTunggakan.jumlahHari}
+				/>
+			</div>
+			<h3>DAFTAR BUKTI TAGIHAN ( foto copy )</h3>
+			<div style="border: 1px solid; padding: 12px;">
+				{#each tagihan as data, index (data)}
+					<div>
+						<select bind:value={data.nama_tagihan}>
+							<option value="" disabled selected
+								>Pilih Sifat/Golongan Tagihan Terlebih Dahulu</option
+							>
+							{#if sifatTagihan.sifat !== ''}
+								{#each tagihanOption[sifatTagihan.sifat].dokumen as dokumen}
+									<option value={dokumen}>{dokumen}</option>
+								{/each}
+							{/if}
+						</select>
+						{#if tagihan.length !== 1}
+							<button type="button" on:click={() => handleRemoveTagihan(index)}>-</button>
+						{/if}
+						{#if tagihan.length - 1 === index}
+							<button type="button" on:click={() => handleAddTagihan()}>+ Tambah Tagihan</button>
+						{/if}
+						<br />
+						{#each data.dokumen as dokumen, indexdokumen (dokumen)}
+							<div>
+								<input
+									type="text"
+									name="nama_dokumen"
+									bind:value={dokumen.nama_dokumen}
+									placeholder="Dokumen"
+								/>
+								<button type="button" on:click={() => handleRemoveDokumen(indexdokumen, index)}
+									>-</button
+								>
+							</div>
+						{/each}
+						<button type="button" on:click={handleAddDokumen(index)}>+ Tambah Dokumen</button>
 					</div>
 				{/each}
-				<button type="button" on:click={handleAddDokumen(index)}>+ Tambah Dokumen</button>
 			</div>
 			<br />
-		{/each}
-		<button type="submit" on:click={handleSubmit}>submit</button>
-	</form>
+			<button type="submit" on:click={handleSubmit}>submit</button>
+		</form>
+	{/if}
 {:else}
 	<h1>Unauthorized</h1>
 {/if}
