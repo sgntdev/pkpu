@@ -1,0 +1,8 @@
+import { c as create_ssr_component, e as escape } from "../../../../../chunks/ssr.js";
+const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  return `<h1 data-svelte-h="svelte-dxuf1w">Halaman Tagihan</h1> <div><h3 for="kreditor" data-svelte-h="svelte-2tl3fz">IDENTITAS KREDITOR</h3> <div style="border: 1px solid; padding: 12px;" data-svelte-h="svelte-ldixoa"><p>Nama : Kreditor 1</p> <p>Alamat : WISMA GKBI, Lt. 39 (d/a CEO SUITE) Jl. Jend Sudirman Kav 28, RT. 14, RW. 1, Bendungan
+			Hilir</p> <p>No. Telepon : 08128392983</p> <p>Email : dummy@gmail.com</p></div> <h3 data-svelte-h="svelte-mxu29r">JUMLAH TAGIHAN</h3> <div style="border: 1px solid; padding: 12px;" data-svelte-h="svelte-1tav8sx"><p>Pertanggal : 17 Agustus 2023</p> <p>Hutang Pokok : Rp. 3.000.000</p> <p>Bunga : Rp. 5.000.000</p> <p>Denda : Rp. 2.000.000</p> <p>Total : Rp. 10.000.000</p></div> <h3 data-svelte-h="svelte-1o1tkpd">SIFAT/GOLONGAN TAGIHAN</h3> <div style="border: 1px solid; padding: 12px;" data-svelte-h="svelte-yh2nrc"><p>Sifat/Golongan Tagihan : Preferent</p> <p>Jumlah Tagihan Seluruhnya : Dijamin</p></div> <h3 data-svelte-h="svelte-z0pcc3">KURUN TUNGGAKAN</h3> <div style="border: 1px solid; padding: 12px;" data-svelte-h="svelte-1vu4opo"><p>Mulai Tertunggak sejak : 11 Desember 2018</p> <p>Jumlah Hari Tunggakan : 1.740 Hari</p></div> <h3 data-svelte-h="svelte-a2bjmt">DAFTAR BUKTI TAGIHAN ( foto copy )</h3> <div style="border: 1px solid; padding: 12px;" data-svelte-h="svelte-1rg1bsa"><p>1. Slip Gaji</p> <p>2. ID Card</p> <p>3. Bukti BPJS</p></div> ${``} <br> <button>${escape("Verify")}</button></div>`;
+});
+export {
+  Page as default
+};

@@ -8,24 +8,21 @@
 	let kreditors = [
 		{
 			nama: 'Kreditor 1',
-			alamat:
-				'WISMA GKBI, Lt. 39 (d/a CEO SUITE) Jl. Jend Sudirman Kav 28, RT. 14, RW. 1, Bendungan Hilir',
-			no_telp: '081…',
-			email: 'xxx@hhh.com'
+			alamat: 'Jl. Merdeka No. 123, Jakarta',
+			no_telp: '081234567890',
+			email: 'budi.santoso@email.com'
 		},
 		{
 			nama: 'Kreditor 2',
-			alamat:
-				'WISMA GKBI, Lt. 39 (d/a CEO SUITE) Jl. Jend Sudirman Kav 28, RT. 14, RW. 1, Bendungan Hilir',
-			no_telp: '081…',
-			email: 'xxx@hhh.com'
+			alamat: 'Jl. Kebon Baru No. 45, Bandung',
+			no_telp: '085623456789',
+			email: 'ani.cahyani@email.com'
 		},
 		{
 			nama: 'Kreditor 3',
-			alamat:
-				'WISMA GKBI, Lt. 39 (d/a CEO SUITE) Jl. Jend Sudirman Kav 28, RT. 14, RW. 1, Bendungan Hilir',
-			no_telp: '081…',
-			email: 'xxx@hhh.com'
+			alamat: 'Jl. Pahlawan Timur No. 67, Surabaya',
+			no_telp: '082187654321',
+			email: 'rahman.subrata@email.com'
 		}
 	];
 	let selectedKreditor = '';
@@ -106,16 +103,40 @@
 		tagihan = list;
 	};
 
-	const handleSubmit = () => {
-		const data = {
-			selectedKreditor,
-			jumlahTagihan,
-			sifatTagihan,
-			kurunTunggakan,
-			tagihan
-		};
+	let loading = false;
+	let error = null;
+	let success = null;
 
-		console.log('Data yang akan dikirim:', data);
+	const handleSubmit = async (event) => {
+		loading = true;
+		error = null;
+		success = null;
+
+		try {
+			const response = await fetch('?/sendEmail', {
+				method: 'POST',
+				body: JSON.stringify({
+					selectedKreditorData,
+					jumlahTagihan,
+					sifatTagihan,
+					kurunTunggakan,
+					tagihan
+				})
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				success = 'Email berhasil dikirim';
+			} else {
+				throw new Error(result.error || 'Something went wrong');
+			}
+		} catch (err) {
+			console.error(err);
+			error = err.message || 'Failed to send email';
+		} finally {
+			loading = false;
+		}
 	};
 
 	export let data;
@@ -148,9 +169,15 @@
 				<td><button>Kirim Email</button></td>
 			</tr>
 		</table>
+	{:else if loading}
+		<p>Loading...</p>
+	{:else if error}
+		<p style="color: red;">Error: {error}</p>
+	{:else if success}
+		<p style="color: green;">{success}</p>
 	{:else}
 		<h1>Form Tagihan</h1>
-		<form>
+		<form on:submit={handleSubmit}>
 			<h3 for="kreditor">IDENTITAS KREDITOR</h3>
 			<div style="border: 1px solid; padding: 12px;">
 				<select bind:value={selectedKreditor}>
