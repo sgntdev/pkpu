@@ -39,7 +39,7 @@
 	{:else if success}
 		<p style="color: green;">{success}</p>
 	{:else}
-		<h1>Welcome to Kurator.id</h1>
+		<h1>Welcome to PKPU</h1>
 		<form on:submit={handleSubmit} >
 			<h3>Input your email</h3>
 			<input type="email" name="to" placeholder="Enter your email" />
