@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id         String   @id
+  email      String   @unique
+  uniqueCode String   @unique @db.VarChar(25)
+  role       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Kreditor {
+  id      Int       @id @default(autoincrement())
+  nama    String
+  alamat  String
+  noTelp  String    @db.VarChar(13)
+  email   String    @unique
+  Tagihan Tagihan[]
+}
+
+model Tagihan {
+  id              Int              @id @default(autoincrement())
+  kreditorId      Int
+  pertanggal      String
+  hutangPokok     String
+  bunga           String
+  denda           String
+  sifatTagihanId  Int
+  jumlahTagihan   String
+  mulaiTertunggak String
+  jumlahHari      String
+  DokumenTagihan  DokumenTagihan[]
+  Kreditor        Kreditor         @relation(fields: [kreditorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  sifatTagihan    SifatTagihan     @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model SifatTagihan {
+  id          Int           @id @default(autoincrement())
+  sifat       String
+  Tagihan     Tagihan[]
+  TipeDokumen TipeDokumen[]
+}
+
+model TipeDokumen {
+  id             Int              @id @default(autoincrement())
+  tipe           String
+  sifatTagihanId Int
+  DokumenTagihan DokumenTagihan[]
+  SifatTagihan   SifatTagihan     @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model DokumenTagihan {
+  id            Int         @id @default(autoincrement())
+  tipeDokumenId Int
+  tagihanId     Int?
+  dokumen       String
+  Tagihan       Tagihan?    @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  TipeDokumen   TipeDokumen @relation(fields: [tipeDokumenId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
