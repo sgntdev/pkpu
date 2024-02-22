@@ -15,14 +15,29 @@
 		"@sveltejs/adapter-netlify": "^3.0.1",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+		"autoprefixer": "^10.4.16",
+		"flowbite-svelte-icons": "^1.4.0",
+		"postcss": "^8.4.32",
+		"postcss-load-config": "^5.0.2",
 		"prettier": "^3.1.1",
 		"prettier-plugin-svelte": "^3.1.2",
+		"prettier-plugin-tailwindcss": "^0.5.9",
+		"prisma": "^5.9.1",
 		"svelte": "^4.2.7",
+		"tailwindcss": "^3.3.6",
 		"vite": "^5.0.3",
 		"vitest": "^1.0.0"
 	},
 	"type": "module",
 	"dependencies": {
-		"nodemailer": "^6.9.8"
-	}
+		"@popperjs/core": "^2.11.8",
+		"@prisma/client": "^5.9.1",
+		"flowbite": "^2.3.0",
+		"flowbite-svelte": "^0.44.23",
+		"nodemailer": "^6.9.8",
+		"tailwind-merge": "^2.2.1"
+	},
+	"prisma": {
+		"seed": "node prisma/seed.js"
+	  }
 }
