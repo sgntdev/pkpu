@@ -32,7 +32,7 @@
 	};
 </script>
 
-<div class="flex h-screen flex-col items-center justify-center">
+<main class="flex flex-col items-center justify-center md:h-screen">
 	{#if loading}
 		<Spinner size={12} />
 	{:else if status === 'error'}
@@ -70,4 +70,4 @@
 			</form>
 		</Card>
 	{/if}
-</div>
+</main>

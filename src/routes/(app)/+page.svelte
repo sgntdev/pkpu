@@ -11,8 +11,8 @@
 	} from 'flowbite-svelte';
 </script>
 
-<div class="">
-	<div class="mx-auto py-6 ">
+<div class="md:h-screen overscroll-y-auto">
+	<div class="mx-auto py-10">
 		<h1 class="text-3xl font-bold tracking-tight text-gray-900">List Debitur PKPU</h1>
 	  </div>
 	<div class="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-lg">

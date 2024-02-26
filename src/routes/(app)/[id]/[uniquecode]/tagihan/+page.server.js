@@ -47,22 +47,47 @@ export const actions = {
 		const tipeDokumenIds = formData.getAll('tipeDokumenId');
 		const dokumenTagihanData = [];
 		const dokumens = formData.getAll('dokumen');
-		const kreditorId = formData.get('kreditorId');
 		// const pertanggal = formData.get('pertanggal');
-		const { dokumen } = Object.fromEntries(formData)
-		const data = {
+		const { kreditorId, pertanggal, hutangPokok, bunga, denda, sifatTagihanId, jumlahTagihan, mulaiTertunggak, jumlahHari, dokumen } = Object.fromEntries(formData)
+		const validation = {
 			success : false,
-			errors : {}
+			errors : []
 		}
+		console.log(dokumen)
 		try {
-			if(!payload.kreditorId){
-				data.errors.kreditorId = 'required'
-				return data
-			}
-			if(!payload.pertanggal){
-				data.errors.pertanggal = 'required'
-				return data
-			}
+			// if (!kreditorId) {
+			// 	validation.errors.push({ field: 'kreditorId', message: 'required' });
+			// }		
+			// if (!pertanggal) {
+			// 	validation.errors.push({ field: 'pertanggal', message: 'required' });
+			// }
+			// if (!hutangPokok) {
+			// 	validation.errors.push({ field: 'hutangPokok', message: 'required' });
+			// }
+			// if (!denda) {
+			// 	validation.errors.push({ field: 'denda', message: 'required' });
+			// }
+			// if (!bunga) {
+			// 	validation.errors.push({ field: 'bunga', message: 'required' });
+			// }
+			// if (!sifatTagihanId) {
+			// 	validation.errors.push({ field: 'sifatTagihanId', message: 'required' });
+			// }
+			// if (!jumlahTagihan) {
+			// 	validation.errors.push({ field: 'jumlahTagihan', message: 'required' });
+			// }
+			// if (!mulaiTertunggak) {
+			// 	validation.errors.push({ field: 'mulaiTertunggak', message: 'required' });
+			// }
+			// if (!jumlahHari) {
+			// 	validation.errors.push({ field: 'jumlahHari', message: 'required' });
+			// }
+			// if (!dokumen) {
+			// 	validation.errors.push({ field: 'dokumen', message: 'required' });
+			// }
+			// if(validation?.errors.length > 0){
+			// 	return validation
+			// }
 			// const createdTagihan = await prisma.tagihan.create({
 			// 	data:{
 			// 		kreditorId : parseInt(payload.kreditorId),
