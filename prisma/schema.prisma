@@ -11,9 +11,10 @@ model Users {
   id         String   @id
   email      String   @unique
   uniqueCode String   @unique @db.VarChar(25)
-  role       String?
+  roleId     Int
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  Role       Role     @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
 model Kreditor {
@@ -63,4 +64,10 @@ model DokumenTagihan {
   dokumen       String
   Tagihan       Tagihan?    @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   TipeDokumen   TipeDokumen @relation(fields: [tipeDokumenId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Role {
+  id    Int     @id @default(autoincrement())
+  name  String
+  Users Users[]
 }

@@ -86,53 +86,28 @@ async function main() {
 			email : "support@sentosaabadi.net"
 		}
 	})
-    // const perjanjiankredit = await prisma.tipeDokumen.upsert({
-    //     where: { id: 1 },
-    //     update: {},
-    //     create: {
-    //         sifatTagihanId: 3,
-    //         tipe : 'Perjanjian Kredit' 
-    //     }
-    // })
-	//   const alice = await prisma.user.upsert({
-	//     where: { email: 'alice@prisma.io' },
-	//     update: {},
-	//     create: {
-	//       email: 'alice@prisma.io',
-	//       name: 'Alice',
-	//       posts: {
-	//         create: {
-	//           title: 'Check out Prisma with Next.js',
-	//           content: 'https://www.prisma.io/nextjs',
-	//           published: true,
-	//         },
-	//       },
-	//     },
-	//   })
-
-	//   const bob = await prisma.user.upsert({
-	//     where: { email: 'bob@prisma.io' },
-	//     update: {},
-	//     create: {
-	//       email: 'bob@prisma.io',
-	//       name: 'Bob',
-	//       posts: {
-	//         create: [
-	//           {
-	//             title: 'Follow Prisma on Twitter',
-	//             content: 'https://twitter.com/prisma',
-	//             published: true,
-	//           },
-	//           {
-	//             title: 'Follow Nexus on Twitter',
-	//             content: 'https://twitter.com/nexusgql',
-	//             published: true,
-	//           },
-	//         ],
-	//       },
-	//     },
-	//   })
-	console.log({ konkuren, preferent, separatis, kreditur1, kreditur2, kreditur3 });
+	const admin = await prisma.role.upsert({
+		where:{id:1},
+		update:{},
+		create:{
+			name : 'admin'
+		}
+	})
+	const pengurus = await prisma.role.upsert({
+		where:{id:2},
+		update:{},
+		create:{
+			name : 'pengurus'
+		}
+	})
+	const kreditor = await prisma.role.upsert({
+		where:{id:3},
+		update:{},
+		create:{
+			name : 'kreditor'
+		}
+	})
+	console.log({ konkuren, preferent, separatis, kreditur1, kreditur2, kreditur3, admin, pengurus, kreditor });
 }
 main()
 	.then(async () => {
