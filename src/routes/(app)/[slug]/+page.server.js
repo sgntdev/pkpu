@@ -90,7 +90,7 @@ export const actions = {
                         email,
                         id: uniqueId,
                         uniqueCode,
-                        role: 'user'
+                        roleId: 3 
                     }
                 });
             }else{
