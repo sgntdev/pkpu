@@ -10,37 +10,22 @@
 		Breadcrumb,
 		BreadcrumbItem,
 		Helper,
+		Dropzone
 	} from 'flowbite-svelte';
 	import { PlusSolid, MinusSolid, CloseSolid } from 'flowbite-svelte-icons';
 	import { deserialize } from '$app/forms';
-
+	import { goto } from '$app/navigation';
+	
 	export let data;
-	let files;
 	let previewURL = [];
-	let isDragging = false;
-	// Mengubah file dokumen bukti tagihan
-	const handleChange = (index) => {
-		const inputElement = document.getElementById(`dropzone-file-${index}`);
-		const files = inputElement.files;
-		if (files.length > 0) {
-			const reader = new FileReader();
-
-			reader.onload = (e) => {
-				previewURL[index] = e.target.result;
-				previewURL = previewURL.slice();
-			};
-
-			reader.readAsDataURL(files[0]);
-		}
-	};
-	// Menambahkan file dengan drag and drop
-	const handleDrop = (index, event) => {
+	let value = [];
+	const dropHandle = (event, index) => {
 		event.preventDefault();
-		if (sifatTagihan.id !== '') {
-			isDragging = false;
-			const files = event.dataTransfer.files;
-
-			if (files.length > 0) {
+		[...event.dataTransfer.items].forEach((item, i) => {
+			if (item.kind === 'file') {
+				const file = item.getAsFile();
+				value.push(file);
+				value = value;
 				const reader = new FileReader();
 
 				reader.onload = (e) => {
@@ -56,29 +41,42 @@
 					previewURL = previewURL.slice(); // Perbarui reaktivitas
 				};
 
-				reader.readAsDataURL(files[0]);
+				reader.readAsDataURL(file);
 			}
-		}
+		});
 	};
-	const handleDragOver = (event) => {
-		event.preventDefault();
-		if (sifatTagihan.id !== '') {
-			isDragging = true;
+
+	const handleChange = (event, index) => {
+		const files = event.target.files;
+		if (files.length > 0) {
+			value.push(files[0]);
+			value = value;
+			const reader = new FileReader();
+
+			reader.onload = (e) => {
+				// Cek apakah sudah ada pratinjau di index ini
+				if (previewURL[index]) {
+					// Jika sudah ada, gantilah dengan pratinjau baru
+					previewURL[index] = e.target.result;
+				} else {
+					// Jika belum ada, tambahkan pratinjau baru
+					previewURL.push(e.target.result);
+				}
+
+				previewURL = previewURL.slice(); // Perbarui reaktivitas
+			};
+
+			reader.readAsDataURL(files[0]);
 		}
 	};
 
-	const handleRemove = (index) => {
-		previewURL.splice(index, 1);
-		previewURL = previewURL.slice();
-	};
-
-	let formModal = false;
 	let buktiTagihan = [
 		{
 			tipeDokumenId: '',
 			dokumen: null
 		}
 	];
+	let formModal = false;
 	let selectedKreditor = '';
 	let searchKreditor = '';
 
@@ -126,8 +124,6 @@
 	};
 
 	let loading = false;
-	let error = null;
-	let success = null;
 
 	let form;
 	const handleAddKreditor = async (event) => {
@@ -152,11 +148,11 @@
 		}
 	};
 	const handleSubmit = async (event) => {
-		// loading = true;
-		// error = null;
-		// success = null;
+		loading = true;
 		const formData = new FormData(event.currentTarget);
-		console.log(formData.getAll('dokumen'))
+		value.forEach((value) => {
+			formData.append(`dokumen`, value);
+		});
 		formData.append('kreditorId', selectedKreditor);
 		try {
 			const response = await fetch('?/addTagihan', {
@@ -165,6 +161,17 @@
 			});
 			const result = deserialize(await response.text());
 			form = result;
+			if (result.data.success) {
+				goto('./', {
+					replaceState: true,
+					state: {
+						success: true,
+						message: 'Tagihan berhasil ditambahkan!'
+					}
+				});
+			} else {
+				console.error(result.data.message);
+			}
 		} catch (err) {
 			console.error(err);
 			error = err.message || 'Failed to send email';
@@ -216,10 +223,6 @@
 					<td><button>Kirim Email</button></td>
 				</tr>
 			</table>
-			<!-- {:else if loading}
-		<p>Loading...</p> -->
-			<!-- {:else if error} -->
-			<!-- <p style="color: red;">Error: {error.message}</p> -->
 		{:else}
 			<Breadcrumb aria-label="Default breadcrumb example" class="mb-2">
 				<BreadcrumbItem href="./" home>List Tagihan</BreadcrumbItem>
@@ -639,6 +642,7 @@
 									{#if form?.data?.errors?.find((error) => error.field === 'dokumen')}
 										<Helper class="mt-2" color="red">Dokumen tidak boleh kosong!</Helper>
 									{/if}
+
 									{#if previewURL[index]}
 										<div>
 											<iframe
@@ -649,65 +653,44 @@
 												frameborder="0"
 												title="s"
 											/>
-											<!-- <div class="grid grid-cols-2 gap-2">
-											<Button on:click={() => {}}>Change Dokumen</Button>
-											<Button on:click={() => handleRemove(index)} color="red"
-												>Remove Dokumen</Button
-											>
-										</div> -->
 										</div>
 									{:else}
-										<div class="mt-4">
-											<div
-												role="button"
-												tabindex="0"
-												aria-label="File Upload"
-												class="flex w-full items-center justify-center"
-												on:drop={(e) => handleDrop(index, e)}
-												on:dragover={handleDragOver}
+										<Dropzone
+											defaultClass={`${sifatTagihan.id === '' ? '' : 'cursor-pointer hover:bg-gray-100'} mt-4 flex flex-col justify-center items-center w-full h-64 bg-gray-50 rounded-lg border-2 border-gray-300 border-dashed dark:hover:bg-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600`}
+											id="dropzone"
+											on:drop={(e) => dropHandle(e, index)}
+											on:dragover={(event) => {
+												event.preventDefault();
+											}}
+											on:change={(e) => handleChange(e, index)}
+											disabled={sifatTagihan.id === ''}
+											accept=".pdf,"
+										>
+											<svg
+												aria-hidden="true"
+												class={`mb-3 h-10 w-10 ${sifatTagihan.id === '' ? 'text-gray-300' : 'text-gray-400'}`}
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+												xmlns="http://www.w3.org/2000/svg"
+												><path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+												/></svg
 											>
-												<label
-													for={`dropzone-file-${index}`}
-													class={`${isDragging ? 'border-primary-700' : 'border-gray-300'} dark:hover:bg-bray-800 flex h-64 w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 ${sifatTagihan.id === '' ? '' : 'cursor-pointer hover:bg-gray-100 '} dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500 dark:hover:bg-gray-600`}
-												>
-													<div class="flex flex-col items-center justify-center pb-6 pt-5">
-														<svg
-															class={`mb-4 h-8 w-8 ${sifatTagihan.id === '' ? 'text-gray-300' : 'text-gray-500'} dark:text-gray-400`}
-															aria-hidden="true"
-															xmlns="http://www.w3.org/2000/svg"
-															fill="none"
-															viewBox="0 0 20 16"
-														>
-															<path
-																stroke="currentColor"
-																stroke-linecap="round"
-																stroke-linejoin="round"
-																stroke-width="2"
-																d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
-															/>
-														</svg>
-														<p
-															class={`mb-2 text-sm  ${sifatTagihan.id === '' ? 'text-gray-300' : 'text-gray-500'} dark:text-gray-400`}
-														>
-															<span class="font-semibold">Click to upload</span> or drag and drop
-														</p>
-														<p
-															class={`text-xs ${sifatTagihan.id === '' ? 'text-gray-300' : 'text-gray-500'} dark:text-gray-400`}
-														>
-															PDF or DOCX (MAX. 800x400px)
-														</p>
-													</div>
-													<input
-														id={`dropzone-file-${index}`}
-														type="file"
-														class="hidden"
-														bind:files
-														name="dokumen"
-														accept=".pdf,"
-													/>
-												</label>
-											</div>
-										</div>
+											<p
+												class={`${sifatTagihan.id === '' ? 'text-gray-300 dark:text-gray-200' : ' text-gray-500 dark:text-gray-400'} mb-2 text-sm`}
+											>
+												<span class="font-semibold">Click to upload</span> or drag and drop
+											</p>
+											<p
+												class={`text-xs ${sifatTagihan.id === '' ? 'text-gray-300 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}
+											>
+												PDF (MAX. 800x400px)
+											</p>
+										</Dropzone>
 									{/if}
 								</div>
 							{/each}
@@ -715,7 +698,12 @@
 					</Card>
 				</div>
 				<div class="my-4 flex justify-end">
-					<Button type="submit">Submit</Button>
+					<Button type="submit">
+						{#if loading}<Spinner color="white" size={4} />
+						{:else}
+							Submit
+						{/if}
+					</Button>
 				</div>
 			</form>
 
