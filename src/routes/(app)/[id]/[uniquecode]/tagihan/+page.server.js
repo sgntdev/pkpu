@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 export async function load({ params }) {
-	const { uniquecode } = params;
+	const { id, uniquecode } = params;
 	const user = await prisma.users.findUnique({
 		where: { uniqueCode: uniquecode }
 	});
@@ -49,8 +49,7 @@ export const actions = {
 			sifatTagihanId,
 			jumlahTagihan,
 			mulaiTertunggak,
-			jumlahHari,
-			dokumen
+			jumlahHari
 		} = Object.fromEntries(formData);
 		const allowedFileTypes = ['application/pdf'];
 		const maxFileSize = 2 * 1024 * 1024; // 2 MB
@@ -89,7 +88,7 @@ export const actions = {
 
 			if (!dokumens || dokumens.length === 0) {
 				validation.errors.push({ field: 'dokumen', message: 'required' });
-			} 
+			}
 
 			for (const key in tipeDokumenIds) {
 				const dokumen = dokumens[key];
@@ -130,10 +129,11 @@ export const actions = {
 					tagihanId
 				});
 			}
-			console.log(dokumenTagihanData);
+
 			await prisma.dokumenTagihan.createMany({
 				data: dokumenTagihanData
 			});
+
 			if (!dokumens) {
 				console.error('Invalid file data');
 				return {
@@ -163,11 +163,31 @@ export const actions = {
 	},
 	addKreditor: async ({ request }) => {
 		const formData = await request.formData();
-		const nama = formData.get('nama');
-		const email = formData.get('email');
-		const noTelp = formData.get('noTelp');
-		const alamat = formData.get('alamat');
+		const { nama, email, noTelp, alamat } = Object.fromEntries(formData);
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		const validation = {
+			success: false,
+			errors: []
+		};
+
 		try {
+			if (!nama) {
+				validation.errors.push({ field: 'nama', message: 'Nama tidak boleh kosong!' });
+			}
+			if (!email) {
+				validation.errors.push({ field: 'email', message: 'Email tidak boleh kosong!' });
+			}else if (!emailRegex.test(email)) {
+				validation.errors.push({ field: 'email', message: 'Format email tidak valid!' });
+			}
+			if (!noTelp) {
+				validation.errors.push({ field: 'noTelp', message: 'No Telepon tidak boleh kosong!' });
+			}
+			if (!alamat) {
+				validation.errors.push({ field: 'alamat', message: 'Alamat tidak boleh kosong!' });
+			}
+			if (validation?.errors.length > 0) {
+				return validation;
+			}
 			await prisma.kreditor.create({
 				data: {
 					nama,
