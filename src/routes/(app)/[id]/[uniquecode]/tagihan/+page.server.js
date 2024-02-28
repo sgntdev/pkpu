@@ -14,8 +14,6 @@ export async function load({ params }) {
 		return {
 			status: 200,
 			body: {
-				role: user.role,
-				uniquecode: uniquecode,
 				kreditorData,
 				sifatTagihanData,
 				tipeDokumenData
@@ -37,8 +35,7 @@ function unformatPrice(price) {
 }
 
 export const actions = {
-	addTagihan: async ({ params, request }) => {
-		// const { uniquecode } = params;
+	addTagihan: async ({ request }) => {
 		const formData = await request.formData();
 		const tipeDokumenIds = formData.getAll('tipeDokumenId');
 		const dokumenTagihanData = [];
@@ -55,6 +52,8 @@ export const actions = {
 			jumlahHari,
 			dokumen
 		} = Object.fromEntries(formData);
+		const allowedFileTypes = ['application/pdf'];
+		const maxFileSize = 2 * 1024 * 1024; // 2 MB
 		const validation = {
 			success: false,
 			errors: []
@@ -87,9 +86,22 @@ export const actions = {
 			if (!jumlahHari) {
 				validation.errors.push({ field: 'jumlahHari', message: 'required' });
 			}
-			if (!dokumen) {
+
+			if (!dokumens || dokumens.length === 0) {
 				validation.errors.push({ field: 'dokumen', message: 'required' });
+			} 
+
+			for (const key in tipeDokumenIds) {
+				const dokumen = dokumens[key];
+
+				if (dokumen.size > maxFileSize) {
+					validation.errors.push({ field: `dokumen.${key}`, message: 'File terlalu besar' });
+				}
+				if (!allowedFileTypes.includes(dokumen.type)) {
+					validation.errors.push({ field: `dokumen.${key}`, message: 'File harus berformat PDF' });
+				}
 			}
+
 			if (validation?.errors.length > 0) {
 				return validation;
 			}
