@@ -1,29 +1,33 @@
 <script>
 	import '../../app.pcss';
-	import {
-		Navbar,
-		NavBrand,
-		NavLi,
-		NavUl,
-		NavHamburger,
-		Footer,
-		FooterCopyright,
-		FooterLink,
-		FooterLinkGroup
-	} from 'flowbite-svelte';
+	import { page } from '$app/stores';
+	export let data;
+	const { user } = data;
 </script>
-<Navbar
-	let:hidden
-	let:toggle
-	class="relative left-0 right-0 top-0 z-50 border border-gray-200 bg-white md:py-4"
+
+<svelte:head>
+	<title>PKPU</title>
+</svelte:head>
+<nav
+	data-sveltekit-reload
+	class="relative top-0 z-50 w-full border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
 >
-	<NavBrand href="/">
-		<span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white"> PKPU </span>
-	</NavBrand>
-</Navbar>
-<div class="relative mx-auto min-h-screen max-w-7xl px-4">
+	<div class="px-3 py-3 lg:px-5 lg:pl-3">
+		<div class="flex items-center justify-between">
+			<div class="flex items-center justify-start rtl:justify-end">
+				<a href="https://flowbite.com" class="ms-2 flex md:me-24">
+					<span
+						class="self-center whitespace-nowrap text-xl font-semibold dark:text-white sm:text-2xl"
+						>PKPU</span
+					>
+				</a>
+			</div>
+			<div class="flex items-center lg:order-2">
+				<p class="text-sm text-gray-500 dark:text-white">{user ?? $page.state.user ?? ''}</p>
+			</div>
+		</div>
+	</div>
+</nav>
+<main class="p-4">
 	<slot />
-</div>
-<Footer footerType="logo" class="relative bottom-0 left-0 right-0">
-	<FooterCopyright href="/" by="pkpu.co.id" />
-</Footer>
+</main>
