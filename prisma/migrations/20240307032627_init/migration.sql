@@ -62,6 +62,7 @@ CREATE TABLE "Tagihan" (
     "jumlahTagihan" TEXT NOT NULL,
     "mulaiTertunggak" TEXT NOT NULL,
     "jumlahHari" TEXT NOT NULL,
+    "status" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "Tagihan_pkey" PRIMARY KEY ("id")
 );
@@ -91,6 +92,16 @@ CREATE TABLE "DokumenTagihan" (
     "dokumen" TEXT NOT NULL,
 
     CONSTRAINT "DokumenTagihan_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Verified" (
+    "id" SERIAL NOT NULL,
+    "password" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Verified_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

@@ -62,6 +62,7 @@ model Tagihan {
   jumlahTagihan   String
   mulaiTertunggak String
   jumlahHari      String
+  status          Int              @default(0)
   DokumenTagihan  DokumenTagihan[]
   Debitor         Debitor          @relation(fields: [debitorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   User            User             @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
@@ -91,4 +92,11 @@ model DokumenTagihan {
   dokumen       String
   Tagihan       Tagihan     @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   TipeDokumen   TipeDokumen @relation(fields: [tipeDokumenId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Verified {
+  id        Int      @id @default(autoincrement())
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
