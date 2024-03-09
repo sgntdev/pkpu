@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+			tailwind.config = {
+				darkMode: 'class',
+				theme: {
+					extend: {
+						colors: {
+							// flowbite-svelte
+							primary: {
+								50: '#EBF5FF',
+								100: '#E1EFFE',
+								200: '#C3DDFD',
+								300: '#A4CAFE',
+								400: '#76A9FA',
+								500: '#3F83F8',
+								600: '#1C64F2',
+								700: '#1A56DB',
+								800: '#1E429F',
+								900: '#233876'
+							}
+						}
+					}
+				}
+			};
+		</script>
+		<title>%sveltekit.error.message%</title>
+	</head>
+	<body>
+		<section class="relative">
+			<div
+				class="pt:mt-0 mx-auto flex flex-col items-center justify-center px-6 pt-8 dark:bg-gray-900 md:h-svh"
+			>
+				<h1
+					class="mb-4 text-7xl font-extrabold tracking-tight text-primary-600 dark:text-primary-500 lg:text-9xl"
+				>
+					%sveltekit.status%
+				</h1>
+				<p class="mb-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white md:text-4xl">
+					%sveltekit.error.message%
+				</p>
+				<p class="mb-4 text-lg font-light text-gray-500 dark:text-gray-400">
+					We are already working to solve the problem.
+				</p>
+			</div>
+		</section>
+	</body>
+</html>

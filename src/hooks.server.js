@@ -9,26 +9,30 @@ export async function handle({ event, resolve }) {
 	let error;
 	if (token) {
 		try {
-			var decoded = jwt.verify(token, SECRET_INGREDIENT);
+			let decoded = jwt.verify(token, SECRET_INGREDIENT);
 			const currentUser = await prisma.User.findUnique({
 				where: { email: decoded.user.email }
 			});
-			event.locals.user = {
-				email: currentUser.email,
-				roleId: currentUser.roleId
-			};
+			if(new Date(decoded.user.expirationDate) < new Date()){
+				redirect(303, '/')
+			}else{
+				event.locals.user = {
+					email: currentUser.email,
+					roleId: currentUser.roleId
+				};
+			}
 		} catch (error) {
 			error = error.name;
 		}
 	}
 
-	if (event.url.pathname.includes('/tagihan') || event.url.pathname.includes('/kreditor')) {
+	if (event.url.pathname.startsWith('/tagihan') || event.url.pathname.startsWith('/kreditor') || event.url.pathname.startsWith('/users') || event.url.pathname.startsWith('/verifypassword')) {
 		if (!event.locals.user) {
-			throw redirect(303, '/');
+			redirect(303, '/');
 		}
 	}
 	if (error) {
-		throw redirect(303, '/');
+		redirect(303, '/');
 	}
 	const response = await resolve(event);
 
