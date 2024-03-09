@@ -13,7 +13,7 @@ export async function POST({ request }) {
 	});
 	if (user) {
         if (new Date(user.expirationDate) < new Date()) {
-            return new Response(JSON.stringify('Expired Unique Code'), {status: 401});
+            return new Response(JSON.stringify('Expired Unique Code'), {status: 400});
         } else {
             try {
                 // Check if user already exists before creating a new one

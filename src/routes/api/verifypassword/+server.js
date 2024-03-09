@@ -38,6 +38,6 @@ export async function POST({request}){
 			return new Response(JSON.stringify({ success: true, message: 'Password berhasil ditambahkan!' }), { status: 200 });
 		}
 	} catch (error) {
-		return new Response(JSON.stringify({ success: false, message: 'Password gagal ditambahkan!' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, message: 'Password gagal ditambahkan!' }), { status: 400 });
 	};
 }

@@ -3,9 +3,20 @@ import { error, redirect } from '@sveltejs/kit';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-export async function GET() {
-	const tagihan = await prisma.tagihan.findMany();
-	return new Response(JSON.stringify(tagihan), { status: 200 });
+export async function GET({ request }) {
+	let token = request.headers.get('authorization');
+	if (token && token.startsWith('Bearer ')) {
+		token = token.slice(7, token.length);
+	}
+	if (!token) {
+		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+	}
+	try {
+		const tagihan = await prisma.tagihan.findMany();
+		return new Response(JSON.stringify(tagihan), { status: 200 });
+	} catch (error) {
+		return new Response(JSON.stringify({ error: 'Error Unexpected' }), { status: 400 });
+	}
 }
 
 function unformatPrice(price) {
@@ -46,35 +57,53 @@ export async function POST({ request }) {
 	};
 	try {
 		if (!kreditorId) {
-			validation.errors.push({ field: 'kreditorId', message: 'required' });
+			validation.errors.push({
+				field: 'kreditorId',
+				message: 'Identitas kreditor tidak boleh kosong!'
+			});
 		}
 		if (!pertanggal) {
-			validation.errors.push({ field: 'pertanggal', message: 'required' });
+			validation.errors.push({ field: 'pertanggal', message: 'Pertanggal tidak boleh kosong!' });
 		}
 		if (!hutangPokok) {
-			validation.errors.push({ field: 'hutangPokok', message: 'required' });
+			validation.errors.push({ field: 'hutangPokok', message: 'Hutang pokok tidak boleh kosong!' });
+		} else if (isNaN(parseFloat(hutangPokok))) {
+			validation.errors.push({ field: 'hutangPokok', message: 'Hutang pokok harus berupa angka!' });
 		}
 		if (!denda) {
-			validation.errors.push({ field: 'denda', message: 'required' });
+			validation.errors.push({ field: 'denda', message: 'Denda tidak boleh kosong!' });
+		} else if (isNaN(parseFloat(denda))) {
+			validation.errors.push({ field: 'denda', message: 'Denda harus berupa angka!' });
 		}
 		if (!bunga) {
-			validation.errors.push({ field: 'bunga', message: 'required' });
+			validation.errors.push({ field: 'bunga', message: 'Bunga tidak boleh kosong!' });
+		} else if (isNaN(parseFloat(bunga))) {
+			validation.errors.push({ field: 'bunga', message: 'Bunga harus berupa angka!' });
 		}
 		if (!sifatTagihanId) {
-			validation.errors.push({ field: 'sifatTagihanId', message: 'required' });
+			validation.errors.push({
+				field: 'sifatTagihanId',
+				message: 'Sifat/golongan tagihan tidak boleh kosong!'
+			});
 		}
 		if (!jumlahTagihan) {
-			validation.errors.push({ field: 'jumlahTagihan', message: 'required' });
+			validation.errors.push({
+				field: 'jumlahTagihan',
+				message: 'Jumlah tagihan tidak boleh kosong!'
+			});
 		}
 		if (!mulaiTertunggak) {
-			validation.errors.push({ field: 'mulaiTertunggak', message: 'required' });
+			validation.errors.push({
+				field: 'mulaiTertunggak',
+				message: 'Mulai tertunggak tidak boleh kosong!'
+			});
 		}
 		if (!jumlahHari) {
-			validation.errors.push({ field: 'jumlahHari', message: 'required' });
+			validation.errors.push({ field: 'jumlahHari', message: 'Jumlah hari tidak boleh kosong!' });
 		}
 
 		if (!dokumens || dokumens.length === 0) {
-			validation.errors.push({ field: 'dokumen', message: 'required' });
+			validation.errors.push({ field: 'dokumen', message: 'Bukti tagihan tidak boleh kosong!' });
 		}
 
 		for (const key in tipeDokumenIds) {
@@ -154,7 +183,8 @@ export async function POST({ request }) {
 			JSON.stringify({
 				success: true,
 				message: 'Tagihan berhasil ditambahkan'
-			})
+			}),
+			{ status: 200 }
 		);
 	} catch (error) {
 		console.log(error);
@@ -162,7 +192,8 @@ export async function POST({ request }) {
 			JSON.stringify({
 				success: false,
 				message: 'Tagihan gagal ditambahkan'
-			})
+			}),
+			{ status: 400 }
 		);
 	}
 }
