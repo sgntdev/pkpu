@@ -6,7 +6,7 @@
 	const {success, user, roleId} = data
 	onMount(() => {
 		if (success) {
-			if(roleId === 1){
+			if(roleId === 1 || roleId === 2){
 				goto('/dashboard', {
 					state: {
 						user : user

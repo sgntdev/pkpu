@@ -17,7 +17,7 @@ export async function load({ params, cookies, fetch }) {
             body: JSON.stringify(uniqueCode)
         });
         if (!res.ok) {
-            if (res.status === 401){
+            if (res.status === 400){
                 error(res.status, {message : 'Expired Unique Code', description : 'Please use a valid verification link'})
             }else{
                 error(res.status, 'Not Found')
@@ -34,7 +34,7 @@ export async function load({ params, cookies, fetch }) {
             cookies.set('AuthorizationToken', result.authToken, {
                 path: '/',
                 httpOnly: true,
-                secure : true,
+                secure : false,
                 sameSite: 'strict',
                 maxAge: 60 * 60 * 24 // one day
             });
