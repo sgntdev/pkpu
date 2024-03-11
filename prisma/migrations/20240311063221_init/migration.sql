@@ -113,9 +113,6 @@ CREATE UNIQUE INDEX "UserVerify_email_key" ON "UserVerify"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "UserVerify_uniqueCode_key" ON "UserVerify"("uniqueCode");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Kreditor_email_key" ON "Kreditor"("email");
-
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
