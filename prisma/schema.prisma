@@ -42,7 +42,7 @@ model Kreditor {
   id      Int       @id @default(autoincrement())
   userId  Int
   nama    String
-  email   String    @unique
+  email   String    
   alamat  String    @db.Text
   noTelp  String    @db.VarChar(13)
   User    User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
