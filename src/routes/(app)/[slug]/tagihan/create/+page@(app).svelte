@@ -7,11 +7,19 @@
 		Spinner,
 		Breadcrumb,
 		BreadcrumbItem,
-		Dropzone
+		Dropzone,
+		Toast
 	} from 'flowbite-svelte';
-	import { PlusSolid, MinusSolid, CloseSolid } from 'flowbite-svelte-icons';
+	import {
+		PlusSolid,
+		MinusSolid,
+		CloseSolid,
+		PenSolid,
+		ExclamationCircleOutline,
+		CheckCircleSolid
+	} from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
-
+	import { fly } from 'svelte/transition';
 	export let data;
 	const { token, debitor, userId, sifatTagihanData, tipeDokumenData } = data.body;
 	let kreditorData = data.body.kreditorData;
@@ -22,11 +30,14 @@
 		}
 	];
 	let formModal = false;
+	let editModal = false;
+	let editTargetId;
+	let showToast = false;
+	let toastData;
 	let selectedKreditor = '';
 	let searchKreditor = '';
 	let previewURL = [];
 	let value = [];
-
 	const dropHandle = (event, index) => {
 		event.preventDefault();
 		if (buktiTagihan[index].tipeDokumenId) {
@@ -145,6 +156,16 @@
 			const result = await response.json();
 			form = result;
 			if (result.success) {
+				formModal = false;
+				showToast = true;
+				toastData = {
+					success: true,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
 				kreditor = {
 					userId,
 					nama: '',
@@ -152,7 +173,6 @@
 					noTelp: '',
 					alamat: ''
 				};
-				formModal = false;
 				const updatedDataResponse = await fetch(`/api/kreditor`, {
 					method: 'GET',
 					headers: {
@@ -164,13 +184,100 @@
 				const formattedData = updatedData.filter((data) => data.userId === userId);
 				kreditorData = formattedData;
 			} else {
-				console.error(result.message);
+				showToast = true;
+				toastData = {
+					success: false,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
 			}
 		} catch (error) {
 			console.log(error);
 		} finally {
 			loading = false;
 		}
+	};
+	const handleEditKreditor = async () => {
+		loading = true;
+		try {
+			const response = await fetch(`/api/kreditor/${editTargetId}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify(kreditor)
+			});
+			const result = await response.json();
+			form = result;
+			if (result.success) {
+				editModal = false;
+				kreditor = {
+					userId,
+					nama: '',
+					email: '',
+					noTelp: '',
+					alamat: ''
+				};
+				showToast = true;
+				toastData = {
+					success: true,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+				const updatedDataResponse = await fetch(`/api/kreditor`, {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
+					}
+				});
+				const updatedData = await updatedDataResponse.json();
+				const formattedData = updatedData.filter((data) => data.userId === userId);
+				kreditorData = formattedData;
+			} else {
+				showToast = true;
+				toastData = {
+					success: false,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+			}
+		} catch (error) {
+			console.log(error);
+		} finally {
+			loading = false;
+		}
+	};
+	const openAddModal = () => {
+		formModal = true
+		kreditor = {
+			userId,
+			nama: '',
+			email: '',
+			noTelp: '',
+			alamat: ''
+		};
+	};
+	const openEditModal = (id, nama, email, noTelp, alamat) => {
+		editTargetId = id;
+		editModal = true;
+		kreditor = {
+			userId,
+			nama,
+			email,
+			noTelp,
+			alamat
+		};
 	};
 	//
 	const handleSubmit = async (event) => {
@@ -224,7 +331,27 @@
 		const formatted = price.replace(/,/g, '');
 		return formatted;
 	}
+	const clearToastData = () => {
+		toastData = null;
+	};
 </script>
+
+{#if showToast}
+	<div transition:fly={{ x: 200 }} class="top-15 absolute end-5">
+		<Toast color={toastData?.success ? 'green' : 'red'} class="z-50 mb-4">
+			<svelte:fragment slot="icon">
+				{#if toastData?.success}
+					<CheckCircleSolid class="h-5 w-5" />
+					<span class="sr-only">Check icon</span>
+				{:else}
+					<CloseSolid class="h-5 w-5" />
+					<span class="sr-only">Error icon</span>
+				{/if}
+			</svelte:fragment>
+			{toastData?.message}
+		</Toast>
+	</div>
+{/if}
 
 <Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
 	<BreadcrumbItem href="/" home>List Debitor</BreadcrumbItem>
@@ -241,11 +368,11 @@
 		<Card size="none" padding="lg">
 			<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Identitas Kreditor</h3>
 
-			<div class="relative">
-				<div class="relative">
+			<div class="relative flex flex-col gap-2 md:flex-row">
+				<div class="relative w-full">
 					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
 						<svg
-							class={`${form?.errors?.find((error) => error.field === 'kreditorId') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4`}
+							class={`${!selectedKreditor && form?.errors?.find((error) => error.field === 'kreditorId') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4`}
 							aria-hidden="true"
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"
@@ -264,51 +391,77 @@
 						type="search"
 						bind:value={searchKreditor}
 						id="default-search"
-						class={`${form?.errors?.find((error) => error.field === 'kreditorId') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'} block w-full rounded-lg border ps-10 text-sm`}
+						class={`${!selectedKreditor && form?.errors?.find((error) => error.field === 'kreditorId') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'} block w-full rounded-lg border ps-10 text-sm`}
 						placeholder="Cari Kreditor..."
 					/>
 				</div>
-				{#if form?.errors?.find((error) => error.field === 'kreditorId')}
-					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-						{form?.errors?.find((error) => error.field === 'kreditorId').message}
-					</p>
-				{/if}
+				<Button size="xs" on:click={() => openAddModal()}
+					><PlusSolid class="me-2 h-5 w-5" />Tambah</Button
+				>
 				{#if searchKreditor !== ''}
 					<div
-						class="absolute z-10 mt-2 max-h-72 w-full overflow-y-auto rounded-lg bg-white p-0 shadow dark:bg-gray-700"
+						class="absolute top-12 z-10 max-h-72 w-full overflow-y-auto rounded-lg bg-white p-0 shadow dark:bg-gray-700"
 					>
 						<ul class="space-y-2 p-2">
 							{#each filteredKreditors as { id, nama, alamat, noTelp, email }}
-								<button
-									type="button"
-									on:click={() => handleSelectKreditor(id)}
-									class="block w-full rounded-lg px-4 py-2 text-start hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+								<div
+									class="flex w-full flex-row items-center justify-between gap-4 rounded-lg px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
 								>
-									<p
-										class="mb-1 text-lg font-semibold tracking-tight text-gray-900 dark:text-white"
+									<button
+										type="button"
+										on:click={() => handleSelectKreditor(id)}
+										class="block w-full text-start"
 									>
-										{nama}
-									</p>
-									<p class="text-xs font-normal text-gray-700 dark:text-gray-400">{alamat}</p>
-									<p class="text-xs font-normal text-gray-700 dark:text-gray-400">
-										{noTelp} | {email}
-									</p>
-								</button>
+										<div>
+											<p
+												class="mb-1 text-lg font-semibold tracking-tight text-gray-900 dark:text-white"
+											>
+												{nama}
+											</p>
+											<p class="text-xs font-normal text-gray-700 dark:text-gray-400">{alamat}</p>
+											<p class="text-xs font-normal text-gray-700 dark:text-gray-400">
+												{noTelp} | {email}
+											</p>
+										</div>
+									</button>
+									<button
+										type="button"
+										class="h-fit rounded-full bg-gray-300 p-2"
+										on:click={() => openEditModal(id, nama, email, noTelp, alamat)}
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											fill="currentColor"
+											class="h-4 w-4 shrink-0 text-white"
+											role="img"
+											aria-label="pen solid"
+											viewBox="0 0 24 24"
+											><path
+												fill="currentColor"
+												fill-rule="evenodd"
+												d="M14 4.2a4.1 4.1 0 0 1 5.8 0 4 4 0 0 1 0 5.7l-1.3 1.3-5.8-5.7L14 4.2Zm-2.7 2.7-5.1 5.2 2.2 2.2 5-5.2-2.1-2.2ZM5 14l-2 5.8c0 .3 0 .7.3 1 .3.3.7.4 1 .2l6-1.9L5 13.8Zm7 4 5-5.2-2.1-2.2-5.1 5.2 2.2 2.1Z"
+												clip-rule="evenodd"
+											></path></svg
+										>
+									</button>
+								</div>
 							{/each}
 							{#if filteredKreditors.length === 0}
 								<li class="block space-y-2 rounded-lg py-8 text-center">
 									<p class="text-lg font-medium tracking-tight text-gray-500 dark:text-white">
 										Kreditor "{searchKreditor}" Tidak Ditemukan
 									</p>
-									<Button size="xs" on:click={() => (formModal = true)}
-										><PlusSolid class="h-5 w-5" /> Tambah Kreditor Baru</Button
-									>
 								</li>
 							{/if}
 						</ul>
 					</div>
 				{/if}
 			</div>
+			{#if !selectedKreditor && form?.errors?.find((error) => error.field === 'kreditorId')}
+				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+					{form?.errors?.find((error) => error.field === 'kreditorId').message}
+				</p>
+			{/if}
 			{#if selectedKreditorData}
 				<div class="mt-4 flex flex-row justify-between rounded-lg bg-gray-50 px-6 py-4">
 					<div>
@@ -795,6 +948,97 @@
 				<Spinner class="me-2" size="4" color="white" />
 			{:else}
 				<PlusSolid class="me-2 h-4 w-4" />Tambah Kreditor
+			{/if}
+		</Button>
+	</form>
+</Modal>
+<Modal
+	bind:open={editModal}
+	size="xs"
+	autoclose={false}
+	class="w-full"
+	backdropClass="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 dark:bg-opacity-80"
+>
+	<form method="POST" class="flex flex-col space-y-4" on:submit|preventDefault={handleEditKreditor}>
+		<h3 class="text-xl font-medium text-gray-900 dark:text-white">Tambah kreditor baru</h3>
+		<label
+			for="nama"
+			class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'nama') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+		>
+			<span>Nama</span>
+			<input
+				type="text"
+				name="nama"
+				bind:value={kreditor.nama}
+				placeholder="Masukkan Nama"
+				class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'nama') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+			/>
+			{#if form?.errors?.find((error) => error.field === 'nama')}
+				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+					{form?.errors?.find((error) => error.field === 'nama').message}
+				</p>
+			{/if}
+		</label>
+		<label
+			for="email"
+			class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'email') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+		>
+			<span>Email</span>
+			<input
+				type="text"
+				name="email"
+				bind:value={kreditor.email}
+				placeholder="Masukkan Email"
+				class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'email') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+			/>
+			{#if form?.errors?.find((error) => error.field === 'email')}
+				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+					{form?.errors?.find((error) => error.field === 'email').message}
+				</p>
+			{/if}
+		</label>
+		<label
+			for="noTelp"
+			class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'noTelp') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+		>
+			<span>No. Telepon</span>
+			<input
+				type="text"
+				name="noTelp"
+				bind:value={kreditor.noTelp}
+				placeholder="Masukkan No Telepon"
+				class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'noTelp') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+			/>
+			{#if form?.errors?.find((error) => error.field === 'noTelp')}
+				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+					{form?.errors?.find((error) => error.field === 'noTelp').message}
+				</p>
+			{/if}
+		</label>
+		<label
+			for="alamat"
+			class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'alamat') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+		>
+			<span>Alamat</span>
+			<textarea
+				id="textarea-id"
+				bind:value={kreditor.alamat}
+				placeholder="Masukkan Alamat"
+				rows="2"
+				name="alamat"
+				class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'alamat') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+			></textarea>
+			{#if form?.errors?.find((error) => error.field === 'alamat')}
+				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+					{form?.errors?.find((error) => error.field === 'alamat').message}
+				</p>
+			{/if}
+		</label>
+		<Button type="submit">
+			{#if loading}
+				<Spinner class="me-2" size="4" color="white" />
+			{:else}
+				<PlusSolid class="me-2 h-4 w-4" />Ubah Kreditor
 			{/if}
 		</Button>
 	</form>

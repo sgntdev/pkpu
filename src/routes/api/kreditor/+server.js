@@ -58,14 +58,6 @@ export async function POST({ request }) {
 		);
 	} catch (error) {
 		console.log(error);
-		if (error.code === 'P2002' && error.meta.target.includes('email')) {
-			return new Response(
-				JSON.stringify({
-					success: false,
-					message: 'Email kreditor sudah terdaftar, silahkan gunakan email lain'
-				})
-			);
-		}
 		return new Response(JSON.stringify({ success: false, message: 'Kreditor gagal ditambahkan' }));
 	}
 }

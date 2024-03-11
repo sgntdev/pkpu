@@ -9,7 +9,7 @@
 		Toast,
 		Breadcrumb,
 		BreadcrumbItem,
-		Badge, 
+		Badge,
 		Indicator
 	} from 'flowbite-svelte';
 	export let data;
@@ -56,15 +56,16 @@
 <div class="space-y-4">
 	<div class="min-h-max overflow-hidden rounded-lg border border-gray-200 p-8 dark:border-gray-700">
 		<div class="mb-4 flex flex-col items-start justify-between sm:mb-0 md:flex-row">
-			<caption
-				class="mb-2 bg-white text-left text-lg font-semibold text-gray-900 dark:bg-gray-800 dark:text-white md:mb-5"
-			>
-				List Tagihan
+			<div class="mb-2 md:mb-5">
+				<p class="text-left text-lg font-semibold text-gray-900 dark:bg-gray-800 dark:text-white">
+					List Tagihan
+				</p>
 				<p class="mt-1 text-sm font-light text-gray-500 dark:text-gray-400">
 					Kelola semua tagihan anda yang ada atau tambahkan tagihan baru.
 				</p>
-			</caption>
-			<a data-sveltekit-reload
+			</div>
+			<a
+				data-sveltekit-reload
 				href="./tagihan/create"
 				class="flex h-fit w-full items-center justify-center rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 sm:w-fit"
 			>
@@ -103,18 +104,18 @@
 							<TableBodyCell>{data.kurunTunggakan}</TableBodyCell>
 							<TableBodyCell>
 								{#if data.statusTagihan === 0}
-								<Badge color="gray" rounded class="px-2.5 py-0.5">
-									<Indicator color="dark" size="xs" class="me-1" />Pending
-								  </Badge>
+									<Badge color="gray" rounded class="px-2.5 py-0.5">
+										<Indicator color="dark" size="xs" class="me-1" />Pending
+									</Badge>
 								{:else if data.statusTagihan === 1}
 									<Badge color="green" rounded class="px-2.5 py-0.5">
 										<Indicator color="green" size="xs" class="me-1" />Verified
 									</Badge>
 								{:else}
-								<Badge color="red" rounded class="px-2.5 py-0.5">
-									<Indicator color="red" size="xs" class="me-1" />Objection
-								  </Badge>
-								  {/if}
+									<Badge color="red" rounded class="px-2.5 py-0.5">
+										<Indicator color="red" size="xs" class="me-1" />Objection
+									</Badge>
+								{/if}
 							</TableBodyCell>
 						</TableBodyRow>
 					{/each}
