@@ -4,15 +4,18 @@
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "prisma generate && vite build",
 		"preview": "vite preview",
 		"test": "vitest",
 		"lint": "prettier --check .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"postinstall": "prisma generate",
+		"postbuild": "cp prisma/schema.prisma",
+		"vercel-build" : "prisma migrate deploy && npm run build"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
-		"@sveltejs/adapter-netlify": "^3.0.1",
+		"@sveltejs/adapter-vercel": "^5.1.0",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
 		"autoprefixer": "^10.4.16",
