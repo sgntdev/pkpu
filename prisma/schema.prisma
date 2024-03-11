@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl= env("DATABASE_URL_NON_POOLING")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
 
 model User {
@@ -43,7 +42,7 @@ model Kreditor {
   id      Int       @id @default(autoincrement())
   userId  Int
   nama    String
-  email   String    
+  email   String
   alamat  String    @db.Text
   noTelp  String    @db.VarChar(13)
   User    User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
