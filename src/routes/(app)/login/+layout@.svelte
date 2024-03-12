@@ -1,3 +1,6 @@
+<script>
+    import '../../../app.pcss';
+</script>
 <svelte:head>
 	<title>PKPU</title>
 </svelte:head>

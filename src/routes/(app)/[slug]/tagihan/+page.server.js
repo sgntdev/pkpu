@@ -3,7 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 export async function load({ params, fetch, locals }) {
 	const { user, token } = locals;
 	if (!user) {
-		redirect(303, '/');
+		redirect(303, '/login');
 	}
 	const debitorRes = await fetch('/api/debitor');
 	const debitors = await debitorRes.json();
@@ -47,22 +47,31 @@ export async function load({ params, fetch, locals }) {
 			}
 		});
 		const sifatTagihanResult = await sifatTagihanResponse.json();
+		// find user id
+		const userRes = await fetch(`/api/user/${user.email}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`
+			}
+		});
+		const userData = await userRes.json();
 		// find tagihan from specific debitor
-		const tagihanByDebitorId = tagihanResult.filter((data) => data.debitorId === debitor.id);
+		const tagihanByUserId = tagihanResult.filter((data) => data.userId === userData.id)
+		const tagihanByDebitorId = tagihanByUserId.filter((data) => data.debitorId === debitor.id);
 		//creates formatted data for display to clients
-		let formattedData = [];
-		tagihanByDebitorId.map((item) => {
+		let formattedData = tagihanByDebitorId.map((item) => {
 			const kreditor = kreditorResult.find((data) => data.id === item.kreditorId).nama;
 			const sifatTagihan = sifatTagihanResult.find((data) => data.id === item.sifatTagihanId).sifat;
-			formattedData.push({
+			return {
 				kreditor,
 				pertanggal: item.pertanggal,
 				sifatTagihan,
 				totalTagihan: parseInt(item.denda) + parseInt(item.hutangPokok) + parseInt(item.bunga),
 				jumlahTagihan: item.jumlahTagihan,
 				kurunTunggakan: item.mulaiTertunggak,
-				statusTagihan : item.status
-			});
+				statusTagihan: item.status
+			};
 		});
 		return {
 			status: 200,

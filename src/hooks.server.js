@@ -2,7 +2,6 @@ import { SECRET_INGREDIENT } from '$env/static/private';
 import { redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import { prisma } from '$lib/prisma.server.js';
-
 export async function handle({ event, resolve }) {
 	const token = event.cookies.get('AuthorizationToken');
 	event.locals.token = token ?? '';
@@ -25,7 +24,6 @@ export async function handle({ event, resolve }) {
 			error = error.name;
 		}
 	}
-
 	if (event.url.pathname.startsWith('/tagihan') || event.url.pathname.startsWith('/kreditor') || event.url.pathname.startsWith('/users') || event.url.pathname.startsWith('/verifypassword')) {
 		if (!event.locals.user) {
 			redirect(303, '/');

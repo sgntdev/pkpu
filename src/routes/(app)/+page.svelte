@@ -23,7 +23,7 @@
 </script>
 
 <div class="space-y-4">
-	<h1 class="text-3xl font-bold tracking-tight text-gray-900">List Debitur PKPU</h1>
+	<h1 class="text-3xl font-bold tracking-tight text-gray-900">List Debitor PKPU</h1>
 	<div class="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-lg">
 		{#if debitor.length === 0}
 			<div
@@ -52,7 +52,7 @@
 							<TableBodyCell>
 								<a
 									data-sveltekit-reload
-									href={`/${data.link}`}
+									href={`/${data.link}/tagihan`}
 									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
 									>{data.nama}</a
 								>

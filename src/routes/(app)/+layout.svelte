@@ -1,8 +1,12 @@
 <script>
 	import '../../app.pcss';
-	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { Button, Dropdown, DropdownItem } from 'flowbite-svelte';
 	export let data;
 	const { user } = data;
+	const handleLogout = () => {
+		goto('/logout');
+	};
 </script>
 
 <svelte:head>
@@ -15,7 +19,7 @@
 	<div class="px-3 py-3 lg:px-5 lg:pl-3">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center justify-start rtl:justify-end">
-				<a href="https://flowbite.com" class="ms-2 flex md:me-24">
+				<a href="/" class="ms-2 flex md:me-24">
 					<span
 						class="self-center whitespace-nowrap text-xl font-semibold dark:text-white sm:text-2xl"
 						>PKPU</span
@@ -23,7 +27,17 @@
 				</a>
 			</div>
 			<div class="flex items-center lg:order-2">
-				<p class="text-sm text-gray-500 dark:text-white">{user ?? $page.state.user ?? ''}</p>
+				{#if user}
+					<Button><p>{user.slice(0, user.indexOf('@'))}</p></Button>
+					<Dropdown>
+						<div slot="header" class="px-4 py-2">
+							<span class="block truncate text-sm font-medium">{user}</span>
+						</div>
+						<DropdownItem on:click={handleLogout}>Logout</DropdownItem>
+					</Dropdown>
+				{:else}
+					<Button href="/login">Login</Button>
+				{/if}
 			</div>
 		</div>
 	</div>

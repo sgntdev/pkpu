@@ -1,10 +1,6 @@
 <script>
-	import { goto } from '$app/navigation';
 	import { Spinner, Card, Button, Label, Input, Helper } from 'flowbite-svelte';
 	import { BadgeCheckSolid, ExclamationCircleSolid } from 'flowbite-svelte-icons';
-	import { onMount } from 'svelte';
-	export let data;
-	const { user, slug } = data.body;
 	let loading = false;
 	let status = null;
 	let form;
@@ -34,17 +30,8 @@
 			loading = false;
 		}
 	};
-
-	onMount(() => {
-		if (user) {
-			goto(`/${slug}/tagihan`, { replaceState: true });
-		}
-	});
 </script>
 
-<!-- Check if user not found -->
-{#if !user}
-	<!-- Before Auth -->
 	{#if loading}
 		<Spinner size={12} />
 	{:else if status === 'error'}
@@ -96,5 +83,3 @@
 			</form>
 		</Card>
 	{/if}
-	<!--  -->
-{/if}
