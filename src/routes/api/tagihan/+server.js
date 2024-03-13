@@ -2,6 +2,8 @@ import { prisma } from '$lib/prisma.server.js';
 import { error, redirect } from '@sveltejs/kit';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { put } from '@vercel/blob';
+import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
 
 export async function GET({ request }) {
 	let token = request.headers.get('authorization');
@@ -102,15 +104,13 @@ export async function POST({ request }) {
 			validation.errors.push({ field: 'jumlahHari', message: 'Jumlah hari tidak boleh kosong!' });
 		}
 
-		if (!dokumens || dokumens.length === 0) {
-			validation.errors.push({ field: 'dokumen', message: 'Bukti tagihan tidak boleh kosong!' });
-		}
-
+		// if (!dokumens || dokumens.length === 0) {
+		// 	validation.errors.push({ field: 'dokumen', message: 'Bukti dokumen tidak boleh kosong!' });
+		// }
 		for (const key in tipeDokumenIds) {
 			const dokumen = dokumens[key];
-
 			if (dokumen.size > maxFileSize) {
-				validation.errors.push({ field: `dokumen.${key}`, message: 'File terlalu besar' });
+				validation.errors.push({ field: `dokumen.${key}`, message: 'File memiliki ukuran terlalu besar' });
 			}
 			if (!allowedFileTypes.includes(dokumen.type)) {
 				validation.errors.push({ field: `dokumen.${key}`, message: 'File harus berformat PDF' });
@@ -140,45 +140,48 @@ export async function POST({ request }) {
 
 		for (const key in tipeDokumenIds) {
 			const tipeDokumenId = tipeDokumenIds[key];
-			console.log(tipeDokumenId);
 			const dokumen = dokumens[key];
 			const fileName = dokumen.name.split('.')[0];
 			const formattedfileName = fileName.replace(/\s/g, '_').toLowerCase();
 			const uniqueFilename = `${Date.now()}_${debitorId}_${userId}_${formattedfileName}_${tagihanId}_${tipeDokumenId}.pdf`;
-
+			const { url } = await put(uniqueFilename, dokumen, {
+				access: 'public',
+				token: BLOB_READ_WRITE_TOKEN
+			});
 			dokumenTagihanData.push({
 				tipeDokumenId: parseInt(tipeDokumenId),
-				name: uniqueFilename,
-				dokumen,
+				// name: uniqueFilename,
+				dokumen: url,
 				tagihanId
 			});
 		}
 		let data = dokumenTagihanData.map((item) => ({
 			tipeDokumenId: item.tipeDokumenId,
-			dokumen: item.name,
+			dokumen: item.dokumen,
 			tagihanId: item.tagihanId
 		}));
+
 		await prisma.dokumenTagihan.createMany({
 			data
 		});
 
-		if (!dokumens) {
-			console.error('Invalid file data');
-			return {
-				status: 400,
-				body: 'Invalid file data'
-			};
-		}
+		// if (!dokumens) {
+		// 	console.error('Invalid file data');
+		// 	return {
+		// 		status: 400,
+		// 		body: 'Invalid file data'
+		// 	};
+		// }
 
-		const uploadsDir = join(process.cwd(), 'static/doc/');
-		mkdirSync(uploadsDir, { recursive: true });
+		// const uploadsDir = join(process.cwd(), 'static/doc/');
+		// mkdirSync(uploadsDir, { recursive: true });
 
-		for (const file of dokumenTagihanData) {
-			const filePath = join(uploadsDir, file.name);
-			writeFileSync(filePath, Buffer.from(await file.dokumen.arrayBuffer()));
-			console.log('uploadsDir:', uploadsDir);
-			console.log('file:', file);
-		}
+		// for (const file of dokumenTagihanData) {
+		// 	const filePath = join(uploadsDir, file.name);
+		// 	writeFileSync(filePath, Buffer.from(await file.dokumen.arrayBuffer()));
+		// 	console.log('uploadsDir:', uploadsDir);
+		// 	console.log('file:', file);
+		// }
 		return new Response(
 			JSON.stringify({
 				success: true,

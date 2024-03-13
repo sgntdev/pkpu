@@ -1,8 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
-
+export const prerender = false;
 export async function load({ locals, fetch, params }) {
 	const { token, user } = locals;
-
 	if (!user) {
 		redirect(301, '/');
 	} else {

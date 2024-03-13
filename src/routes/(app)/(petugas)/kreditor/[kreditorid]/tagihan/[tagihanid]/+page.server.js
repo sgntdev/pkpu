@@ -43,7 +43,7 @@ export async function load({ params, fetch, locals }) {
 				const tipe = tipeDokumenResult.find((data) => data.id === item.tipeDokumenId).tipe;
 				dokumen.push({
 					tipeDokumen: tipe,
-					namaDokumen: item.dokumen
+					dokumen_url: item.dokumen
 				});
 			});
 			return {

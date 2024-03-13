@@ -8,7 +8,10 @@
 		Breadcrumb,
 		BreadcrumbItem,
 		Dropzone,
-		Toast
+		Toast,
+		Fileupload,
+		Label,
+		Helper,
 	} from 'flowbite-svelte';
 	import {
 		PlusSolid,
@@ -16,6 +19,7 @@
 		CloseSolid,
 		PenSolid,
 		ExclamationCircleOutline,
+		XCircleSolid,
 		CheckCircleSolid
 	} from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
@@ -34,67 +38,69 @@
 	let editTargetId;
 	let showToast = false;
 	let toastData;
+	let loading = false;
+	let submitted = false;
+	let form;
 	let selectedKreditor = '';
 	let searchKreditor = '';
 	let previewURL = [];
 	let value = [];
-	const dropHandle = (event, index) => {
-		event.preventDefault();
-		if (buktiTagihan[index].tipeDokumenId) {
-			[...event.dataTransfer.items].forEach((item, i) => {
-				if (item.kind === 'file') {
-					const file = item.getAsFile();
-					value.push(file);
-					value = value;
-					const reader = new FileReader();
+	// const dropHandle = (event, index) => {
+	// 	event.preventDefault();
+	// 	if (buktiTagihan[index].tipeDokumenId) {
+	// 		[...event.dataTransfer.items].forEach((item, i) => {
+	// 			if (item.kind === 'file') {
+	// 				const file = item.getAsFile();
+	// 				value.push(file);
+	// 				value = value;
+	// 				const reader = new FileReader();
 
-					reader.onload = (e) => {
-						// Cek apakah sudah ada pratinjau di index ini
-						if (previewURL[index]) {
-							// Jika sudah ada, gantilah dengan pratinjau baru
-							previewURL[index] = e.target.result;
-						} else {
-							// Jika belum ada, tambahkan pratinjau baru
-							previewURL.push(e.target.result);
-						}
+	// 				reader.onload = (e) => {
+	// 					// Cek apakah sudah ada pratinjau di index ini
+	// 					if (previewURL[index]) {
+	// 						// Jika sudah ada, gantilah dengan pratinjau baru
+	// 						previewURL[index] = e.target.result;
+	// 					} else {
+	// 						// Jika belum ada, tambahkan pratinjau baru
+	// 						previewURL.push(e.target.result);
+	// 					}
 
-						previewURL = previewURL.slice(); // Perbarui reaktivitas
-					};
+	// 					previewURL = previewURL.slice(); // Perbarui reaktivitas
+	// 				};
 
-					reader.readAsDataURL(file);
-				}
-			});
-		}
-	};
+	// 				reader.readAsDataURL(file);
+	// 			}
+	// 		});
+	// 	}
+	// };
 
-	const handleChange = (event, index) => {
-		const files = event.target.files;
-		if (files.length > 0) {
-			value.push(files[0]);
-			value = value;
-			const reader = new FileReader();
+	// const handleChange = (event, index) => {
+	// 	const files = event.target.files;
+	// 	if (files.length > 0) {
+	// 		value.push(files[0]);
+	// 		value = value;
+	// 		const reader = new FileReader();
 
-			reader.onload = (e) => {
-				// Cek apakah sudah ada pratinjau di index ini
-				if (previewURL[index]) {
-					// Jika sudah ada, gantilah dengan pratinjau baru
-					previewURL[index] = e.target.result;
-				} else {
-					// Jika belum ada, tambahkan pratinjau baru
-					previewURL.push(e.target.result);
-				}
+	// 		reader.onload = (e) => {
+	// 			// Cek apakah sudah ada pratinjau di index ini
+	// 			if (previewURL[index]) {
+	// 				// Jika sudah ada, gantilah dengan pratinjau baru
+	// 				previewURL[index] = e.target.result;
+	// 			} else {
+	// 				// Jika belum ada, tambahkan pratinjau baru
+	// 				previewURL.push(e.target.result);
+	// 			}
 
-				previewURL = previewURL.slice(); // Perbarui reaktivitas
-			};
+	// 			previewURL = previewURL.slice(); // Perbarui reaktivitas
+	// 		};
 
-			reader.readAsDataURL(files[0]);
-		}
-	};
+	// 		reader.readAsDataURL(files[0]);
+	// 	}
+	// };
 
 	$: filteredKreditors = kreditorData.filter((kreditor) =>
 		kreditor.nama.toLowerCase().includes(searchKreditor.toLowerCase())
 	);
-
 	const handleSelectKreditor = (kreditorId) => {
 		selectedKreditor = kreditorId;
 		searchKreditor = '';
@@ -132,8 +138,6 @@
 		buktiTagihan = list;
 	};
 
-	let loading = false;
-	let form;
 	//add kreditor form
 	let kreditor = {
 		userId,
@@ -259,7 +263,7 @@
 		}
 	};
 	const openAddModal = () => {
-		formModal = true
+		formModal = true;
 		kreditor = {
 			userId,
 			nama: '',
@@ -280,8 +284,10 @@
 		};
 	};
 	//
+
 	const handleSubmit = async (event) => {
 		loading = true;
+		submitted = true;
 		const formData = new FormData(event.currentTarget);
 		value.forEach((value) => {
 			formData.append(`dokumen`, value);
@@ -293,7 +299,6 @@
 			const response = await fetch('/api/tagihan', {
 				method: 'POST',
 				headers: {
-					// 'Content-Type': 'multipart/form-data',
 					Authorization: `Bearer ${token}`
 				},
 				body: formData
@@ -308,15 +313,27 @@
 					}
 				});
 			} else {
+				submitted = true;
 				form = result;
-				console.error(result.message);
+				if (!result.errors) {
+					toastData = {
+						success: false,
+						message: result.message
+					};
+					showToast = true;
+					setTimeout(() => {
+							showToast = false;
+							clearToastData();
+						}, 2000);
+					}
+				}
+			} catch (err) {
+				console.error('client', err);
+			} finally {
+				loading = false;
 			}
-		} catch (err) {
-			console.error(err);
-		} finally {
-			loading = false;
-		}
-	};
+		};
+		$: console.log(showToast)
 
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
@@ -334,17 +351,26 @@
 	const clearToastData = () => {
 		toastData = null;
 	};
+
+	$: {
+    if (sifatTagihan.id !== '') {
+        submitted = false;
+    }
+	if (buktiTagihan.tipeDokumenId !== '') {
+        submitted = false;
+    }
+}
 </script>
 
 {#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-15 absolute end-5">
-		<Toast color={toastData?.success ? 'green' : 'red'} class="z-50 mb-4">
+	<div transition:fly={{ x: 200 }} class="top-15 fixed z-50 end-5">
+		<Toast color={toastData?.success ? 'green' : 'red'} >
 			<svelte:fragment slot="icon">
 				{#if toastData?.success}
 					<CheckCircleSolid class="h-5 w-5" />
 					<span class="sr-only">Check icon</span>
 				{:else}
-					<CloseSolid class="h-5 w-5" />
+					<XCircleSolid class="h-5 w-5" />
 					<span class="sr-only">Error icon</span>
 				{/if}
 			</svelte:fragment>
@@ -526,13 +552,13 @@
 				<div>
 					<label
 						for="hutangPokok"
-						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'hutangPokok') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						class={`mb-2 block text-sm font-medium ${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Hutang Pokok</label
 					>
 					<div class="relative">
 						<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
 							<p
-								class={`${form?.errors?.find((error) => error.field === 'hutangPokok') ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
+								class={`${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
 							>
 								Rp.
 							</p>
@@ -546,10 +572,10 @@
 							on:input={() => {
 								jumlahTagihan.hutangPokok = formatPrice(jumlahTagihan.hutangPokok);
 							}}
-							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'hutangPokok') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 						/>
 					</div>
-					{#if form?.errors?.find((error) => error.field === 'hutangPokok')}
+					{#if jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 							{form?.errors?.find((error) => error.field === 'hutangPokok').message}
 						</p>
@@ -558,13 +584,13 @@
 				<div>
 					<label
 						for="bunga"
-						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'bunga') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						class={`mb-2 block text-sm font-medium ${jumlahTagihan.bunga === '' && form?.errors?.find((error) => error.field === 'bunga') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Bunga</label
 					>
 					<div class="relative">
 						<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
 							<p
-								class={`${form?.errors?.find((error) => error.field === 'bunga') ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
+								class={`${jumlahTagihan.bunga === '' && form?.errors?.find((error) => error.field === 'bunga') ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
 							>
 								Rp.
 							</p>
@@ -578,10 +604,10 @@
 							on:input={() => {
 								jumlahTagihan.bunga = formatPrice(jumlahTagihan.bunga);
 							}}
-							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'bunga') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${jumlahTagihan.bunga === '' && form?.errors?.find((error) => error.field === 'bunga') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 						/>
 					</div>
-					{#if form?.errors?.find((error) => error.field === 'bunga')}
+					{#if jumlahTagihan.bunga === '' && form?.errors?.find((error) => error.field === 'bunga')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 							{form?.errors?.find((error) => error.field === 'bunga').message}
 						</p>
@@ -590,13 +616,13 @@
 				<div>
 					<label
 						for="denda"
-						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'denda') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						class={`mb-2 block text-sm font-medium ${jumlahTagihan.denda === '' && form?.errors?.find((error) => error.field === 'denda') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Denda</label
 					>
 					<div class="relative">
 						<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
 							<p
-								class={`${form?.errors?.find((error) => error.field === 'denda') ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
+								class={`${jumlahTagihan.denda === '' && form?.errors?.find((error) => error.field === 'denda') ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
 							>
 								Rp.
 							</p>
@@ -610,10 +636,10 @@
 							on:input={() => {
 								jumlahTagihan.denda = formatPrice(jumlahTagihan.denda);
 							}}
-							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'denda') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${jumlahTagihan.denda === '' && form?.errors?.find((error) => error.field === 'denda') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 						/>
 					</div>
-					{#if form?.errors?.find((error) => error.field === 'denda')}
+					{#if jumlahTagihan.denda === '' && form?.errors?.find((error) => error.field === 'denda')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 							{form?.errors?.find((error) => error.field === 'denda').message}
 						</p>
@@ -648,21 +674,21 @@
 				<div>
 					<label
 						for="sifatTagihan"
-						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'sifatTagihanId') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-						>Pertanggal</label
+						class={`mb-2 block text-sm font-medium ${sifatTagihan.id === '' && form?.errors?.find((error) => error.field === 'sifatTagihanId') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						>Sifat/Golongan Tagihan</label
 					>
 					<select
 						id="sifatTagihan"
 						name="sifatTagihanId"
 						bind:value={sifatTagihan.id}
-						class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'pertanggal') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+						class={`block w-full rounded-lg border p-2.5 text-sm ${sifatTagihan.id === '' && form?.errors?.find((error) => error.field === 'sifatTagihanId') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 					>
 						<option value="" selected disabled>Pilih Sifat Tagihan</option>
 						{#each sifatTagihanData as { id, sifat }}
 							<option value={id}>{sifat}</option>
 						{/each}
 					</select>
-					{#if form?.errors?.find((error) => error.field === 'sifatTagihanId')}
+					{#if sifatTagihan.id === '' && form?.errors?.find((error) => error.field === 'sifatTagihanId')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 							{form?.errors?.find((error) => error.field === 'sifatTagihanId').message}
 						</p>
@@ -671,20 +697,20 @@
 				<div>
 					<label
 						for="jumlahTagihan"
-						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'jumlahTagihan') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						class={`mb-2 block text-sm font-medium ${sifatTagihan.jumlahTagihan === '' && form?.errors?.find((error) => error.field === 'jumlahTagihan') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Jumlah Tagihan Seluruhnya</label
 					>
 					<select
 						id="jumlahTagihan"
 						name="jumlahTagihan"
 						bind:value={sifatTagihan.jumlahTagihan}
-						class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'jumlahTagihan') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+						class={`block w-full rounded-lg border p-2.5 text-sm ${sifatTagihan.jumlahTagihan === '' && form?.errors?.find((error) => error.field === 'jumlahTagihan') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 					>
 						<option value="" selected disabled>Pilih Jumlah Tagihan Seluruhnya</option>
 						<option value="Dijamin">Dijamin</option>
 						<option value="Tidak Dijamin">Tidak Dijamin</option>
 					</select>
-					{#if form?.errors?.find((error) => error.field === 'jumlahTagihan')}
+					{#if sifatTagihan.jumlahTagihan === '' && form?.errors?.find((error) => error.field === 'jumlahTagihan')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 							{form?.errors?.find((error) => error.field === 'jumlahTagihan').message}
 						</p>
@@ -698,7 +724,7 @@
 				<div>
 					<label
 						for="mulaiTertunggak"
-						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'mulaiTertunggak') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						class={`mb-2 block text-sm font-medium ${kurunTunggakan.mulaiTertunggak === '' && form?.errors?.find((error) => error.field === 'mulaiTertunggak') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Mulai Tertunggak Sejak</label
 					>
 					<div class="relative">
@@ -725,6 +751,7 @@
 							name="mulaiTertunggak"
 							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'mulaiTertunggak') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 							placeholder="Pilih Tanggal"
+							
 						/>
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'mulaiTertunggak')}
@@ -736,7 +763,7 @@
 				<div>
 					<label
 						for="jumlahHari"
-						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'jumlahHari') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						class={`mb-2 block text-sm font-medium ${kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Jumlah Hari</label
 					>
 					<input
@@ -745,9 +772,9 @@
 						id="jumlahHari"
 						bind:value={kurunTunggakan.jumlahHari}
 						placeholder="Jumlah Hari Tunggakan"
-						class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'jumlahHari') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+						class={`block w-full rounded-lg border p-2.5 text-sm ${kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 					/>
-					{#if form?.errors?.find((error) => error.field === 'jumlahHari')}
+					{#if kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 							{form?.errors?.find((error) => error.field === 'jumlahHari').message}
 						</p>
@@ -762,9 +789,14 @@
 			<div class="space-y-4">
 				{#each buktiTagihan as bukti, index (bukti)}
 					<div>
+						<label
+							for="tipeDokumenId"
+							class={`mb-2 block text-sm font-medium ${submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+							>Tipe Dokumen</label
+						>
 						<div class="flex flex-row gap-4">
 							<Select
-								class={`${sifatTagihan.id !== '' && form?.errors?.find((error) => error.field === 'dokumen' || `dokumen.${index}`) ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 disabled:text-red-900 dark:border-red-500 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-primary-500 focus:ring-primary-500 disabled:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500'} rounded-lg border`}
+								class={`${submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 disabled:text-red-900 dark:border-red-500 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-primary-500 focus:ring-primary-500 disabled:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500'} rounded-lg border`}
 								bind:value={bukti.tipeDokumenId}
 								name="tipeDokumenId"
 								placeholder="Pilih Sifat/Golongan Tagihan Terlebih Dahulu"
@@ -785,19 +817,12 @@
 								<Button on:click={() => handleAddTagihan()}><PlusSolid class="h-5 w-5" /></Button>
 							{/if}
 						</div>
-						{#if sifatTagihan.id !== ''}
-							{#if form?.errors?.find((error) => error.field === `dokumen`)}
-								<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-									{form?.errors?.find((error) => error.field === 'dokumen').message}
-								</p>
-							{:else if form?.errors?.find((error) => error.field === `dokumen.${index}`)}
-								<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-									{form?.errors?.find((error) => error.field === `dokumen.${index}`).message}
-								</p>
-							{/if}
+						{#if submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === ''}
+							<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+								Tipe dokumen tidak boleh kosong!
+							</p>
 						{/if}
-
-						{#if previewURL[index]}
+						<!-- {#if previewURL[index]}
 							<div>
 								<iframe
 									src={previewURL[index]}
@@ -846,7 +871,44 @@
 									PDF (MAX. 2 MB)
 								</p>
 							</Dropzone>
+						{/if} -->
+					</div>
+					<div>
+						<label
+							for="dokumen"
+							class={`mb-2 block text-sm font-medium ${submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+							>Bukti Dokumen</label
+						>
+						<Fileupload
+							id="with_helper"
+							class="mb-2"
+							accept=".pdf,"
+							bind:files={bukti.dokumen}
+							name="dokumen"
+							disabled={bukti.tipeDokumenId === ''}
+							color={submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === '' ? 'red' : ''}
+						/>
+						<Helper>PDF (MAX. 2 MB).</Helper>
+						{#if submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === ''}
+							<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+								Dokumen tidak boleh kosong!
+							</p>
+						{:else if form?.errors?.find((error) => error.field === `dokumen.${index}`)}
+							<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+								{form?.errors?.find((error) => error.field === `dokumen.${index}`).message}
+							</p>
 						{/if}
+						<!-- {#if sifatTagihan.id !== ''}
+							{#if form?.errors?.find((error) => error.field === `dokumen`)}
+								<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+									{form?.errors?.find((error) => error.field === 'dokumen').message}
+								</p>
+							{:else if form?.errors?.find((error) => error.field === `dokumen.${index}`)}
+								<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+									{form?.errors?.find((error) => error.field === `dokumen.${index}`).message}
+								</p>
+							{/if}
+						{/if} -->
 					</div>
 				{/each}
 			</div>
@@ -861,6 +923,7 @@
 		</Button>
 	</div>
 </form>
+<!-- Add Kreditor Modal -->
 <Modal
 	bind:open={formModal}
 	size="xs"
@@ -952,6 +1015,7 @@
 		</Button>
 	</form>
 </Modal>
+<!-- Edit Kreditor Modal -->
 <Modal
 	bind:open={editModal}
 	size="xs"

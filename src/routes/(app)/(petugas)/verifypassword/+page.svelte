@@ -16,7 +16,7 @@
 	import {
 		ExclamationCircleOutline,
 		CheckCircleSolid,
-		CloseSolid
+		XCircleSolid
 	} from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
 	export let data;
@@ -201,7 +201,7 @@
 					<CheckCircleSolid class="h-5 w-5" />
 					<span class="sr-only">Check icon</span>
 				{:else}
-					<CloseSolid class="h-5 w-5" />
+					<XCircleSolid class="h-5 w-5" />
 					<span class="sr-only">Error icon</span>
 				{/if}
 			</svelte:fragment>

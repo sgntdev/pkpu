@@ -1,6 +1,6 @@
 <script>
 	import { Breadcrumb, BreadcrumbItem, Button, Modal, Spinner, Toast } from 'flowbite-svelte';
-	import { PlusSolid, CheckCircleSolid, CloseSolid } from 'flowbite-svelte-icons';
+	import { PlusSolid, CheckCircleSolid, XCircleSolid } from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
 	export let data;
 	const { tagihanId, dokumen, token, roleId } = data.body;
@@ -34,7 +34,6 @@
 				body: JSON.stringify(verifyData)
 			});
 			const result = await response.json();
-			console.log(result);
 			if (result.success) {
 				verifyModal = false;
 				showToast = true;
@@ -73,8 +72,6 @@
 					}, 2000);
 				}
 			}
-		} catch (error) {
-			console.error('err', error);
 		} finally {
 			loading = false;
 		}
@@ -92,7 +89,7 @@
 					<CheckCircleSolid class="h-5 w-5" />
 					<span class="sr-only">Check icon</span>
 				{:else}
-					<CloseSolid class="h-5 w-5" />
+					<XCircleSolid class="h-5 w-5" />
 					<span class="sr-only">Error icon</span>
 				{/if}
 			</svelte:fragment>
@@ -333,7 +330,7 @@
 						{index + 1}. {item.tipeDokumen}
 					</p>
 					<iframe
-						src={`/doc/${item.namaDokumen}`}
+						src={item.dokumen_url}
 						class="mb-2 mt-4 max-h-64 w-full rounded-lg border-2 border-gray-300"
 						width="600"
 						height="400"
