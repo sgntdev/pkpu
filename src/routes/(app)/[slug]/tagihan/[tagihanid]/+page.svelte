@@ -1,0 +1,304 @@
+<script>
+	import { Breadcrumb, BreadcrumbItem, Button, ButtonGroup } from 'flowbite-svelte';
+	import { PlusSolid, DownloadSolid, EyeSolid } from 'flowbite-svelte-icons';
+	export let data;
+	const { dokumen } = data.body;
+	let tagihan = data.body.tagihan
+	const formatPrice = (price) => {
+		if (typeof price !== 'string') {
+			price = price.toString();
+		}
+		const digits = price.replace(/,/g, '');
+		const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+		return formatted;
+	};
+</script>
+
+<div class="space-y-4">
+	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
+		<BreadcrumbItem href="/dashboard" home>Dashboard</BreadcrumbItem>
+		<BreadcrumbItem href="/kreditor">List Kreditor</BreadcrumbItem>
+		<BreadcrumbItem href="./">List Tagihan</BreadcrumbItem>
+		<BreadcrumbItem>Tagihan</BreadcrumbItem>
+	</Breadcrumb>
+	<div
+		class="flex min-h-max flex-col gap-4 overflow-hidden rounded-lg border border-gray-200 p-8 dark:border-gray-700"
+	>
+		<div>
+			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
+				identitas kreditor
+			</h2>
+			<div class="grid gap-2 md:px-4">
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							nama
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							{tagihan.kreditor.nama}
+						</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">alamat</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							{tagihan.kreditor.alamat}
+						</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							no. telepon
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							{tagihan.kreditor.noTelp}
+						</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							email
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal tracking-tight text-gray-900 dark:text-white">
+							{tagihan.kreditor.email}
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div>
+			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
+				jumlah tagihan
+			</h2>
+			<div class="grid gap-2 md:px-4">
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							Pertanggal
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							{tagihan.pertanggal}
+						</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							hutang pokok
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							Rp. {formatPrice(tagihan.hutangPokok)}
+						</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							bunga
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							Rp. {formatPrice(tagihan.bunga)}
+						</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							denda
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							Rp. {formatPrice(tagihan.denda)}
+						</p>
+					</div>
+				</div>
+				<div
+					class="ms-14 flex max-w-60 flex-row items-center justify-center gap-2 md:ms-48 md:max-w-80"
+				>
+					<div class="flex h-0.5 w-full border-t-2 border-dashed border-gray-900" />
+					<PlusSolid />
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							total
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-bold capitalize tracking-tight text-gray-900 dark:text-white">
+							Rp. {formatPrice(tagihan.totalTagihan)}
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div>
+			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
+				sifat/golongan tagihan
+			</h2>
+			<div class="grid gap-2 md:px-4">
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							sifat/golongan tagihan
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							{tagihan.sifatTagihan}
+						</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							jumlah tagihan seluruhnya
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							{tagihan.jumlahTagihan}
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div>
+			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
+				kurun tunggakan
+			</h2>
+			<div class="grid gap-2 md:px-4">
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							mulai tertunggak sejak
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							{tagihan.mulaiTertunggak}
+						</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+					<div class="lg:col-span-2">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							jumlah hari tunggakan
+						</p>
+					</div>
+					<div class="lg:col-span-5">
+						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+							{tagihan.jumlahHari} Hari
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="relative">
+			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
+				daftar bukti tagihan
+			</h2>
+			<div class="grid gap-4 md:px-4">
+				{#each dokumen as item, index}
+				<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-0">
+					<p class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white">
+						{index + 1}. {item.tipeDokumen}
+					</p>
+					<ButtonGroup>
+						<Button href={item.dokumen_url}>
+							<EyeSolid class="w-3 h-3 me-2" />
+						  View
+						</Button>
+						<Button>
+						  <DownloadSolid class="w-3 h-3 me-2" />
+						  Download
+						</Button>
+					  </ButtonGroup>
+					<!-- <div class="flex gap-4">
+						<Button download href={item.dokumen_url}>Download</Button>
+						<a class="font-medium text-primary-600 hover:underline dark:text-primary-500" download href={item.dokumen_url}>Download</a>
+						<a class="font-medium text-primary-600 hover:underline dark:text-primary-500" href={item.dokumen_url}>View</a>
+					</div> -->
+				</div>
+				{/each}
+			</div>
+			<div class="absolute -bottom-6 -right-8 -rotate-12 opacity-50">
+				{#if tagihan.statusTagihan === 1}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="h-40 w-40 text-green-500"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
+						/>
+					</svg>
+				{/if}
+				{#if tagihan.statusTagihan === 2}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="h-40 w-40 text-red-500"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075.75V4.575m0 0a1.575 1.575 0 0 1 3.15 0V15M6.9 7.575a1.575 1.575 0 1 0-3.15 0v8.175a6.75 6.75 0 0 0 6.75 6.75h2.018a5.25 5.25 0 0 0 3.712-1.538l1.732-1.732a5.25 5.25 0 0 0 1.538-3.712l.003-2.024a.668.668 0 0 1 .198-.471 1.575 1.575 0 1 0-2.228-2.228 3.818 3.818 0 0 0-1.12 2.687M6.9 7.575V12m6.27 4.318A4.49 4.49 0 0 1 16.35 15m.002 0h-.002"
+						/>
+					</svg>
+				{/if}
+			</div>
+		</div>
+	</div>
+</div>
+

@@ -64,6 +64,7 @@ export async function load({ params, fetch, locals }) {
 			const kreditor = kreditorResult.find((data) => data.id === item.kreditorId).nama;
 			const sifatTagihan = sifatTagihanResult.find((data) => data.id === item.sifatTagihanId).sifat;
 			return {
+				id:item.id,
 				kreditor,
 				pertanggal: item.pertanggal,
 				sifatTagihan,
@@ -76,7 +77,8 @@ export async function load({ params, fetch, locals }) {
 		return {
 			status: 200,
 			body: {
-				tagihan: formattedData
+				tagihan: formattedData, 
+				link : params.slug
 			}
 		};
 	}

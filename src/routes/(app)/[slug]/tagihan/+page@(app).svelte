@@ -17,7 +17,7 @@
 	import { CheckCircleSolid } from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	const { tagihan } = data?.body;
+	const { tagihan, link } = data?.body;
 	let showToast = false;
 	onMount(() => {
 		if ($page.state.statusSuccess) {
@@ -81,7 +81,7 @@
 				</h1>
 			</div>
 		{:else}
-			<Table striped divClass="mt-2">
+			<Table striped divClass="mt-2 overflow-auto">
 				<TableHead>
 					<TableHeadCell>No</TableHeadCell>
 					<TableHeadCell>Kreditor</TableHeadCell>
@@ -91,6 +91,7 @@
 					<TableHeadCell>Jumlah Tagihan Seluruhnya</TableHeadCell>
 					<TableHeadCell>Mulai Tertunggak</TableHeadCell>
 					<TableHeadCell>Status</TableHeadCell>
+					<TableHeadCell>Tagihan</TableHeadCell>
 				</TableHead>
 				<TableBody>
 					{#each tagihan as data, index (data)}
@@ -116,6 +117,13 @@
 										<Indicator color="red" size="xs" class="me-1" />Objection
 									</Badge>
 								{/if}
+							</TableBodyCell>
+							<TableBodyCell>
+								<a
+									href={`/${link}/tagihan/${data.id}`}
+									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
+									>Lihat Dokumen</a
+								>
 							</TableBodyCell>
 						</TableBodyRow>
 					{/each}
