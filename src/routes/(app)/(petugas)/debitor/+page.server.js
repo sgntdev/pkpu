@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 
 export async function load({ locals, fetch }) {
-	const { user } = locals;
+	const { user, token } = locals;
 	if (!user) {
 		redirect(303, '/');
 	} else {
@@ -12,7 +12,8 @@ export async function load({ locals, fetch }) {
 				status: 200,
 				body: {
 					roleId : user.roleId,
-					debitor: data
+					debitor: data, 
+					token
 				}
 			};
 		} else {
