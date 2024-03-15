@@ -1,10 +1,24 @@
 <script>
-	import { Breadcrumb, BreadcrumbItem, Button, Modal, Spinner, Toast } from 'flowbite-svelte';
-	import { PlusSolid, CheckCircleSolid, XCircleSolid } from 'flowbite-svelte-icons';
+	import {
+		Breadcrumb,
+		BreadcrumbItem,
+		Button,
+		Modal,
+		Spinner,
+		Toast,
+		ButtonGroup
+	} from 'flowbite-svelte';
+	import {
+		PlusSolid,
+		CheckCircleSolid,
+		XCircleSolid,
+		DownloadSolid,
+		EyeSolid
+	} from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
 	export let data;
 	const { tagihanId, dokumen, token, roleId } = data.body;
-	let tagihan = data.body.tagihan
+	let tagihan = data.body.tagihan;
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
 			price = price.toString();
@@ -108,12 +122,33 @@
 	<div
 		class="flex min-h-max flex-col gap-4 overflow-hidden rounded-lg border border-gray-200 p-8 dark:border-gray-700"
 	>
+		<div class="flex items-center justify-between">
+			<h2 class="text-3xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
+				tagihan
+			</h2>
+			{#if tagihan.statusTagihan === 1}
+				<span
+					class="inline-flex h-max items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+				>
+					<span class="me-1 h-2 w-2 rounded-full bg-green-500"></span>
+					Verified
+				</span>
+			{/if}
+			{#if tagihan.statusTagihan === 2}
+				<span
+					class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
+				>
+					<span class="me-1 h-2 w-2 rounded-full bg-red-500"></span>
+					Objection
+				</span>
+			{/if}
+		</div>
 		<div>
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				identitas kreditor
 			</h2>
 			<div class="grid gap-2 md:px-4">
-				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+				<div class="grid-rows grid items-center lg:grid-cols-7">
 					<div class="lg:col-span-2">
 						<p
 							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
@@ -127,9 +162,13 @@
 						</p>
 					</div>
 				</div>
-				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+				<div class="grid-rows grid items-center lg:grid-cols-7">
 					<div class="lg:col-span-2">
-						<p class="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">alamat</p>
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							alamat
+						</p>
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
@@ -137,7 +176,7 @@
 						</p>
 					</div>
 				</div>
-				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+				<div class="grid-rows grid items-center lg:grid-cols-7">
 					<div class="lg:col-span-2">
 						<p
 							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
@@ -151,7 +190,7 @@
 						</p>
 					</div>
 				</div>
-				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+				<div class="grid-rows grid items-center lg:grid-cols-7">
 					<div class="lg:col-span-2">
 						<p
 							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
@@ -229,7 +268,7 @@
 					</div>
 				</div>
 				<div
-					class="ms-14 flex max-w-60 flex-row items-center justify-center gap-2 md:ms-48 md:max-w-80"
+					class="ms-32 flex max-w-60 flex-row items-center justify-center gap-2 md:ms-72 md:max-w-80"
 				>
 					<div class="flex h-0.5 w-full border-t-2 border-dashed border-gray-900" />
 					<PlusSolid />
@@ -255,7 +294,7 @@
 				sifat/golongan tagihan
 			</h2>
 			<div class="grid gap-2 md:px-4">
-				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+				<div class="grid-rows grid items-center lg:grid-cols-7">
 					<div class="lg:col-span-2">
 						<p
 							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
@@ -269,7 +308,7 @@
 						</p>
 					</div>
 				</div>
-				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+				<div class="grid-rows grid items-center lg:grid-cols-7">
 					<div class="lg:col-span-2">
 						<p
 							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
@@ -290,7 +329,7 @@
 				kurun tunggakan
 			</h2>
 			<div class="grid gap-2 md:px-4">
-				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+				<div class="grid-rows grid items-center lg:grid-cols-7">
 					<div class="lg:col-span-2">
 						<p
 							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
@@ -304,7 +343,7 @@
 						</p>
 					</div>
 				</div>
-				<div class="grid grid-cols-2 items-center lg:grid-cols-7">
+				<div class="grid-rows grid items-center lg:grid-cols-7">
 					<div class="lg:col-span-2">
 						<p
 							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
@@ -320,58 +359,30 @@
 				</div>
 			</div>
 		</div>
-		<div class="relative">
+		<div>
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				daftar bukti tagihan
 			</h2>
-			<div class="grid gap-2 md:px-4">
+			<div class="grid gap-4 md:px-4">
 				{#each dokumen as item, index}
-					<p class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white">
-						{index + 1}. {item.tipeDokumen}
-					</p>
-					<iframe
-						src={item.dokumen_url}
-						class="mb-2 mt-4 max-h-64 w-full rounded-lg border-2 border-gray-300"
-						width="600"
-						height="400"
-						frameborder="0"
-						title="s"
-					/>
+					<div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-0">
+						<p
+							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+						>
+							{index + 1}. {item.tipeDokumen}
+						</p>
+						<ButtonGroup>
+							<Button href={item.dokumen_url}>
+								<EyeSolid class="me-2 h-3 w-3" />
+								View
+							</Button>
+							<Button download href={item.dokumen_url}>
+								<DownloadSolid class="me-2 h-3 w-3" />
+								Download
+							</Button>
+						</ButtonGroup>
+					</div>
 				{/each}
-			</div>
-			<div class="absolute -bottom-6 -right-8 -rotate-12 opacity-50">
-				{#if tagihan.statusTagihan === 1}
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						stroke="currentColor"
-						class="h-40 w-40 text-green-500"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
-						/>
-					</svg>
-				{/if}
-				{#if tagihan.statusTagihan === 2}
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						stroke="currentColor"
-						class="h-40 w-40 text-red-500"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075.75V4.575m0 0a1.575 1.575 0 0 1 3.15 0V15M6.9 7.575a1.575 1.575 0 1 0-3.15 0v8.175a6.75 6.75 0 0 0 6.75 6.75h2.018a5.25 5.25 0 0 0 3.712-1.538l1.732-1.732a5.25 5.25 0 0 0 1.538-3.712l.003-2.024a.668.668 0 0 1 .198-.471 1.575 1.575 0 1 0-2.228-2.228 3.818 3.818 0 0 0-1.12 2.687M6.9 7.575V12m6.27 4.318A4.49 4.49 0 0 1 16.35 15m.002 0h-.002"
-						/>
-					</svg>
-				{/if}
 			</div>
 		</div>
 		{#if roleId === 1}

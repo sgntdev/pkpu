@@ -51,7 +51,6 @@
 							<TableBodyCell>{data.tempatSidang}</TableBodyCell>
 							<TableBodyCell>
 								<a
-									data-sveltekit-reload
 									href={`/${data.link}/tagihan`}
 									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
 									>{data.nama}</a

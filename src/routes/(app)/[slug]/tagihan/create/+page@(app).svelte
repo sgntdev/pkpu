@@ -333,7 +333,6 @@
 				loading = false;
 			}
 		};
-		$: console.log(showToast)
 
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
@@ -1010,7 +1009,7 @@
 			{#if loading}
 				<Spinner class="me-2" size="4" color="white" />
 			{:else}
-				<PlusSolid class="me-2 h-4 w-4" />Tambah Kreditor
+				Tambah Kreditor
 			{/if}
 		</Button>
 	</form>
@@ -1024,7 +1023,7 @@
 	backdropClass="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 dark:bg-opacity-80"
 >
 	<form method="POST" class="flex flex-col space-y-4" on:submit|preventDefault={handleEditKreditor}>
-		<h3 class="text-xl font-medium text-gray-900 dark:text-white">Tambah kreditor baru</h3>
+		<h3 class="text-xl font-medium text-gray-900 dark:text-white">Edit kreditor</h3>
 		<label
 			for="nama"
 			class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'nama') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
@@ -1102,7 +1101,7 @@
 			{#if loading}
 				<Spinner class="me-2" size="4" color="white" />
 			{:else}
-				<PlusSolid class="me-2 h-4 w-4" />Ubah Kreditor
+				Ubah Kreditor
 			{/if}
 		</Button>
 	</form>
