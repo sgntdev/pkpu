@@ -6,29 +6,42 @@ export async function load({ locals, fetch }) {
 	if (!user) {
 		redirect(303, '/');
 	} else {
-		const users = await prisma.user.findMany();
-		const res = await fetch('/api/kreditor', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		const data = await res.json();
 		if (user.roleId === 1 || user.roleId === 2) {
-			const kreditorData = data.map((kreditor) => {
-				const link = kreditor.nama.replace(/\s/g, '-').toLowerCase();
+			const debitorResponse = await fetch('/api/debitor');
+			const debitorResult = await debitorResponse.json();
+			const users = await prisma.user.findMany();
+			const kreditorJoinTagihan = await prisma.kreditor.findMany({
+				include: {
+					Tagihan: {
+						select: {
+							id: true,
+							debitorId: true
+						}
+					}
+				}
+			});
+			const processedData = kreditorJoinTagihan.map((kreditor) => {
+				const debitorIds = kreditor.Tagihan.map((tagihan) => tagihan.debitorId);
+				// Menghapus duplikat debitorId
+				const uniqueDebitorIds = [...new Set(debitorIds)];
+				// Menggabungkan debitorId menjadi satu string
+				const mergedDebitorId = uniqueDebitorIds.join(', ');
 				const userEmail = users.find((user) => user.id === kreditor.userId).email;
 				return {
-					...kreditor,
-					link,
-					userEmail
+					id: kreditor.id,
+					userEmail,
+					nama: kreditor.nama,
+					email: kreditor.email,
+					alamat: kreditor.alamat,
+					noTelp: kreditor.noTelp,
+					debitorId: parseInt(mergedDebitorId)
 				};
 			});
 			return {
 				status: 200,
 				body: {
-					kreditorData
+					debitorData: debitorResult,
+					kreditorData: processedData
 				}
 			};
 		} else {
