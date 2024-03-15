@@ -68,6 +68,11 @@ export async function PUT({ params, request }) {
 			return new Response(JSON.stringify(validation));
 		}
 		const verify = await prisma.verified.findFirst();
+		if(verify === null){
+			return new Response(JSON.stringify({ success: false, message: 'Password verify tidak ditemukan!' }), {
+				status: 400
+			});
+		}
 		if (data.password !== verify.password) {
 			return new Response(JSON.stringify({ success: false, message: 'Password verify salah!' }), {
 				status: 400
@@ -84,6 +89,6 @@ export async function PUT({ params, request }) {
 			});
 		}
 	} catch (error) {
-		return new Response(JSON.stringify({ error: 'Error Unexpected' }), { status: 400 });
+		return new Response(JSON.stringify({  success: false, message: 'Error Unexpected' }), { status: 400 });
 	}
 }
