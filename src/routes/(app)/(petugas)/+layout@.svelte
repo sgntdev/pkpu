@@ -5,10 +5,15 @@
 	import { Button, Dropdown, DropdownItem } from 'flowbite-svelte';
 	import {
 		UserSolid,
+		UserOutline,
 		UsersSolid,
+		UsersOutline,
 		UsersGroupSolid,
+		UsersGroupOutline,
 		PieChartSolid,
-		BadgeCheckSolid
+		ChartOutline,
+		BadgeCheckSolid,
+		BadgeCheckOutline
 	} from 'flowbite-svelte-icons';
 	let showSidebar = false;
 	const handleSidebar = () => {
@@ -65,7 +70,7 @@
 			</div>
 			<div class="flex items-center lg:order-2">
 				{#if user}
-					<Button><p>{user.email.slice(0, user.email.indexOf('@'))}</p></Button>
+					<Button color="light"><p>{user.email.slice(0, user.email.indexOf('@'))}</p></Button>
 					<Dropdown>
 						<div slot="header" class="px-4 py-2">
 							<span class="block truncate text-sm font-medium">{user.email}</span>
@@ -93,27 +98,39 @@
 			<li>
 				<a
 					href={`/dashboard`}
-					class={`${activeUrl === `/dashboard` ? 'bg-gray-100 text-gray-900' : ''} group flex items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
+					class={`${activeUrl === `/dashboard` ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
 				>
-					<PieChartSolid size="md" class="" />
+					{#if activeUrl === `/dashboard`}
+						<PieChartSolid size="md" class="" />
+					{:else}
+						<ChartOutline size="md" class="" />
+					{/if}
 					<span class="ms-3">Dashboard</span>
 				</a>
 			</li>
 			<li>
 				<a
 					href={`/kreditor`}
-					class={`${activeUrl.startsWith(`/kreditor`) ? 'bg-gray-100 text-gray-900' : ''} group flex items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
+					class={`${activeUrl.startsWith(`/kreditor`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
 				>
-					<UsersGroupSolid size="md" class="" />
+					{#if activeUrl.startsWith(`/kreditor`)}
+						<UsersGroupSolid size="md" class="" />
+					{:else}
+						<UsersGroupOutline size="md" class="" />
+					{/if}
 					<span class="ms-3 flex-1 whitespace-nowrap">Kreditor</span>
 				</a>
 			</li>
 			<li>
 				<a
 					href={`/debitor`}
-					class={`${activeUrl.startsWith(`/debitor`) ? 'bg-gray-100 text-gray-900' : ''} group flex items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
+					class={`${activeUrl.startsWith(`/debitor`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
 				>
-					<UsersSolid size="md" class="" />
+					{#if activeUrl.startsWith(`/debitor`)}
+						<UsersSolid size="md" class="" />
+					{:else}
+						<UsersOutline size="md" class="" />
+					{/if}
 					<span class="ms-3 flex-1 whitespace-nowrap">Debitor</span>
 				</a>
 			</li>
@@ -121,18 +138,26 @@
 				<li>
 					<a
 						href={`/users`}
-						class={`${activeUrl.startsWith(`/users`) ? 'bg-gray-100 text-gray-900' : ''} group flex items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
+						class={`${activeUrl.startsWith(`/users`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
 					>
-						<UserSolid size="md" class="" />
+						{#if activeUrl.startsWith(`/users`)}
+							<UserSolid size="md" class="" />
+						{:else}
+							<UserOutline size="md" class="" />
+						{/if}
 						<span class="ms-3 flex-1 whitespace-nowrap">Users</span>
 					</a>
 				</li>
 				<li>
 					<a
 						href={`/verifypassword`}
-						class={`${activeUrl.startsWith(`/verifypassword`) ? 'bg-gray-100 text-gray-900' : ''} group flex items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
+						class={`${activeUrl.startsWith(`/verifypassword`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
 					>
-						<BadgeCheckSolid size="md" class="" />
+						{#if activeUrl.startsWith(`/verifypassword`)}
+							<BadgeCheckSolid size="md" class="" />
+						{:else}
+							<BadgeCheckOutline size="md" class="" />
+						{/if}
 						<span class="ms-3 flex-1 whitespace-nowrap">Verify Password</span>
 					</a>
 				</li>

@@ -28,7 +28,7 @@
 			</div>
 			<div class="flex items-center lg:order-2">
 				{#if user}
-					<Button><p>{user.slice(0, user.indexOf('@'))}</p></Button>
+					<Button color="light"><p>{user.slice(0, user.indexOf('@'))}</p></Button>
 					<Dropdown>
 						<div slot="header" class="px-4 py-2">
 							<span class="block truncate text-sm font-medium">{user}</span>
@@ -36,7 +36,7 @@
 						<DropdownItem on:click={handleLogout}>Logout</DropdownItem>
 					</Dropdown>
 				{:else}
-					<Button href="/login">Login</Button>
+					<Button color="light" href="/login">Login</Button>
 				{/if}
 			</div>
 		</div>
