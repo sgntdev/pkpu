@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -89,14 +89,17 @@ model DokumenTagihan {
   id            Int         @id @default(autoincrement())
   tipeDokumenId Int
   tagihanId     Int
-  dokumen       String
+  nama_dokumen  String
+  dokumen_url   String
   Tagihan       Tagihan     @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   TipeDokumen   TipeDokumen @relation(fields: [tipeDokumenId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
 model Verified {
-  id        Int      @id @default(autoincrement())
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  password       String
+  uniqueCode     String   @unique @db.VarChar(25)
+  expirationDate DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
