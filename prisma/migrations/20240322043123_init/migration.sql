@@ -89,7 +89,8 @@ CREATE TABLE "DokumenTagihan" (
     "id" SERIAL NOT NULL,
     "tipeDokumenId" INTEGER NOT NULL,
     "tagihanId" INTEGER NOT NULL,
-    "dokumen" TEXT NOT NULL,
+    "nama_dokumen" TEXT NOT NULL,
+    "dokumen_url" TEXT NOT NULL,
 
     CONSTRAINT "DokumenTagihan_pkey" PRIMARY KEY ("id")
 );
@@ -98,6 +99,8 @@ CREATE TABLE "DokumenTagihan" (
 CREATE TABLE "Verified" (
     "id" SERIAL NOT NULL,
     "password" TEXT NOT NULL,
+    "uniqueCode" VARCHAR(25) NOT NULL,
+    "expirationDate" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -112,6 +115,9 @@ CREATE UNIQUE INDEX "UserVerify_email_key" ON "UserVerify"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserVerify_uniqueCode_key" ON "UserVerify"("uniqueCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Verified_uniqueCode_key" ON "Verified"("uniqueCode");
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
