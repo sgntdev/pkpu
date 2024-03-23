@@ -1,9 +1,9 @@
 import { prisma } from '$lib/prisma.server.js';
-import { error, redirect } from '@sveltejs/kit';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { put } from '@vercel/blob';
-import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
+import { BLOB_READ_WRITE_TOKEN, SECRET_INGREDIENT } from '$env/static/private';
+import jwt from 'jsonwebtoken';
 
 export async function GET({ request }) {
 	let token = request.headers.get('authorization');
@@ -14,10 +14,37 @@ export async function GET({ request }) {
 		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 	}
 	try {
-		const tagihan = await prisma.tagihan.findMany();
-		return new Response(JSON.stringify(tagihan), { status: 200 });
+		let decoded = jwt.verify(token, SECRET_INGREDIENT);
+		const currentUser = await prisma.User.findUnique({
+			where: { email: decoded.user.email }
+		});
+		if (!currentUser) {
+			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+				status: 403
+			});
+		}
+		const tagihanJoin = await prisma.tagihan.findMany({
+			orderBy: {
+				id: 'asc'
+			  },
+			include: {
+				Debitor: true,
+				sifatTagihan : true,
+				Kreditor:true,
+				DokumenTagihan : {
+					include:{
+						TipeDokumen:{
+							select:{
+								tipe:true
+							}
+						}
+					}
+				}
+			}
+		});
+		return new Response(JSON.stringify(tagihanJoin), { status: 200 });
 	} catch (error) {
-		return new Response(JSON.stringify({ error: 'Error Unexpected' }), { status: 400 });
+		return new Response(JSON.stringify({ error: error }), { status: 400 });
 	}
 }
 
@@ -146,18 +173,20 @@ export async function POST({ request }) {
 			const uniqueFilename = `${Date.now()}_${debitorId}_${userId}_${formattedfileName}_${tagihanId}_${tipeDokumenId}.pdf`;
 			const { url } = await put(uniqueFilename, dokumen, {
 				access: 'public',
-				token: BLOB_READ_WRITE_TOKEN
+				token: BLOB_READ_WRITE_TOKEN,
+				addRandomSuffix : false
 			});
 			dokumenTagihanData.push({
 				tipeDokumenId: parseInt(tipeDokumenId),
-				// name: uniqueFilename,
-				dokumen: url,
+				nama_dokumen : dokumen.name,
+				dokumen_url: url,
 				tagihanId
 			});
 		}
 		let data = dokumenTagihanData.map((item) => ({
 			tipeDokumenId: item.tipeDokumenId,
-			dokumen: item.dokumen,
+			nama_dokumen: item.nama_dokumen,
+			dokumen_url: item.dokumen_url,
 			tagihanId: item.tagihanId
 		}));
 

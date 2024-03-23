@@ -10,7 +10,8 @@
 		Breadcrumb,
 		BreadcrumbItem,
 		Badge,
-		Indicator
+		Indicator,
+		Spinner
 	} from 'flowbite-svelte';
 	export let data;
 	import { page } from '$app/stores';
@@ -92,23 +93,28 @@
 					<TableHeadCell>Mulai Tertunggak</TableHeadCell>
 					<TableHeadCell>Status</TableHeadCell>
 					<TableHeadCell>Tagihan</TableHeadCell>
+					<TableHeadCell>Aksi</TableHeadCell>
 				</TableHead>
 				<TableBody>
 					{#each tagihan as data, index (data)}
 						<TableBodyRow>
 							<TableBodyCell>{index + 1}</TableBodyCell>
-							<TableBodyCell>{data.kreditor}</TableBodyCell>
+							<TableBodyCell>{data.Kreditor.nama}</TableBodyCell>
 							<TableBodyCell>{data.pertanggal}</TableBodyCell>
-							<TableBodyCell>Rp. {formatPrice(data.totalTagihan)}</TableBodyCell>
-							<TableBodyCell>{data.sifatTagihan}</TableBodyCell>
+							<TableBodyCell
+								>Rp. {formatPrice(
+									parseFloat(data.denda) + parseFloat(data.hutangPokok) + parseFloat(data.bunga)
+								)}</TableBodyCell
+							>
+							<TableBodyCell>{data.sifatTagihan.sifat}</TableBodyCell>
 							<TableBodyCell>{data.jumlahTagihan}</TableBodyCell>
-							<TableBodyCell>{data.kurunTunggakan}</TableBodyCell>
+							<TableBodyCell>{data.mulaiTertunggak}</TableBodyCell>
 							<TableBodyCell>
-								{#if data.statusTagihan === 0}
+								{#if data.status === 0}
 									<Badge color="gray" rounded class="px-2.5 py-0.5">
 										<Indicator color="dark" size="xs" class="me-1" />Pending
 									</Badge>
-								{:else if data.statusTagihan === 1}
+								{:else if data.status === 1}
 									<Badge color="green" rounded class="px-2.5 py-0.5">
 										<Indicator color="green" size="xs" class="me-1" />Verified
 									</Badge>
@@ -125,6 +131,13 @@
 									>Lihat Dokumen</a
 								>
 							</TableBodyCell>
+							<TableBodyCell
+								><a
+									data-sveltekit-reload
+									href={`/${link}/tagihan/edit/${data.id}`}
+									class="font-medium text-primary-600 hover:underline dark:text-primary-500">Edit</a
+								></TableBodyCell
+							>
 						</TableBodyRow>
 					{/each}
 				</TableBody>

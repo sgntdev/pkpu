@@ -28,26 +28,7 @@ export async function load({ params, fetch, locals }) {
 				Authorization: `Bearer ${token}`
 			}
 		});
-		const tagihanResult = await tagihanResponse.json();
-		//get all data kreditor
-		const kreditorResponse = await fetch(`/api/kreditor`, {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		const kreditorResult = await kreditorResponse.json();
-		// getting all data sifat tagihan
-		const sifatTagihanResponse = await fetch('/api/sifattagihan', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-		const sifatTagihanResult = await sifatTagihanResponse.json();
-		// find user id
+		const tagihan = await tagihanResponse.json();
 		const userRes = await fetch(`/api/user/${user.email}`, {
 			method: 'GET',
 			headers: {
@@ -56,28 +37,12 @@ export async function load({ params, fetch, locals }) {
 			}
 		});
 		const userData = await userRes.json();
-		// find tagihan from specific debitor
-		const tagihanByUserId = tagihanResult.filter((data) => data.userId === userData.id)
-		const tagihanByDebitorId = tagihanByUserId.filter((data) => data.debitorId === debitor.id);
-		//creates formatted data for display to clients
-		let formattedData = tagihanByDebitorId.map((item) => {
-			const kreditor = kreditorResult.find((data) => data.id === item.kreditorId).nama;
-			const sifatTagihan = sifatTagihanResult.find((data) => data.id === item.sifatTagihanId).sifat;
-			return {
-				id:item.id,
-				kreditor,
-				pertanggal: item.pertanggal,
-				sifatTagihan,
-				totalTagihan: parseInt(item.denda) + parseInt(item.hutangPokok) + parseInt(item.bunga),
-				jumlahTagihan: item.jumlahTagihan,
-				kurunTunggakan: item.mulaiTertunggak,
-				statusTagihan: item.status
-			};
-		});
+		const tagihanByUser = tagihan.filter((data) => data.userId === userData.id)
+		const tagihanByDebitor = tagihanByUser.filter((data) => data.debitorId === debitor.id)
 		return {
 			status: 200,
 			body: {
-				tagihan: formattedData, 
+				tagihan : tagihanByDebitor, 
 				link : params.slug
 			}
 		};
