@@ -39,7 +39,7 @@
 	const handleEntryPassword = async () => {
 		loading = true;
 		try {
-			const response = await fetch(`/api/tagihan/${tagihanId}`, {
+			const response = await fetch(`/api/tagihan/${tagihanId}/verify`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -63,15 +63,7 @@
 					tagihanStatus: '',
 					password: ''
 				};
-				const updatedDataResponse = await fetch(`/api/tagihan/${tagihanId}`, {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${token}`
-					}
-				});
-				const updatedData = await updatedDataResponse.json();
-				tagihan = updatedData;
+				tagihan = result.data;
 			} else {
 				form = result;
 				if (!result.errors) {
@@ -126,7 +118,7 @@
 			<h2 class="text-3xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				tagihan
 			</h2>
-			{#if tagihan.statusTagihan === 1}
+			{#if tagihan.status === 1}
 				<span
 					class="inline-flex h-max items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
 				>
@@ -134,7 +126,7 @@
 					Verified
 				</span>
 			{/if}
-			{#if tagihan.statusTagihan === 2}
+			{#if tagihan.status === 2}
 				<span
 					class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
 				>
@@ -158,7 +150,7 @@
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
-							{tagihan.kreditor.nama}
+							{tagihan.Kreditor.nama}
 						</p>
 					</div>
 				</div>
@@ -172,7 +164,7 @@
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
-							{tagihan.kreditor.alamat}
+							{tagihan.Kreditor.alamat}
 						</p>
 					</div>
 				</div>
@@ -186,7 +178,7 @@
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
-							{tagihan.kreditor.noTelp}
+							{tagihan.Kreditor.noTelp}
 						</p>
 					</div>
 				</div>
@@ -200,7 +192,7 @@
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-normal tracking-tight text-gray-900 dark:text-white">
-							{tagihan.kreditor.email}
+							{tagihan.Kreditor.email}
 						</p>
 					</div>
 				</div>
@@ -283,7 +275,11 @@
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-bold capitalize tracking-tight text-gray-900 dark:text-white">
-							Rp. {formatPrice(tagihan.totalTagihan)}
+							Rp. {formatPrice(
+								parseFloat(tagihan.hutangPokok) +
+									parseFloat(tagihan.denda) +
+									parseFloat(tagihan.bunga)
+							)}
 						</p>
 					</div>
 				</div>
@@ -304,7 +300,7 @@
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
-							{tagihan.sifatTagihan}
+							{tagihan.sifatTagihan.sifat}
 						</p>
 					</div>
 				</div>
@@ -364,29 +360,37 @@
 				daftar bukti tagihan
 			</h2>
 			<div class="grid gap-4 md:px-4">
-				{#each dokumen as item, index}
-					<div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-0">
-						<p
-							class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+				{#if !tagihan.DokumenTagihan.length > 0}
+					<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
+						Dokumen Bukti Tagihan Tidak Ditemukan.
+					</p>
+				{:else}
+					{#each tagihan.DokumenTagihan as item, index}
+						<div
+							class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-0"
 						>
-							{index + 1}. {item.tipeDokumen}
-						</p>
-						<ButtonGroup>
-							<Button href={item.dokumen_url}>
-								<EyeSolid class="me-2 h-3 w-3" />
-								View
-							</Button>
-							<Button download href={item.dokumen_url}>
-								<DownloadSolid class="me-2 h-3 w-3" />
-								Download
-							</Button>
-						</ButtonGroup>
-					</div>
-				{/each}
+							<p
+								class="text-lg font-semibold capitalize tracking-tight text-gray-900 dark:text-white"
+							>
+								{index + 1}. {item.TipeDokumen.tipe}
+							</p>
+							<ButtonGroup>
+								<Button href={item.dokumen_url}>
+									<EyeSolid class="me-2 h-3 w-3" />
+									View
+								</Button>
+								<Button download href={item.dokumen_url}>
+									<DownloadSolid class="me-2 h-3 w-3" />
+									Download
+								</Button>
+							</ButtonGroup>
+						</div>
+					{/each}
+				{/if}
 			</div>
 		</div>
 		{#if roleId === 1}
-			{#if tagihan.statusTagihan === 0}
+			{#if tagihan.status === 0}
 				<div class="flex justify-end">
 					<Button on:click={() => (verifyModal = true)}>Verify</Button>
 				</div>
