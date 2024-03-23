@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { Breadcrumb, BreadcrumbItem, Button } from 'flowbite-svelte';
+	import { Breadcrumb, BreadcrumbItem, Button, Spinner } from 'flowbite-svelte';
 	let form;
 	export let data;
 	const { token, debitor } = data.body;
@@ -41,7 +41,7 @@
 	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
 		<BreadcrumbItem href="/dashboard" home>Dashboard</BreadcrumbItem>
 		<BreadcrumbItem href="/debitor">List Debitor</BreadcrumbItem>
-		<BreadcrumbItem>Tambah Debitor</BreadcrumbItem>
+		<BreadcrumbItem>Edit Debitor</BreadcrumbItem>
 	</Breadcrumb>
 
 	<div class="min-h-max overflow-hidden rounded-lg border border-gray-200 p-8 dark:border-gray-700">
@@ -136,7 +136,13 @@
 						{/if}
 					</label>
 				</div>
-				<Button type="submit" class="w-full md:w-fit">Ubah</Button>
+				<Button type="submit" class="w-full md:w-fit">
+					{#if loading}
+						<Spinner color="white" size={4} />
+					{:else}
+						Ubah
+					{/if}
+				</Button>
 			</form>
 		</div>
 	</div>
