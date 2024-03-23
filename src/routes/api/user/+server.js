@@ -2,7 +2,7 @@ import { SITE_URL } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
 
-export async function GET({request}) {
+export async function GET({ request }) {
 	let token = request.headers.get('authorization');
 	if (token && token.startsWith('Bearer ')) {
 		token = token.slice(7, token.length);
@@ -11,7 +11,12 @@ export async function GET({request}) {
 		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 	}
 	try {
-		const users = await prisma.user.findMany();
+		const users = await prisma.user.findMany({
+			orderBy: { id: 'asc' },
+			include: {
+				Role: true
+			}
+		});
 		return new Response(JSON.stringify(users), { status: 200 });
 	} catch (error) {
 		return new Response(JSON.stringify({ error: 'Error Unexpected' }), { status: 401 });

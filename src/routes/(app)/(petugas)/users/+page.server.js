@@ -1,33 +1,34 @@
-import { prisma } from '$lib/prisma.server.js';
 import { error } from '@sveltejs/kit';
 
 export async function load({ locals, fetch }) {
 	const {user, token} = locals
-	const res = await fetch('/api/user', {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		}
-	});
-	const data = await res.json();
 	if (!user) {
 		redirect(303, '/');
 	} else {
 		if (user.roleId === 1) {
-			const roleData = await prisma.role.findMany();
-			let users = [];
-			data.map((data) => {
-				let roles = roleData.find((role) => role.id === data.roleId);
-				users.push({
-					email: data.email,
-					role: roles.name
-				});
+			const res = await fetch('/api/user', {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				}
 			});
+			const data = await res.json();
+			const roleResponse = await fetch('/api/role', {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				}
+			})
+			const role = await roleResponse.json();
 			return {
 				status: 200,
 				body: {
-					users
+					user,
+					users:data, 
+					roleData : role.data, 
+					token
 				}
 			};
 		} else {
