@@ -18,14 +18,33 @@
 	import { CheckCircleSolid } from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	const { tagihan, link } = data?.body;
+	const { link, token } = data?.body;
+
+	let tagihan = [];
 	let showToast = false;
-	onMount(() => {
+	let loading = false
+	onMount(async () => {
 		if ($page.state.statusSuccess) {
 			showToast = true;
 			setTimeout(() => {
 				showToast = false;
 			}, 2000);
+		}
+		try {
+			loading = true
+			const response = await fetch(`/api/tagihan`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				}
+			})
+			const data = await response.json();
+			tagihan = data;
+		} catch (error) {
+			console.log(error)
+		}finally{
+			loading = false
 		}
 	});
 	const formatPrice = (price) => {
@@ -73,7 +92,10 @@
 				Tambah tagihan
 			</a>
 		</div>
-		{#if tagihan.length === 0}
+		{#if loading}
+		<Spinner color='blue' size={8}/>
+		{/if}
+		{#if !tagihan.length > 0}
 			<div
 				class="border-1 flex w-full items-center justify-center rounded-md border border-gray-300 py-40"
 			>
