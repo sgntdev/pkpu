@@ -5,19 +5,18 @@ import jwt from 'jsonwebtoken';
 
 export async function DELETE({ params, request }) {
 	const id = parseInt(params.id);
-    let token = request.headers.get('authorization');
+	let token = request.headers.get('authorization');
 	if (token && token.startsWith('Bearer ')) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	try {
-        let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
-		});
-		if (!currentUser) {
+		let decoded = jwt.verify(token, SECRET_INGREDIENT);
+		if (!decoded) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
@@ -30,21 +29,31 @@ export async function DELETE({ params, request }) {
 			await prisma.DokumenTagihan.delete({
 				where: { id }
 			});
+			return new Response(
+				JSON.stringify({
+					success: true,
+					message: 'Bukti tagihan berhasil dihapus!'
+				}),
+				{ status: 200 }
+			);
+		} else {
+			return new Response(
+				JSON.stringify({
+					success: false,
+					code: 404,
+					message: 'Bukti tagihan tidak ditemukan!'
+				}),
+				{ status: 404 }
+			);
 		}
-		return new Response(
-			JSON.stringify({
-				success: true,
-				message: 'Bukti Tagihan berhasil dihapus!'
-			}),
-			{ status: 200 }
-		);
 	} catch (error) {
 		return new Response(
 			JSON.stringify({
 				success: false,
-				message: 'Bukti Tagihan gagal dihapus!'
+				code: 500,
+				message: 'Bukti tagihan gagal dihapus!'
 			}),
-			{ status: 400 }
+			{ status: 500 }
 		);
 	}
 }
