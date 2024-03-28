@@ -7,13 +7,12 @@ export async function GET({ request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
-	const currentUser = await prisma.User.findUnique({
-		where: { email: decoded.user.email }
-	});
-	if (currentUser.roleId !== 1) {
+	if (!decoded) {
 		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 			status: 403
 		});
@@ -21,14 +20,11 @@ export async function GET({ request }) {
 	const role = await prisma.role.findMany();
 	if (!role) {
 		return new Response(
-			JSON.stringify(
-				{ success: false, code: 404, message: 'Role tidak ditemukan!' },
-				{ status: 404 }
-			)
-		);
-	} else {
-		return new Response(
-			JSON.stringify({ success: true, message: 'Role berhasil ditemukan', data: role })
+			JSON.stringify({ success: false, code: 404, message: 'Role tidak ditemukan!' }),
+			{
+				status: 404
+			}
 		);
 	}
+	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: role }));
 }

@@ -6,23 +6,33 @@ export async function GET({ params, request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-	}
-	try {
-		const kreditor = await prisma.kreditor.findUnique({
-			where: { id }
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
 		});
-		if (!kreditor) {
-			return new Response(JSON.stringify({ error: 'Not Found' }), { status: 404 });
-		} else {
-			return new Response(JSON.stringify(kreditor), { status: 200 });
-		}
-	} catch (error) {
-		return new Response(JSON.stringify({ error: 'Error Unexpected' }), { status: 401 });
 	}
+	let decoded = jwt.verify(token, SECRET_INGREDIENT);
+	if (!decoded) {
+		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+			status: 403
+		});
+	}
+	const kreditor = await prisma.kreditor.findUnique({
+		where: { id }
+	});
+	if (!kreditor) {
+		return new Response(
+			JSON.stringify({ success: false, code: 404, message: 'Kreditor tidak ditemukan!' }),
+			{
+				status: 404
+			}
+		);
+	}
+	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: kreditor }), {
+		status: 200
+	});
 }
 
-export async function PUT({params, request}){
+export async function PUT({ params, request }) {
 	let token = request.headers.get('authorization');
 	const id = parseInt(params.kreditorid);
 	const data = await request.json();
@@ -36,9 +46,17 @@ export async function PUT({params, request}){
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	try {
+		let decoded = jwt.verify(token, SECRET_INGREDIENT);
+		if (!decoded) {
+			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+				status: 403
+			});
+		}
 		if (!nama) {
 			validation.errors.push({ field: 'nama', message: 'Nama tidak boleh kosong!' });
 		}
@@ -54,10 +72,10 @@ export async function PUT({params, request}){
 			validation.errors.push({ field: 'alamat', message: 'Alamat tidak boleh kosong!' });
 		}
 		if (validation?.errors.length > 0) {
-			return new Response(JSON.stringify(validation));
+			return new Response(JSON.stringify(validation), { status: 400 });
 		}
-		await prisma.kreditor.update({
-			where:{id},
+		const kreditor = await prisma.kreditor.update({
+			where: { id },
 			data: {
 				userId,
 				nama,
@@ -68,11 +86,16 @@ export async function PUT({params, request}){
 		});
 
 		return new Response(
-			JSON.stringify({ success: true, message: 'Kreditor berhasil diubah!' })
+			JSON.stringify({ success: true, message: 'Kreditor berhasil diubah!', data: kreditor }),
+			{
+				status: 200
+			}
 		);
 	} catch (error) {
-		console.log(error);
-		return new Response(JSON.stringify({ success: false, message: 'Kreditor gagal diubah!' }));
+		return new Response(
+			JSON.stringify({ success: false, code: 500, message: 'Kreditor gagal diubah!' }),
+			{ status: 500 }
+		);
 	}
 }
 

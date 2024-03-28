@@ -19,24 +19,31 @@ export async function GET({ params, request }) {
 			status: 403
 		});
 	}
-	const tagihan = await prisma.tagihan.findMany({
-		where: { debitorId, userId: parseInt(userId) },
-		orderBy: {
-			id: 'asc'
-		},
-		include: {
-			Kreditor: {
-				select: {
-					nama: true
-				}
-			},
-			sifatTagihan: {
-				select: {
-					sifat: true
-				}
-			}
-		}
-	});
+	let tagihanQuery = {
+        where: { debitorId },
+        orderBy: {
+            id: 'asc'
+        },
+        include: {
+            Kreditor: {
+                select: {
+                    nama: true
+                }
+            },
+            sifatTagihan: {
+                select: {
+                    sifat: true
+                }
+            }
+        }
+    };
+
+    if (userId) {
+        tagihanQuery.where.userId = parseInt(userId);
+    }
+
+    const tagihan = await prisma.tagihan.findMany(tagihanQuery);
+	
 	if (!tagihan) {
 		return new Response(
 			JSON.stringify({ success: false, code: 404, message: 'Tagihan tidak ditemukan!' }),
