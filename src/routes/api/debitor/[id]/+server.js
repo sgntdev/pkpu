@@ -14,10 +14,15 @@ export async function GET({ request, params }) {
 		});
 	}
 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
-	const currentUser = await prisma.User.findUnique({
-		where: { email: decoded.user.email }
-	});
-	if (currentUser.roleId !== 1) {
+	// const currentUser = await prisma.User.findUnique({
+	// 	where: { email: decoded.user.email }
+	// });
+	// if (currentUser.roleId !== 1) {
+	// 	return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+	// 		status: 403
+	// 	});
+	// }
+	if (!decoded) {
 		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 			status: 403
 		});
@@ -32,7 +37,7 @@ export async function GET({ request, params }) {
 		);
 	}
 	return new Response(
-		JSON.stringify({ success: true, message: 'Debitor ditemukan!', data: debitor })
+		JSON.stringify({ success: true, message: 'Berhasil', data: debitor }, { status: 200 })
 	);
 }
 
@@ -47,7 +52,7 @@ export async function PUT({ request, params }) {
 			status: 401
 		});
 	}
-    const formData = await request.formData();
+	const formData = await request.formData();
 	const { nama, tglSidang, tempatSidang } = Object.fromEntries(formData);
 	const validation = {
 		success: false,
@@ -63,31 +68,38 @@ export async function PUT({ request, params }) {
 				status: 403
 			});
 		}
-        if (!nama) {
+		if (!nama) {
 			validation.errors.push({ field: 'nama', message: 'Nama tidak boleh kosong!' });
 		}
 		if (!tglSidang) {
 			validation.errors.push({ field: 'tglSidang', message: 'Tanggal sidang tidak boleh kosong!' });
 		}
 		if (!tempatSidang) {
-			validation.errors.push({ field: 'tempatSidang', message: 'Tempat sidang tidak boleh kosong!' });
+			validation.errors.push({
+				field: 'tempatSidang',
+				message: 'Tempat sidang tidak boleh kosong!'
+			});
 		}
 		if (validation?.errors.length > 0) {
-			return new Response(JSON.stringify(validation));
+			return new Response(JSON.stringify(validation), { status: 400 });
 		}
-        const debitor = await prisma.debitor.update({
-            where:{id},
+		const debitor = await prisma.debitor.update({
+			where: { id },
 			data: {
 				nama,
-                tglSidang,
-                tempatSidang
+				tglSidang,
+				tempatSidang
 			}
 		});
-		return new Response(JSON.stringify({ success: true, message: 'Debitor berhasil diubah!', data:debitor }));
+		return new Response(
+			JSON.stringify({ success: true, message: 'Debitor berhasil diubah!', data: debitor }),
+			{ status: 200 }
+		);
 	} catch (error) {
 		console.log(error);
 		return new Response(
-			JSON.stringify({ success: false, code: 400, message: 'Debitor gagal diubah!' })
+			JSON.stringify({ success: false, code: 500, message: 'Debitor gagal diubah!' }),
+			{ status: 500 }
 		);
 	}
 }
@@ -125,11 +137,14 @@ export async function DELETE({ request, params }) {
 		await prisma.debitor.delete({
 			where: { id }
 		});
-		return new Response(JSON.stringify({ success: true, message: 'Debitor berhasil dihapus!' }));
+		return new Response(JSON.stringify({ success: true, message: 'Debitor berhasil dihapus!' }), {
+			status: 200
+		});
 	} catch (error) {
 		console.log(error);
 		return new Response(
-			JSON.stringify({ success: false, code: 400, message: 'Debitor gagal dihapus!' })
+			JSON.stringify({ success: false, code: 500, message: 'Debitor gagal dihapus!' }),
+			{ status: 500 }
 		);
 	}
 }
