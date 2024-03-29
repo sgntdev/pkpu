@@ -9,7 +9,7 @@ export async function load({ locals, fetch, params }) {
 		const debitorRes = await fetch('/api/debitor');
 		const debitors = await debitorRes.json();
 
-		const modifiedDebitors = debitors.map((data) => {
+		const modifiedDebitors = debitors.data.map((data) => {
 			const link = data.nama.replace(/\s/g, '-').toLowerCase();
 			return {
 				...data,
@@ -21,17 +21,8 @@ export async function load({ locals, fetch, params }) {
 		if (!debitor) {
 			error(404, 'Page Not Found');
 		} else {
-			// find user from specific email
-			const userRes = await fetch(`/api/user/${user.email}`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			});
-			const userData = await userRes.json();
-			// getting all data sifat kreditor
-			const kreditorResponse = await fetch(`/api/kreditor`, {
+			// getting all data kreditor
+			const kreditorResponse = await fetch(`/api/kreditor?userId=${user.id}`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',
@@ -39,8 +30,6 @@ export async function load({ locals, fetch, params }) {
 				}
 			});
 			const kreditorResult = await kreditorResponse.json();
-			// find kreditor from specific user id
-			const kreditorByUserId = kreditorResult.filter((data) => data.userId === userData.id);
 			// getting all data sifat tagihan
 			const sifatTagihanResponse = await fetch('/api/sifattagihan', {
 				method: 'GET',
@@ -71,12 +60,12 @@ export async function load({ locals, fetch, params }) {
 				status: 200,
 				body: {
 					token,
-					debitor,
-					kreditorData: kreditorByUserId,
-					userId: userData.id,
-					sifatTagihanData: sifatTagihanResult,
-					tipeDokumenData: tipeDokumenResult,
-					tagihan: tagihanResult,
+					debitorId : debitor.id,
+					kreditorData: kreditorResult.data,
+					userId: user.id,
+					sifatTagihanData: sifatTagihanResult.data,
+					tipeDokumenData: tipeDokumenResult.data,
+					tagihan: tagihanResult.data,
 				}
 			};
 		}

@@ -22,7 +22,7 @@
 	import { goto } from '$app/navigation';
 	import { fly } from 'svelte/transition';
 	export let data;
-	const { token, debitor, userId, sifatTagihanData, tipeDokumenData, tagihan } = data.body;
+	const { token, debitorId, userId, sifatTagihanData, tipeDokumenData, tagihan } = data.body;
 	let kreditorData = data.body.kreditorData;
 	let buktiTagihan = [
 		{
@@ -336,7 +336,7 @@
 			formData.append(`oldDokumenId`, item.id);
 		});
 		formData.append('kreditorId', selectedKreditor);
-		formData.append('debitorId', debitor.id);
+		formData.append('debitorId', debitorId);
 		formData.append('userId', userId);
 		try {
 			const response = await fetch(`/api/tagihan/${tagihan.id}`, {
