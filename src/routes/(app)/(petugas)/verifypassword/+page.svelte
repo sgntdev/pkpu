@@ -1,22 +1,9 @@
 <script>
-	import {
-		Table,
-		TableBody,
-		TableBodyCell,
-		TableBodyRow,
-		TableHead,
-		TableHeadCell,
-		Button,
-		Breadcrumb,
-		BreadcrumbItem,
-		Modal,
-		Spinner,
-		Toast
-	} from 'flowbite-svelte';
-	import { ExclamationCircleOutline, CheckCircleSolid, XCircleSolid } from 'flowbite-svelte-icons';
+	import { Button, Breadcrumb, BreadcrumbItem, Spinner, Toast } from 'flowbite-svelte';
+	import { CheckCircleSolid, XCircleSolid } from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
 	export let data;
-	const { token, verified } = data.body;
+	const { token, verified, email } = data.body;
 	let form;
 	let verify = {
 		password: '',
@@ -118,6 +105,42 @@
 	};
 	const clearToastData = () => {
 		toastData = null;
+	};
+	const handleResetPass = async () => {
+		try{
+			const response = await fetch('/api/resetpassword', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: JSON.stringify(email)
+			})
+			const result = await response.json()
+			if (result.success) {
+				showToast = true;
+				toastData = {
+					success: true,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+			} else {
+				showToast = true;
+				toastData = {
+					success: false,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+			}
+		}catch(error){
+			console.error(error);
+		}
 	};
 </script>
 
@@ -223,14 +246,16 @@
 								</p>
 							{/if}
 						</div>
-						<div class="flex items-center justify-end">
-							<a
-								href="/resetpassword"
+						<Button type="submit" class="w-full">Ubah password</Button>
+						<div class="flex items-center justify-center gap-1">
+							<p class="text-sm text-gray-500">Forgot your old password?</p>
+							<button
+								type="button"
+								on:click={handleResetPass}
 								class="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500"
-								>Reset password</a
+								>Reset password</button
 							>
 						</div>
-						<Button type="submit" class="w-full">Ubah password</Button>
 					</form>
 				</div>
 			</div>
