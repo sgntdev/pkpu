@@ -7,25 +7,21 @@
 		Spinner,
 		Breadcrumb,
 		BreadcrumbItem,
-		Dropzone,
 		Toast,
 		Fileupload,
-		Label,
 		Helper,
 	} from 'flowbite-svelte';
 	import {
 		PlusSolid,
 		MinusSolid,
 		CloseSolid,
-		PenSolid,
-		ExclamationCircleOutline,
 		XCircleSolid,
 		CheckCircleSolid
 	} from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
 	import { fly } from 'svelte/transition';
 	export let data;
-	const { token, debitor, userId, sifatTagihanData, tipeDokumenData } = data.body;
+	const { token, debitorId, userId, sifatTagihanData, tipeDokumenData } = data.body;
 	let kreditorData = data.body.kreditorData;
 	let buktiTagihan = [
 		{
@@ -43,60 +39,7 @@
 	let form;
 	let selectedKreditor = '';
 	let searchKreditor = '';
-	let previewURL = [];
 	let value = [];
-	// const dropHandle = (event, index) => {
-	// 	event.preventDefault();
-	// 	if (buktiTagihan[index].tipeDokumenId) {
-	// 		[...event.dataTransfer.items].forEach((item, i) => {
-	// 			if (item.kind === 'file') {
-	// 				const file = item.getAsFile();
-	// 				value.push(file);
-	// 				value = value;
-	// 				const reader = new FileReader();
-
-	// 				reader.onload = (e) => {
-	// 					// Cek apakah sudah ada pratinjau di index ini
-	// 					if (previewURL[index]) {
-	// 						// Jika sudah ada, gantilah dengan pratinjau baru
-	// 						previewURL[index] = e.target.result;
-	// 					} else {
-	// 						// Jika belum ada, tambahkan pratinjau baru
-	// 						previewURL.push(e.target.result);
-	// 					}
-
-	// 					previewURL = previewURL.slice(); // Perbarui reaktivitas
-	// 				};
-
-	// 				reader.readAsDataURL(file);
-	// 			}
-	// 		});
-	// 	}
-	// };
-
-	// const handleChange = (event, index) => {
-	// 	const files = event.target.files;
-	// 	if (files.length > 0) {
-	// 		value.push(files[0]);
-	// 		value = value;
-	// 		const reader = new FileReader();
-
-	// 		reader.onload = (e) => {
-	// 			// Cek apakah sudah ada pratinjau di index ini
-	// 			if (previewURL[index]) {
-	// 				// Jika sudah ada, gantilah dengan pratinjau baru
-	// 				previewURL[index] = e.target.result;
-	// 			} else {
-	// 				// Jika belum ada, tambahkan pratinjau baru
-	// 				previewURL.push(e.target.result);
-	// 			}
-
-	// 			previewURL = previewURL.slice(); // Perbarui reaktivitas
-	// 		};
-
-	// 		reader.readAsDataURL(files[0]);
-	// 	}
-	// };
 
 	$: filteredKreditors = kreditorData.filter((kreditor) =>
 		kreditor.nama.toLowerCase().includes(searchKreditor.toLowerCase())
@@ -177,7 +120,7 @@
 					noTelp: '',
 					alamat: ''
 				};
-				const updatedDataResponse = await fetch(`/api/kreditor`, {
+				const updatedDataResponse = await fetch(`/api/kreditor?userId=${userId}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -185,8 +128,7 @@
 					}
 				});
 				const updatedData = await updatedDataResponse.json();
-				const formattedData = updatedData.filter((data) => data.userId === userId);
-				kreditorData = formattedData;
+				kreditorData = updatedData.data;
 			} else {
 				showToast = true;
 				toastData = {
@@ -235,7 +177,7 @@
 					showToast = false;
 					clearToastData();
 				}, 2000);
-				const updatedDataResponse = await fetch(`/api/kreditor`, {
+				const updatedDataResponse = await fetch(`/api/kreditor?userId=${userId}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -243,8 +185,7 @@
 					}
 				});
 				const updatedData = await updatedDataResponse.json();
-				const formattedData = updatedData.filter((data) => data.userId === userId);
-				kreditorData = formattedData;
+				kreditorData = updatedData.data;
 			} else {
 				showToast = true;
 				toastData = {
@@ -293,7 +234,7 @@
 			formData.append(`dokumen`, value);
 		});
 		formData.append('kreditorId', selectedKreditor);
-		formData.append('debitorId', debitor.id);
+		formData.append('debitorId', debitorId);
 		formData.append('userId', userId);
 		try {
 			const response = await fetch('/api/tagihan', {
@@ -821,56 +762,6 @@
 								Tipe dokumen tidak boleh kosong!
 							</p>
 						{/if}
-						<!-- {#if previewURL[index]}
-							<div>
-								<iframe
-									src={previewURL[index]}
-									class="mb-2 mt-4 max-h-64 w-full rounded-lg border-2 border-gray-300"
-									width="600"
-									height="400"
-									frameborder="0"
-									title="s"
-								/>
-							</div>
-						{:else}
-							<Dropzone
-								defaultClass={`${bukti.tipeDokumenId === '' ? '' : 'cursor-pointer hover:bg-gray-100'} mt-4 flex flex-col justify-center items-center w-full h-64 bg-gray-50 rounded-lg border-2 border-gray-300 border-dashed dark:hover:bg-gray-800 dark:bg-gray-700 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600`}
-								id="dropzone"
-								on:drop={(e) => dropHandle(e, index)}
-								on:dragover={(event) => {
-									event.preventDefault();
-								}}
-								on:change={(e) => handleChange(e, index)}
-								disabled={bukti.tipeDokumenId === ''}
-								accept=".pdf,"
-								bind:files={bukti.dokumen}
-							>
-								<svg
-									aria-hidden="true"
-									class={`mb-3 h-10 w-10 ${bukti.tipeDokumenId === '' ? 'text-gray-300' : 'text-gray-400'}`}
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-									xmlns="http://www.w3.org/2000/svg"
-									><path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-									/></svg
-								>
-								<p
-									class={`${bukti.tipeDokumenId === '' ? 'text-gray-300 dark:text-gray-200' : ' text-gray-500 dark:text-gray-400'} mb-2 text-sm`}
-								>
-									<span class="font-semibold">Click to upload</span> or drag and drop
-								</p>
-								<p
-									class={`text-xs ${bukti.tipeDokumenId === '' ? 'text-gray-300 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}`}
-								>
-									PDF (MAX. 2 MB)
-								</p>
-							</Dropzone>
-						{/if} -->
 					</div>
 					<div>
 						<label
@@ -897,17 +788,6 @@
 								{form?.errors?.find((error) => error.field === `dokumen.${index}`).message}
 							</p>
 						{/if}
-						<!-- {#if sifatTagihan.id !== ''}
-							{#if form?.errors?.find((error) => error.field === `dokumen`)}
-								<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-									{form?.errors?.find((error) => error.field === 'dokumen').message}
-								</p>
-							{:else if form?.errors?.find((error) => error.field === `dokumen.${index}`)}
-								<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-									{form?.errors?.find((error) => error.field === `dokumen.${index}`).message}
-								</p>
-							{/if}
-						{/if} -->
 					</div>
 				{/each}
 			</div>
