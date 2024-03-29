@@ -13,7 +13,7 @@ export async function load({ locals, fetch }) {
 					Authorization: `Bearer ${token}`
 				}
 			});
-			const data = await res.json();
+			const users = await res.json();
 			const roleResponse = await fetch('/api/role', {
 				method: 'GET',
 				headers: {
@@ -26,7 +26,7 @@ export async function load({ locals, fetch }) {
 				status: 200,
 				body: {
 					user,
-					users:data, 
+					users:users.data, 
 					roleData : role.data, 
 					token
 				}
