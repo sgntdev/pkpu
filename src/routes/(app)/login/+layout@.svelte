@@ -1,4 +1,6 @@
 <script>
+    import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+	injectSpeedInsights();
     import '../../../app.pcss';
 </script>
 <svelte:head>

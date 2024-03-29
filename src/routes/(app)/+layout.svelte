@@ -1,4 +1,6 @@
 <script>
+	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+	injectSpeedInsights();
 	import '../../app.pcss';
 	import { goto } from '$app/navigation';
 	import { Button, Dropdown, DropdownItem } from 'flowbite-svelte';
