@@ -20,7 +20,7 @@ export async function load({ params, fetch, locals }) {
 				status: 200,
 				body: {
 					roleId: user.roleId,
-					tagihan,
+					tagihan: tagihan.data,
 					token
 				}
 			};

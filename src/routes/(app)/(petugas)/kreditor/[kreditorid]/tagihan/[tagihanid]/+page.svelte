@@ -16,8 +16,10 @@
 		EyeSolid
 	} from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
+	import { page } from '$app/stores';
+	const tagihanId = $page.params.tagihanid;
 	export let data;
-	const { tagihanId, dokumen, token, roleId } = data.body;
+	const { token, roleId } = data.body;
 	let tagihan = data.body.tagihan;
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
