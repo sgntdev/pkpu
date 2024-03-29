@@ -18,7 +18,7 @@ export async function load({ params, fetch, locals }) {
 		return {
 			status: 200,
 			body: {
-				tagihan
+				tagihan: tagihan.data
 			}
 		};
 	}
