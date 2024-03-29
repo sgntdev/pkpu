@@ -1,7 +1,11 @@
 import { prisma } from '$lib/prisma.server.js';
+import { SECRET_INGREDIENT } from '$env/static/private';
+import jwt from 'jsonwebtoken';
 export async function GET({ params, request }) {
 	let token = request.headers.get('authorization');
 	const id = parseInt(params.kreditorid);
+	const url = new URL(request.url);
+	const tagihan = url.searchParams.get('tagihan');
 	if (token && token.startsWith('Bearer ')) {
 		token = token.slice(7, token.length);
 	}
@@ -16,9 +20,26 @@ export async function GET({ params, request }) {
 			status: 403
 		});
 	}
-	const kreditor = await prisma.kreditor.findUnique({
-		where: { id }
-	});
+	let kreditorQuery = {
+		where: {id},
+		include:{}
+	};
+
+	if(tagihan){
+		kreditorQuery.include = {
+			Tagihan: {
+				include:{
+					sifatTagihan : {
+						select:{
+							sifat:true
+						}
+					}
+				}
+			}
+		}
+	}
+	const kreditor = await prisma.kreditor.findUnique(kreditorQuery);
+
 	if (!kreditor) {
 		return new Response(
 			JSON.stringify({ success: false, code: 404, message: 'Kreditor tidak ditemukan!' }),

@@ -1,5 +1,5 @@
 import { prisma } from '$lib/prisma.server.js';
-import { put} from '@vercel/blob';
+import { put } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN, SECRET_INGREDIENT } from '$env/static/private';
 import jwt from 'jsonwebtoken';
 
@@ -9,40 +9,51 @@ export async function GET({ params, request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-	}
-	try {
-		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
 		});
-		if (!currentUser) {
-			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
-				status: 403
-			});
-		}
-		const tagihanId = parseInt(params.tagihanid);
-		const tagihanJoin = await prisma.tagihan.findUnique({
-			where: { id: tagihanId },
-			include: {
-				Debitor: true,
-				sifatTagihan: true,
-				Kreditor: true,
-				DokumenTagihan: {
-					include: {
-						TipeDokumen: {
-							select: {
-								tipe: true
-							}
+	}
+	let decoded = jwt.verify(token, SECRET_INGREDIENT);
+	if (!decoded) {
+		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+			status: 403
+		});
+	}
+	const tagihanId = parseInt(params.tagihanid);
+	const tagihanJoin = await prisma.tagihan.findUnique({
+		where: { id: tagihanId },
+		include: {
+			sifatTagihan: {
+				select: {
+					sifat: true
+				}
+			},
+			Kreditor: true,
+			DokumenTagihan: {
+				select: {
+					tipeDokumenId: true,
+					nama_dokumen: true,
+					dokumen_url: true,
+					TipeDokumen: {
+						select: {
+							tipe: true
 						}
 					}
 				}
 			}
-		});
-		return new Response(JSON.stringify(tagihanJoin));
-	} catch (error) {
-		return new Response(JSON.stringify({ error: 'Error Unexpected' }), { status: 400 });
+		}
+	});
+	if (!tagihanJoin) {
+		return new Response(
+			JSON.stringify({
+				success: false,
+				code: 500,
+				message: 'Tagihan tidak ditemukan!'
+			}),
+			{ status: 500 }
+		);
 	}
+	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: tagihanJoin }));
 }
 
 function unformatPrice(price) {
@@ -56,7 +67,9 @@ export async function PUT({ params, request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	const tagihanId = parseInt(params.tagihanid);
 	const formData = await request.formData();
@@ -140,9 +153,6 @@ export async function PUT({ params, request }) {
 			validation.errors.push({ field: 'jumlahHari', message: 'Jumlah hari tidak boleh kosong!' });
 		}
 		if (oldDokumens.length < 1) {
-			// if (!dokumens || dokumens.length === 0) {
-			// 	validation.errors.push({ field: 'dokumen', message: 'Bukti dokumen tidak boleh kosong!' });
-			// }
 			for (const key in tipeDokumenIds) {
 				const dokumen = dokumens[key];
 				if (oldDokumens[key] !== '') {
@@ -163,10 +173,10 @@ export async function PUT({ params, request }) {
 		}
 
 		if (validation?.errors.length > 0) {
-			return new Response(JSON.stringify(validation));
+			return new Response(JSON.stringify(validation), { status: 400 });
 		}
 		const updateTagihan = await prisma.tagihan.update({
-			where: {id : tagihanId},
+			where: { id: tagihanId },
 			data: {
 				debitorId: parseInt(debitorId),
 				userId: parseInt(userId),
@@ -181,7 +191,7 @@ export async function PUT({ params, request }) {
 				jumlahHari
 			}
 		});
-		let index = 0
+		let index = 0;
 		for (const key in tipeDokumenIds) {
 			const tipeDokumenId = tipeDokumenIds[key];
 			const oldDokumenId = oldDokumensIds[key];
@@ -208,7 +218,7 @@ export async function PUT({ params, request }) {
 					dokumen_url: url,
 					tagihanId
 				});
-				index++
+				index++;
 			}
 		}
 		let data = dokumenTagihanData.map((item) => ({
@@ -235,11 +245,10 @@ export async function PUT({ params, request }) {
 		return new Response(
 			JSON.stringify({
 				success: false,
-				code:400,
-				message: 'Tagihan gagal diubah!'
+				code: 500,
+				message: 'Tagihan gagal ditambahkan!'
 			}),
-			{ status: 400 }
+			{ status: 500 }
 		);
 	}
 }
-

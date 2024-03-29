@@ -1,4 +1,6 @@
 import { prisma } from '$lib/prisma.server.js';
+import { SECRET_INGREDIENT } from '$env/static/private';
+import jwt from 'jsonwebtoken';
 
 export async function GET({ request }) {
 	let token = request.headers.get('authorization');
@@ -6,13 +8,24 @@ export async function GET({ request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	try {
+		let decoded = jwt.verify(token, SECRET_INGREDIENT);
+		const currentUser = await prisma.User.findUnique({
+			where: { email: decoded.user.email }
+		});
+		if (currentUser.roleId !== 1) {
+			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+				status: 403
+			});
+		}
 		const verify = await prisma.Verified.findMany();
 		return new Response(JSON.stringify(verify), { status: 200 });
 	} catch (error) {
-		return new Response(JSON.stringify({ error: 'Error Unexpected' }), { status: 401 });
+		return new Response(JSON.stringify({ success:false, code:500, message: 'Error Unexpected' }), { status: 500 });
 	}
 }
 
@@ -27,9 +40,20 @@ export async function POST({ request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	try {
+		let decoded = jwt.verify(token, SECRET_INGREDIENT);
+		const currentUser = await prisma.User.findUnique({
+			where: { email: decoded.user.email }
+		});
+		if (currentUser.roleId !== 1) {
+			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+				status: 403
+			});
+		}
 		if (!password) {
 			validation.errors.push({ field: 'password', message: 'Password tidak boleh kosong!' });
 		}
@@ -83,9 +107,20 @@ export async function PUT({ request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	try {
+		let decoded = jwt.verify(token, SECRET_INGREDIENT);
+		const currentUser = await prisma.User.findUnique({
+			where: { email: decoded.user.email }
+		});
+		if (currentUser.roleId !== 1) {
+			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+				status: 403
+			});
+		}
 		const oldData = await prisma.Verified.findFirst();
 		if (!oldPassword) {
 			validation.errors.push({ field: 'oldPassword', message: 'Old password tidak boleh kosong!' });

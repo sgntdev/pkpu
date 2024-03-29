@@ -1,6 +1,4 @@
 import { prisma } from '$lib/prisma.server.js';
-import { mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
 import { put } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN, SECRET_INGREDIENT } from '$env/static/private';
 import jwt from 'jsonwebtoken';
@@ -11,41 +9,30 @@ export async function GET({ request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-	}
-	try {
-		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
 		});
-		if (!currentUser) {
-			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
-				status: 403
-			});
+	}
+	let decoded = jwt.verify(token, SECRET_INGREDIENT);
+	if (!decoded) {
+		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+			status: 403
+		});
+	}
+	const tagihan = await prisma.tagihan.findMany({
+		orderBy: {
+			id: 'asc'
 		}
-		const tagihanJoin = await prisma.tagihan.findMany({
-			orderBy: {
-				id: 'asc'
-			  },
-			include: {
-				Debitor: true,
-				sifatTagihan : true,
-				Kreditor:true,
-				DokumenTagihan : {
-					include:{
-						TipeDokumen:{
-							select:{
-								tipe:true
-							}
-						}
-					}
-				}
+	});
+	if (!tagihan) {
+		return new Response(
+			JSON.stringify({ success: false, code: 404, message: 'Tagihan tidak ditemukan!' }),
+			{
+				status: 404
 			}
-		});
-		return new Response(JSON.stringify(tagihanJoin), { status: 200 });
-	} catch (error) {
-		return new Response(JSON.stringify({ error: error }), { status: 400 });
+		);
 	}
+	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: tagihan }));
 }
 
 function unformatPrice(price) {
@@ -59,7 +46,9 @@ export async function POST({ request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	const formData = await request.formData();
 	const tipeDokumenIds = formData.getAll('tipeDokumenId');
@@ -85,6 +74,15 @@ export async function POST({ request }) {
 		errors: []
 	};
 	try {
+		let decoded = jwt.verify(token, SECRET_INGREDIENT);
+		const currentUser = await prisma.User.findUnique({
+			where: { email: decoded.user.email }
+		});
+		if (!currentUser) {
+			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+				status: 403
+			});
+		}
 		if (!kreditorId) {
 			validation.errors.push({
 				field: 'kreditorId',
@@ -130,14 +128,13 @@ export async function POST({ request }) {
 		if (!jumlahHari) {
 			validation.errors.push({ field: 'jumlahHari', message: 'Jumlah hari tidak boleh kosong!' });
 		}
-
-		// if (!dokumens || dokumens.length === 0) {
-		// 	validation.errors.push({ field: 'dokumen', message: 'Bukti dokumen tidak boleh kosong!' });
-		// }
 		for (const key in tipeDokumenIds) {
 			const dokumen = dokumens[key];
 			if (dokumen.size > maxFileSize) {
-				validation.errors.push({ field: `dokumen.${key}`, message: 'File memiliki ukuran terlalu besar' });
+				validation.errors.push({
+					field: `dokumen.${key}`,
+					message: 'File memiliki ukuran terlalu besar'
+				});
 			}
 			if (!allowedFileTypes.includes(dokumen.type)) {
 				validation.errors.push({ field: `dokumen.${key}`, message: 'File harus berformat PDF' });
@@ -145,7 +142,7 @@ export async function POST({ request }) {
 		}
 
 		if (validation?.errors.length > 0) {
-			return new Response(JSON.stringify(validation));
+			return new Response(JSON.stringify(validation), { status: 400 });
 		}
 		const createdTagihan = await prisma.tagihan.create({
 			data: {
@@ -174,11 +171,11 @@ export async function POST({ request }) {
 			const { url } = await put(uniqueFilename, dokumen, {
 				access: 'public',
 				token: BLOB_READ_WRITE_TOKEN,
-				addRandomSuffix : false
+				addRandomSuffix: false
 			});
 			dokumenTagihanData.push({
 				tipeDokumenId: parseInt(tipeDokumenId),
-				nama_dokumen : dokumen.name,
+				nama_dokumen: dokumen.name,
 				dokumen_url: url,
 				tagihanId
 			});
@@ -194,38 +191,21 @@ export async function POST({ request }) {
 			data
 		});
 
-		// if (!dokumens) {
-		// 	console.error('Invalid file data');
-		// 	return {
-		// 		status: 400,
-		// 		body: 'Invalid file data'
-		// 	};
-		// }
-
-		// const uploadsDir = join(process.cwd(), 'static/doc/');
-		// mkdirSync(uploadsDir, { recursive: true });
-
-		// for (const file of dokumenTagihanData) {
-		// 	const filePath = join(uploadsDir, file.name);
-		// 	writeFileSync(filePath, Buffer.from(await file.dokumen.arrayBuffer()));
-		// 	console.log('uploadsDir:', uploadsDir);
-		// 	console.log('file:', file);
-		// }
 		return new Response(
 			JSON.stringify({
 				success: true,
-				message: 'Tagihan berhasil ditambahkan'
+				message: 'Tagihan berhasil ditambahkan!'
 			}),
 			{ status: 200 }
 		);
 	} catch (error) {
-		console.log(error);
 		return new Response(
 			JSON.stringify({
 				success: false,
-				message: 'Tagihan gagal ditambahkan'
+				code: 500,
+				message: 'Tagihan gagal ditambahkan!'
 			}),
-			{ status: 400 }
+			{ status: 500 }
 		);
 	}
 }

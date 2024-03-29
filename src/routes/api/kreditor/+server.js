@@ -6,6 +6,7 @@ export async function GET({ request }) {
 	let token = request.headers.get('authorization');
 	const url = new URL(request.url);
 	const userId = url.searchParams.get('userId');
+	const tagihan = url.searchParams.get('tagihan');
 	if (token && token.startsWith('Bearer ')) {
 		token = token.slice(7, token.length);
 	}
@@ -24,13 +25,28 @@ export async function GET({ request }) {
 		where: {},
 		orderBy: {
 			id: 'asc'
-		}
+		},
+		include:{}
 	};
 
 	if (userId) {
 		kreditorQuery.where.userId = parseInt(userId);
 	}
-
+	if(tagihan){
+		kreditorQuery.include = {
+			User : {
+				select : {
+					email:true
+				}
+			},
+			Tagihan: {
+				select: {
+					id: true,
+					debitorId: true
+				}
+			}
+		}
+	}
 	const kreditors = await prisma.kreditor.findMany(kreditorQuery);
 
 	if (!kreditors) {

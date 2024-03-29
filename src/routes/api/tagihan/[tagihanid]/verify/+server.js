@@ -8,7 +8,9 @@ export async function PUT({ params, request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	const tagihanId = parseInt(params.tagihanid);
 	const data = await request.json();
@@ -61,11 +63,17 @@ export async function PUT({ params, request }) {
 			const tagihanJoin = await prisma.Tagihan.findUnique({
 				where: { id: tagihanId },
 				include: {
-					Debitor: true,
-					sifatTagihan: true,
+					sifatTagihan: {
+						select: {
+							sifat: true
+						}
+					},
 					Kreditor: true,
 					DokumenTagihan: {
-						include: {
+						select: {
+							tipeDokumenId: true,
+							nama_dokumen: true,
+							dokumen_url: true,
 							TipeDokumen: {
 								select: {
 									tipe: true
@@ -84,8 +92,8 @@ export async function PUT({ params, request }) {
 		}
 	} catch (error) {
 		return new Response(
-			JSON.stringify({ success: false, code: 400, message: 'Error Unexpected' }),
-			{ status: 400 }
+			JSON.stringify({ success: false, code: 500, message: 'Proses verify gagal!' }),
+			{ status: 500 }
 		);
 	}
 }
