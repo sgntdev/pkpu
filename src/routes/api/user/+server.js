@@ -1,6 +1,8 @@
 import { SITE_URL } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
+import { SECRET_INGREDIENT } from '$env/static/private';
+import jwt from 'jsonwebtoken';
 
 export async function GET({ request }) {
 	let token = request.headers.get('authorization');
@@ -8,19 +10,36 @@ export async function GET({ request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-	}
-	try {
-		const users = await prisma.user.findMany({
-			orderBy: { id: 'asc' },
-			include: {
-				Role: true
-			}
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
 		});
-		return new Response(JSON.stringify(users), { status: 200 });
-	} catch (error) {
-		return new Response(JSON.stringify({ error: 'Error Unexpected' }), { status: 401 });
 	}
+	let decoded = jwt.verify(token, SECRET_INGREDIENT);
+	const currentUser = await prisma.User.findUnique({
+		where: { email: decoded.user.email }
+	});
+	if (currentUser.roleId !== 1) {
+		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+			status: 403
+		});
+	}
+	const users = await prisma.user.findMany({
+		orderBy: { id: 'asc' },
+		include: {
+			Role: true
+		}
+	});
+	if (!users) {
+		return new Response(
+			JSON.stringify({ success: false, code: 404, message: 'Users tidak ditemukan!' }),
+			{
+				status: 404
+			}
+		);
+	}
+	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: users }), {
+		status: 200
+	});
 }
 // async function generateUniqueRandomId(length) {
 // 	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -103,7 +122,7 @@ export async function POST({ request }) {
 			validation.errors.push({ field: 'email', message: 'Format email tidak valid!' });
 		}
 		if (validation?.errors.length > 0) {
-			return new Response(JSON.stringify(validation));
+			return new Response(JSON.stringify(validation), { status: 400 });
 		}
 
 		const existingUser = await prisma.UserVerify.findUnique({
@@ -146,9 +165,21 @@ export async function POST({ request }) {
 			html: html
 		};
 		await sendEmail(message);
-		return new Response(JSON.stringify({ success: true, message: 'Email berhasil terkirim!' }));
+		return new Response(
+			JSON.stringify({
+				success: true,
+				message: 'Email berhasil terkirim!'
+			}),
+			{ status: 200 }
+		);
 	} catch (error) {
-		console.error(error);
-		return new Response(JSON.stringify({ success: false, message: 'Email gagal dikirim' }));
+		return new Response(
+			JSON.stringify({
+				success: false,
+				code: 500,
+				message: 'Email gagal dikirim!'
+			}),
+			{ status: 500 }
+		);
 	}
 }

@@ -7,7 +7,9 @@ export async function GET({ request }) {
 		token = token.slice(7, token.length);
 	}
 	if (!token) {
-		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
 	}
 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
 	if (!decoded) {

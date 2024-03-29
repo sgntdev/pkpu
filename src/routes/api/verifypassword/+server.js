@@ -12,21 +12,27 @@ export async function GET({ request }) {
 			status: 401
 		});
 	}
-	try {
-		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
+	let decoded = jwt.verify(token, SECRET_INGREDIENT);
+	const currentUser = await prisma.User.findUnique({
+		where: { email: decoded.user.email }
+	});
+	if (currentUser.roleId !== 1) {
+		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+			status: 403
 		});
-		if (currentUser.roleId !== 1) {
-			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
-				status: 403
-			});
-		}
-		const verify = await prisma.Verified.findMany();
-		return new Response(JSON.stringify(verify), { status: 200 });
-	} catch (error) {
-		return new Response(JSON.stringify({ success:false, code:500, message: 'Error Unexpected' }), { status: 500 });
 	}
+	const verify = await prisma.Verified.findMany();
+	if (!verify) {
+		return new Response(
+			JSON.stringify({ success: false, code: 404, message: 'Password tidak ditemukan!' }),
+			{
+				status: 404
+			}
+		);
+	}
+	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: verify }), {
+		status: 200
+	});
 }
 
 export async function POST({ request }) {
@@ -70,12 +76,12 @@ export async function POST({ request }) {
 			});
 		}
 		if (validation?.errors.length > 0) {
-			return new Response(JSON.stringify(validation));
+			return new Response(JSON.stringify(validation), { status: 400 });
 		}
 		const existingData = await prisma.Verified.findMany();
 		if (existingData.length >= 1) {
 			return new Response(
-				JSON.stringify({ success: false, message: 'Password hanya boleh satu!' }),
+				JSON.stringify({ success: false, code: 400, message: 'Password hanya boleh satu!' }),
 				{ status: 400 }
 			);
 		} else {
@@ -90,9 +96,14 @@ export async function POST({ request }) {
 			);
 		}
 	} catch (error) {
-		return new Response(JSON.stringify({ success: false, message: 'Password gagal disimpan!' }), {
-			status: 400
-		});
+		return new Response(
+			JSON.stringify({
+				success: false,
+				code: 500,
+				message: 'Password gagal disimpan!'
+			}),
+			{ status: 500 }
+		);
 	}
 }
 
@@ -125,7 +136,7 @@ export async function PUT({ request }) {
 		if (!oldPassword) {
 			validation.errors.push({ field: 'oldPassword', message: 'Old password tidak boleh kosong!' });
 		}
-		if (oldPassword !== oldData.password ) {
+		if (oldPassword !== oldData.password) {
 			validation.errors.push({ field: 'oldPassword', message: 'Old password tidak sesuai!' });
 		}
 		if (!newPassword) {
@@ -144,20 +155,25 @@ export async function PUT({ request }) {
 			});
 		}
 		if (validation?.errors.length > 0) {
-			return new Response(JSON.stringify(validation));
+			return new Response(JSON.stringify(validation), { status: 400 });
 		}
 		await prisma.Verified.update({
-			where: {id: oldData.id},
+			where: { id: oldData.id },
 			data: {
-				password : newPassword
+				password: newPassword
 			}
 		});
 		return new Response(JSON.stringify({ success: true, message: 'Password berhasil diubah!' }), {
 			status: 200
 		});
 	} catch (error) {
-		return new Response(JSON.stringify({ success: false, message: 'Password gagal diubah!' }), {
-			status: 400
-		});
+		return new Response(
+			JSON.stringify({
+				success: false,
+				code: 500,
+				message: 'Password gagal diubah!'
+			}),
+			{ status: 500 }
+		);
 	}
 }
