@@ -8,7 +8,7 @@ export async function load({ params, fetch, locals }) {
 	const debitorRes = await fetch('/api/debitor');
 	const debitors = await debitorRes.json();
 
-	const modifiedDebitors = debitors.map((data) => {
+	const modifiedDebitors = debitors.data.map((data) => {
 		const link = data.nama.replace(/\s/g, '-').toLowerCase();
 		return {
 			...data,
@@ -20,31 +20,20 @@ export async function load({ params, fetch, locals }) {
 	if (!debitor) {
 		error(404, 'Page Not Found');
 	} else {
-		// //get all data tagihan
-		// const tagihanResponse = await fetch(`/api/tagihan`, {
-		// 	method: 'GET',
-		// 	headers: {
-		// 		'Content-Type': 'application/json',
-		// 		Authorization: `Bearer ${token}`
-		// 	}
-		// });
-		// const tagihan = await tagihanResponse.json();
-		// const userRes = await fetch(`/api/user/${user.email}`, {
-		// 	method: 'GET',
-		// 	headers: {
-		// 		'Content-Type': 'application/json',
-		// 		Authorization: `Bearer ${token}`
-		// 	}
-		// });
-		// const userData = await userRes.json();
-		// const tagihanByUser = tagihan.filter((data) => data.userId === userData.id)
-		// const tagihanByDebitor = tagihanByUser.filter((data) => data.debitorId === debitor.id)
+		//get all data tagihan
+		const tagihanResponse = await fetch(`/api/debitor/${debitor.id}/tagihan?userId=${user.id}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`
+			}
+		});
+		const tagihan = await tagihanResponse.json();
 		return {
 			status: 200,
 			body: {
-				// tagihan : tagihanByDebitor, 
-				link : params.slug,
-				token
+				tagihan : tagihan.data,
+				link : params.slug
 			}
 		};
 	}

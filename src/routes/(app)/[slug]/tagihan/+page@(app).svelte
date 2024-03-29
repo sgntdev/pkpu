@@ -18,9 +18,7 @@
 	import { CheckCircleSolid } from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	const { link, token } = data?.body;
-
-	let tagihan = [];
+	const { link, tagihan } = data?.body;
 	let showToast = false;
 	let loading = false
 	onMount(async () => {
@@ -29,22 +27,6 @@
 			setTimeout(() => {
 				showToast = false;
 			}, 2000);
-		}
-		try {
-			loading = true
-			const response = await fetch(`/api/tagihan`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			})
-			const data = await response.json();
-			tagihan = data;
-		} catch (error) {
-			console.log(error)
-		}finally{
-			loading = false
 		}
 	});
 	const formatPrice = (price) => {
