@@ -11,9 +11,8 @@
 		Badge,
 		Indicator
 	} from 'flowbite-svelte';
-	import { EyeSolid } from 'flowbite-svelte-icons';
 	export let data;
-	const { tagihan, kreditor } = data.body;
+	const { kreditor } = data.body;
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
 			price = price.toString();
@@ -41,7 +40,7 @@
 				</p>
 			</caption>
 		</div>
-		{#if tagihan.length === 0}
+		{#if kreditor.Tagihan.length === 0}
 			<div
 				class="border-1 flex w-full items-center justify-center rounded-md border border-gray-300 py-40"
 			>
@@ -62,28 +61,32 @@
 					<TableHeadCell>Tagihan</TableHeadCell>
 				</TableHead>
 				<TableBody>
-					{#each tagihan as data, index (data)}
+					{#each kreditor.Tagihan as data, index (data)}
 						<TableBodyRow>
 							<TableBodyCell>{index + 1}</TableBodyCell>
 							<TableBodyCell>{data.pertanggal}</TableBodyCell>
-							<TableBodyCell>Rp. {formatPrice(data.totalTagihan)}</TableBodyCell>
-							<TableBodyCell>{data.sifatTagihan}</TableBodyCell>
+							<TableBodyCell
+								>Rp. {formatPrice(
+									parseFloat(data.denda) + parseFloat(data.hutangPokok) + parseFloat(data.bunga)
+								)}</TableBodyCell
+							>
+							<TableBodyCell>{data.sifatTagihan.sifat}</TableBodyCell>
 							<TableBodyCell>{data.jumlahTagihan}</TableBodyCell>
-							<TableBodyCell>{data.kurunTunggakan}</TableBodyCell>
+							<TableBodyCell>{data.mulaiTertunggak}</TableBodyCell>
 							<TableBodyCell>
-								{#if data.statusTagihan === 0}
-								<Badge color="gray" rounded class="px-2.5 py-0.5">
-									<Indicator color="dark" size="xs" class="me-1" />Pending
-								  </Badge>
-								{:else if data.statusTagihan === 1}
+								{#if data.status === 0}
+									<Badge color="gray" rounded class="px-2.5 py-0.5">
+										<Indicator color="dark" size="xs" class="me-1" />Pending
+									</Badge>
+								{:else if data.status === 1}
 									<Badge color="green" rounded class="px-2.5 py-0.5">
 										<Indicator color="green" size="xs" class="me-1" />Verified
 									</Badge>
 								{:else}
-								<Badge color="red" rounded class="px-2.5 py-0.5">
-									<Indicator color="red" size="xs" class="me-1" />Objection
-								  </Badge>
-								  {/if}
+									<Badge color="red" rounded class="px-2.5 py-0.5">
+										<Indicator color="red" size="xs" class="me-1" />Objection
+									</Badge>
+								{/if}
 							</TableBodyCell>
 							<TableBodyCell>
 								<a
