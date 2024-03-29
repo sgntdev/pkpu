@@ -1,4 +1,3 @@
-import { prisma } from '$lib/prisma.server.js';
 import { error, redirect } from '@sveltejs/kit';
 
 export async function load({ locals, fetch }) {
@@ -9,38 +8,38 @@ export async function load({ locals, fetch }) {
 		if (user.roleId === 1 || user.roleId === 2) {
 			const debitorResponse = await fetch('/api/debitor');
 			const debitorResult = await debitorResponse.json();
-			const users = await prisma.user.findMany();
-			const kreditorJoinTagihan = await prisma.kreditor.findMany({
-				include: {
-					Tagihan: {
-						select: {
-							id: true,
-							debitorId: true
-						}
-					}
+			
+			const kreditorWithTagihanRes = await fetch(`/api/kreditor?tagihan=true`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
 				}
 			});
-			const processedData = kreditorJoinTagihan.map((kreditor) => {
-				const debitorIds = kreditor.Tagihan.map((tagihan) => tagihan.debitorId);
+			const kreditorWithTagihan = await kreditorWithTagihanRes.json();
+
+			const processedData = kreditorWithTagihan.data.map((kreditor) => {
+				const debitorIds = kreditor.Tagihan ? kreditor.Tagihan.map((tagihan) => tagihan.debitorId) : 0;
 				// Menghapus duplikat debitorId
 				const uniqueDebitorIds = [...new Set(debitorIds)];
 				// Menggabungkan debitorId menjadi satu string
 				const mergedDebitorId = uniqueDebitorIds.join(', ');
-				const userEmail = users.find((user) => user.id === kreditor.userId).email;
+				const debitorId = mergedDebitorId != '' ? parseInt(mergedDebitorId) : ''
 				return {
 					id: kreditor.id,
-					userEmail,
+					userEmail : kreditor.User.email,
 					nama: kreditor.nama,
 					email: kreditor.email,
 					alamat: kreditor.alamat,
 					noTelp: kreditor.noTelp,
-					debitorId: parseInt(mergedDebitorId)
+					debitorId
 				};
 			});
+			
 			return {
 				status: 200,
 				body: {
-					debitorData: debitorResult,
+					debitorData: debitorResult.data,
 					kreditorData: processedData
 				}
 			};
