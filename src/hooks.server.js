@@ -6,25 +6,29 @@ export async function handle({ event, resolve }) {
 	const token = event.cookies.get('AuthorizationToken');
 	event.locals.token = token ?? '';
 	let error;
-	if (token) {
-		try {
-			let decoded = jwt.verify(token, SECRET_INGREDIENT);
-			const currentUser = await prisma.User.findUnique({
-				where: { email: decoded.user.email }
-			});
-			if(new Date(decoded.user.expirationDate) < new Date()){
-				redirect(303, '/')
-			}else{
-				event.locals.user = {
-					email: currentUser.email,
-					roleId: currentUser.roleId
-				};
+	if (!event.url.pathname.startsWith('/api')) {
+		if (token) {
+			try {
+				console.log('hooks server', event.url.pathname);
+				let decoded = jwt.verify(token, SECRET_INGREDIENT);
+				const currentUser = await prisma.User.findUnique({
+					where: { email: decoded.user.email }
+				});
+				if (new Date(decoded.user.expirationDate) < new Date()) {
+					redirect(303, '/');
+				} else {
+					event.locals.user = {
+						id : currentUser.id,
+						email: currentUser.email,
+						roleId: currentUser.roleId
+					};
+				}
+			} catch (error) {
+				error = error.name;
 			}
-		} catch (error) {
-			error = error.name;
 		}
 	}
-	if (event.url.pathname.startsWith('/tagihan') || event.url.pathname.startsWith('/kreditor') || event.url.pathname.startsWith('/users') || event.url.pathname.startsWith('/verifypassword')) {
+	if (!event.url.pathname.startsWith('/api') || event.url.pathname.startsWith('/tagihan') || event.url.pathname.startsWith('/kreditor') || event.url.pathname.startsWith('/users') || event.url.pathname.startsWith('/verifypassword')) {
 		if (!event.locals.user) {
 			redirect(303, '/');
 		}

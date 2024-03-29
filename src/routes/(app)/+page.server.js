@@ -7,8 +7,8 @@ export async function load({ fetch, locals }) {
 		redirect(303, '/dashboard');
 	}
 	const res = await fetch(`/api/debitor`);
-	const data = await res.json();
-	const debitorData = data.map((debitor) => {
+	const result = await res.json();
+	const debitorData = result.data.map((debitor) => {
 		const link = debitor.nama.replace(/\s/g, '-').toLowerCase();
 		return {
 			...debitor,
