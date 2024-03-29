@@ -28,11 +28,11 @@ export async function handle({ event, resolve }) {
 			}
 		}
 	}
-	if (!event.url.pathname.startsWith('/api') || event.url.pathname.startsWith('/tagihan') || event.url.pathname.startsWith('/kreditor') || event.url.pathname.startsWith('/users') || event.url.pathname.startsWith('/verifypassword')) {
-		if (!event.locals.user) {
-			redirect(303, '/');
-		}
-	}
+	// if (!event.url.pathname.startsWith('/api') || event.url.pathname.startsWith('/tagihan') || event.url.pathname.startsWith('/kreditor') || event.url.pathname.startsWith('/users') || event.url.pathname.startsWith('/verifypassword')) {
+	// 	if (!event.locals.user) {
+	// 		redirect(303, '/');
+	// 	}
+	// }
 	if (error) {
 		redirect(303, '/');
 	}
