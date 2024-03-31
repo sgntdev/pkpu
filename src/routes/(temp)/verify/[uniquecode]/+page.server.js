@@ -31,7 +31,8 @@ export async function load({ params, cookies, fetch }) {
             }
         })
         if (result.authToken){
-            cookies.set('AuthorizationToken', result.authToken, {
+            await cookies.delete('AuthorizationToken', { path: '/' });
+            await cookies.set('AuthorizationToken', result.authToken, {
                 path: '/',
                 httpOnly: true,
                 secure : true,
