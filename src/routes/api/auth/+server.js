@@ -11,6 +11,7 @@ export async function POST({ request }) {
 			expirationDate: true
 		}
 	});
+    console.log(user)
 	if (user) {
         if (new Date(user.expirationDate) < new Date()) {
             return new Response(JSON.stringify('Expired Unique Code'), {status: 400});

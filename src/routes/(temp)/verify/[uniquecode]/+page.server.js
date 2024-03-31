@@ -42,6 +42,7 @@ export async function load({ params, cookies, fetch }) {
 				sameSite: 'strict',
 				maxAge: 60 * 60 * 24 // one day
 			});
+            console.log(result.authToken)
 			return { success: true, user: userverif.email, roleId: user?.roleId };
 		} else {
 			return { success: false };
