@@ -9,7 +9,6 @@ export async function load({ params, cookies, fetch }) {
 		}
 	});
 	if (userverif) {
-		await cookies.delete('AuthorizationToken', { path: '/' });
 		const res = await fetch(`/api/auth`, {
 			method: 'POST',
 			headers: {
@@ -35,17 +34,28 @@ export async function load({ params, cookies, fetch }) {
 			}
 		});
 		if (result.authToken) {
-			cookies.set('AuthorizationToken', result.authToken, {
-				path: '/',
-				httpOnly: true,
-				secure: true,
-				sameSite: 'strict',
-				maxAge: 60 * 60 * 24 // one day
-			});
-            console.log(result.authToken)
-			return { success: true, user: userverif.email, roleId: user?.roleId };
+			try {
+				cookies.delete('AuthorizationToken', { path: '/' });
+				cookies.set('AuthorizationToken', result.authToken, {
+					path: '/',
+					httpOnly: true,
+					secure: true,
+					sameSite: 'strict',
+					maxAge: 60 * 60 * 24 // one day
+				});
+				return { success: true, user: userverif.email, roleId: user?.roleId };
+			} catch (error) {
+                console.log(error)
+				error(404, {
+                    message: 'Not Found',
+                    description: error
+                });
+			}
 		} else {
-			return { success: false };
+			error(404, {
+                message: 'Token Not Found',
+                description: 'Please ensure that the information you entered is correct'
+            });
 		}
 	} else {
 		error(404, {
