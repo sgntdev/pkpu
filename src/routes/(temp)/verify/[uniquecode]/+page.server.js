@@ -34,28 +34,20 @@ export async function load({ params, cookies, fetch }) {
 			}
 		});
 		if (result.authToken) {
-			try {
-				cookies.delete('AuthorizationToken', { path: '/' });
-				cookies.set('AuthorizationToken', result.authToken, {
-					path: '/',
-					httpOnly: true,
-					secure: true,
-					sameSite: 'strict',
-					maxAge: 60 * 60 * 24 // one day
-				});
-				return { success: true, user: userverif.email, roleId: user?.roleId };
-			} catch (error) {
-                console.log(error)
-				error(404, {
-                    message: 'Not Found',
-                    description: error
-                });
-			}
+			cookies.delete('AuthorizationToken', { path: '/' });
+			cookies.set('AuthorizationToken', result.authToken, {
+				path: '/',
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				maxAge: 60 * 60 * 24 // one day
+			});
+			return { success: true, user: userverif.email, roleId: user?.roleId };
 		} else {
 			error(404, {
-                message: 'Token Not Found',
-                description: 'Please ensure that the information you entered is correct'
-            });
+				message: 'Token Not Found',
+				description: 'Please ensure that the information you entered is correct'
+			});
 		}
 	} else {
 		error(404, {
