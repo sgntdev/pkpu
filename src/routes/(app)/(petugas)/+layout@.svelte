@@ -1,5 +1,7 @@
 <script>
 	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+	import { setContext } from 'svelte';
+	import { writable } from 'svelte/store';
 	injectSpeedInsights();
 	import { dev } from '$app/environment';
 	import { inject } from '@vercel/analytics';
@@ -7,7 +9,7 @@
 	import '../../../app.pcss';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { Button, Dropdown, DropdownItem } from 'flowbite-svelte';
+	import { Button, Dropdown, DropdownItem, Radio, Search } from 'flowbite-svelte';
 	import {
 		UserSolid,
 		UserOutline,
@@ -17,6 +19,7 @@
 		UsersGroupOutline,
 		PieChartSolid,
 		ChartOutline,
+		FilterOutline,
 		BadgeCheckSolid,
 		BadgeCheckOutline
 	} from 'flowbite-svelte-icons';
@@ -27,7 +30,27 @@
 	let activeUrl;
 	$: activeUrl = $page.url.pathname;
 	export let data;
-	const { user } = data;
+	const user = data.body.user;
+
+	// Filter Debitor
+	let debitorData = data.body.debitorData;
+	let chooseDebitor = writable();
+	setContext('Choose', chooseDebitor);
+	const RadioPilihDebitor = (id) => {
+		$chooseDebitor = id;
+	};
+	// for still checked radio in other page
+	let checkedDebitor;
+	// End checked
+	let searchDebitor = '';
+	$: filterDebitors = debitorData.filter((debitor) =>
+		debitor.nama.toLowerCase().includes(searchDebitor.toLowerCase())
+	);
+	function namaDebitor(id) {
+		let obj = debitorData.filter((debitor) => debitor.id === id);
+		return obj[0].nama;
+	}
+	// ------- End Filter Debitor -------------
 	const handleLogout = () => {
 		goto('/logout');
 	};
@@ -75,6 +98,30 @@
 			</div>
 			<div class="flex items-center lg:order-2">
 				{#if user}
+					<Button color="light" class="mr-2 h-fit w-full md:w-fit"
+						>{$chooseDebitor == null ? 'Pilih Debitor' : namaDebitor($chooseDebitor)}<FilterOutline
+							class="ms-2 h-4 w-4 text-gray-900"
+						/></Button
+					>
+					<Dropdown placement="bottom" class="max-h-44 min-h-5 overflow-y-auto px-3 pb-3 text-sm">
+						<div slot="header" class="p-3">
+							<Search size="md" bind:value={searchDebitor} />
+						</div>
+						{#each filterDebitors as { id, nama }}
+							<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
+								<Radio
+									value={id}
+									bind:group={checkedDebitor}
+									on:change={() => RadioPilihDebitor(id)}
+									name="debitor">{nama}</Radio
+								>
+							</li>
+						{/each}
+						<div slot="footer" class="px-3 py-1">
+							<Button size="xs" color="light" on:click={() => ($chooseDebitor = null)}>Reset</Button
+							>
+						</div>
+					</Dropdown>
 					<Button color="light"><p>{user.email.slice(0, user.email.indexOf('@'))}</p></Button>
 					<Dropdown>
 						<div slot="header" class="px-4 py-2">
@@ -139,7 +186,7 @@
 					<span class="ms-3 flex-1 whitespace-nowrap">Debitor</span>
 				</a>
 			</li>
-			{#if data.user.roleId === 1}
+			{#if data.body.user.roleId === 1}
 				<li>
 					<a
 						href={`/users`}

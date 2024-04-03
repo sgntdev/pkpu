@@ -1,15 +1,20 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error, redirect } from '@sveltejs/kit';
 
-export async function load({ locals }) {
+export async function load({ locals, fetch }) {
 	const { user } = locals;
-	if(!user){
+	if (!user) {
 		redirect(303, '/');
-	}else{
+	} else {
 		if (user.roleId === 1 || user.roleId === 2) {
+			const debitorResponse = await fetch('/api/debitor');
+			const debitorResult = await debitorResponse.json();
 			return {
-					user : user
-			}
-		}else{
+				body: {
+					user: user,
+					debitorData: debitorResult.data
+				}
+			};
+		} else {
 			error(404, 'Page Not Found');
 		}
 	}
