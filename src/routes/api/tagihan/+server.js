@@ -22,6 +22,18 @@ export async function GET({ request }) {
 	const tagihan = await prisma.tagihan.findMany({
 		orderBy: {
 			id: 'asc'
+		},
+		include:{
+			Kreditor:{
+				select:{
+					nama:true
+				}
+			},
+			sifatTagihan : {
+				select:{
+					sifat:true
+				}
+			}
 		}
 	});
 	if (!tagihan) {
