@@ -41,33 +41,7 @@ export async function GET({ request }) {
 		status: 200
 	});
 }
-// async function generateUniqueRandomId(length) {
-// 	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-// 	let result = '';
 
-// 	// Generate a unique ID
-// 	while (true) {
-// 		for (let i = 0; i < length; i++) {
-// 			const randomIndex = Math.floor(Math.random() * characters.length);
-// 			result += characters.charAt(randomIndex);
-// 		}
-
-// 		//   Check if the generated ID already exists in the database
-// 		const existingUser = await prisma.users.findUnique({
-// 			where: { id: result }
-// 		});
-
-// 		if (!existingUser) {
-// 			// If the ID is unique, break out of the loop
-// 			break;
-// 		} else {
-// 			// If the ID already exists, reset and try generating a new one
-// 			result = '';
-// 		}
-// 	}
-
-// 	return result;
-// }
 async function generateUniqueCode(length) {
 	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 	let result = '';
@@ -105,7 +79,7 @@ const sendEmail = async (message) => {
 	}
 };
 export async function POST({ request }) {
-	const email = await request.json();
+	const { debitorUid, email } = await request.json();
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	const validation = {
 		success: false,
@@ -116,10 +90,19 @@ export async function POST({ request }) {
 		const expirationDate = new Date();
 		expirationDate.setDate(expirationDate.getDate() + 1);
 
+		if (!debitorUid) {
+			validation.errors.push({ field: 'debitorUid', message: 'Kode debitor tidak boleh kosong!' });
+		}
 		if (!email) {
 			validation.errors.push({ field: 'email', message: 'Email tidak boleh kosong!' });
 		} else if (!emailRegex.test(email)) {
 			validation.errors.push({ field: 'email', message: 'Format email tidak valid!' });
+		}
+		let debitor = await prisma.debitor.findUnique({
+			where: { uid: debitorUid }
+		});
+		if (!debitor) {
+			validation.errors.push({ field: 'debitorUid', message: 'Kode debitor tidak valid!' });
 		}
 		if (validation?.errors.length > 0) {
 			return new Response(JSON.stringify(validation), { status: 400 });
@@ -153,7 +136,7 @@ export async function POST({ request }) {
 			}
 		}
 
-		const link = `${SITE_URL}/verify/${uniqueCode}`;
+		const link = `${SITE_URL}/verify/${debitorUid}/${uniqueCode}`;
 		let html = `<h2>Hi!</h2><p>Click the following link to access the form: <a href="${link}">${link}</a></p>`;
 
 		const message = {
