@@ -113,7 +113,8 @@ async function main() {
 		create : {
 			nama : 'GlobalTech Solutions',
 			tglSidang : '20 April 2024',
-			tempatSidang : 'Bandung, Indonesia'
+			tempatSidang : 'Bandung, Indonesia',
+			uid: 'X8JK9'
 		}
 	})
 	const debitor2 = await prisma.debitor.upsert({
@@ -122,7 +123,8 @@ async function main() {
 		create : {
 			nama : 'MegaTrade Holdings',
 			tglSidang : '25 Mei 2024',
-			tempatSidang : 'Medan, Indonesia'
+			tempatSidang : 'Medan, Indonesia',
+			uid:'KLSO8'
 		}
 	})
 	const debitor3 = await prisma.debitor.upsert({
@@ -131,7 +133,8 @@ async function main() {
 		create : {
 			nama : 'Infinite Innovations',
 			tglSidang : '30 Juni 2024',
-			tempatSidang : 'Yogyakarta, Indonesia'
+			tempatSidang : 'Yogyakarta, Indonesia',
+			uid:'Y7K2E'
 		}
 	})
 	console.log({ konkuren, preferent, separatis, asisten, pengurus, kreditor, debitor1, debitor2, debitor3 });

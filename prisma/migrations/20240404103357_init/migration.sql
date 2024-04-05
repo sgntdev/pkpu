@@ -32,6 +32,7 @@ CREATE TABLE "Debitor" (
     "nama" TEXT NOT NULL,
     "tglSidang" TEXT NOT NULL,
     "tempatSidang" TEXT NOT NULL,
+    "uid" TEXT NOT NULL,
 
     CONSTRAINT "Debitor_pkey" PRIMARY KEY ("id")
 );
@@ -115,6 +116,9 @@ CREATE UNIQUE INDEX "UserVerify_email_key" ON "UserVerify"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserVerify_uniqueCode_key" ON "UserVerify"("uniqueCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Debitor_uid_key" ON "Debitor"("uid");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Verified_uniqueCode_key" ON "Verified"("uniqueCode");

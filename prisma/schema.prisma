@@ -36,6 +36,7 @@ model Debitor {
   nama         String
   tglSidang    String
   tempatSidang String
+  uid          String    @unique
   Tagihan      Tagihan[]
 }
 
