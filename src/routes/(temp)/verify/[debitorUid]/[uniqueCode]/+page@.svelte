@@ -1,5 +1,4 @@
 <script>
-	/** @type {import('./$types').PageData} */
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	export let data;
@@ -9,13 +8,13 @@
 			if(roleId === 1 || roleId === 2){
 				goto('/dashboard', {
 					state: {
-						user : user
+						user
 					}
 				});
 			}else{
-				goto('/', {
+				goto(`/tagihan`, {
 					state: {
-						user : user
+						user
 					}
 				});
 			}

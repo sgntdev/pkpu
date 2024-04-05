@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { prisma } from '$lib/prisma.server.js';
 export async function load({ params, cookies, fetch }) {
-	const uniqueCode = params.uniquecode;
+	const { uniqueCode } = params;
 	const userverif = await prisma.UserVerify.findUnique({
 		where: { uniqueCode },
 		select: {
@@ -14,7 +14,7 @@ export async function load({ params, cookies, fetch }) {
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify(uniqueCode)
+			body: JSON.stringify(params)
 		});
 		if (!res.ok) {
 			if (res.status === 400) {
@@ -34,7 +34,7 @@ export async function load({ params, cookies, fetch }) {
 			}
 		});
 		if (result.authToken) {
-			cookies.delete('AuthorizationToken', { path: '/' });
+			await cookies.delete('AuthorizationToken', { path: '/' });
 			cookies.set('AuthorizationToken', result.authToken, {
 				path: '/',
 				httpOnly: true,
