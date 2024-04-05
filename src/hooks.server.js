@@ -1,7 +1,7 @@
 import { SECRET_INGREDIENT } from '$env/static/private';
 import { redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
-import { prisma } from '$lib/prisma.server.js';
+
 export async function handle({ event, resolve }) {
 	const token = event.cookies.get('AuthorizationToken');
 	event.locals.token = token ?? '';
@@ -11,16 +11,14 @@ export async function handle({ event, resolve }) {
 			try {
 				console.log('hooks server', event.url.pathname);
 				let decoded = jwt.verify(token, SECRET_INGREDIENT);
-				const currentUser = await prisma.User.findUnique({
-					where: { email: decoded.user.email }
-				});
 				if (new Date(decoded.user.expirationDate) < new Date()) {
 					redirect(303, '/');
 				} else {
 					event.locals.user = {
-						id : currentUser.id,
-						email: currentUser.email,
-						roleId: currentUser.roleId
+						id: decoded.user.id,
+						email: decoded.user.email,
+						roleId: decoded.user.roleId,
+						debitorUid : decoded.user.debitorUid
 					};
 				}
 			} catch (error) {
