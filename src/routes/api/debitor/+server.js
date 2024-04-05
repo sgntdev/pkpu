@@ -8,6 +8,34 @@ export async function GET() {
 	});
 }
 
+async function generateUniqueRandomId(length) {
+	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	let result = '';
+
+	// Generate a unique ID
+	while (true) {
+		for (let i = 0; i < length; i++) {
+			const randomIndex = Math.floor(Math.random() * characters.length);
+			result += characters.charAt(randomIndex);
+		}
+
+		//   Check if the generated ID already exists in the database
+		const existingUser = await prisma.debitor.findUnique({
+			where: { uid: result }
+		});
+
+		if (!existingUser) {
+			// If the ID is unique, break out of the loop
+			break;
+		} else {
+			// If the ID already exists, reset and try generating a new one
+			result = '';
+		}
+	}
+
+	return result;
+}
+
 export async function POST({ request }) {
 	let token = request.headers.get('authorization');
 	if (token && token.startsWith('Bearer ')) {
@@ -24,7 +52,7 @@ export async function POST({ request }) {
 		success: false,
 		errors: []
 	};
-
+	let debitorUid = null;
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
 		const currentUser = await prisma.User.findUnique({
@@ -50,11 +78,13 @@ export async function POST({ request }) {
 		if (validation?.errors.length > 0) {
 			return new Response(JSON.stringify(validation), { status: 400 });
 		}
+		debitorUid = await generateUniqueRandomId(5);
 		const debitor = await prisma.debitor.create({
 			data: {
 				nama,
 				tglSidang,
-				tempatSidang
+				tempatSidang,
+				uid: debitorUid
 			}
 		});
 
