@@ -9,70 +9,51 @@
 		BreadcrumbItem,
 		Toast,
 		Fileupload,
-		Helper
+		Helper,
 	} from 'flowbite-svelte';
 	import {
 		PlusSolid,
 		MinusSolid,
 		CloseSolid,
 		XCircleSolid,
-		CheckCircleSolid,
-		ExclamationCircleOutline
+		CheckCircleSolid
 	} from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
 	import { fly } from 'svelte/transition';
 	export let data;
-	const { token, debitorId, userId, sifatTagihanData, tipeDokumenData, tagihan } = data.body;
+	const { token, debitorId, userId, sifatTagihanData, tipeDokumenData } = data.body;
 	let kreditorData = data.body.kreditorData;
 	let buktiTagihan = [
 		{
 			tipeDokumenId: '',
-			dokumen: '',
-			dokumen_url: '',
-			nama_dokumen: '',
-			id: ''
+			dokumen: ''
 		}
 	];
 	let formModal = false;
 	let editModal = false;
-	let deleteModal = false;
 	let editTargetId;
 	let showToast = false;
 	let toastData;
 	let loading = false;
 	let submitted = false;
 	let form;
-	let selectedKreditor = tagihan.Kreditor.id;
+	let selectedKreditor = '';
 	let searchKreditor = '';
-
-	const formatPrice = (price) => {
-		if (typeof price !== 'string') {
-			price = price.toString(); // Convert to string if it's not already
-		}
-		const digits = price.replace(/,/g, '');
-		const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-		return formatted;
-	};
-
-	function unformatPrice(price) {
-		const formatted = price.replace(/,/g, '');
-		return formatted;
-	}
+	let value = [];
 
 	$: filteredKreditors = kreditorData.filter((kreditor) =>
 		kreditor.nama.toLowerCase().includes(searchKreditor.toLowerCase())
 	);
-
 	const handleSelectKreditor = (kreditorId) => {
 		selectedKreditor = kreditorId;
 		searchKreditor = '';
 	};
 	$: selectedKreditorData = kreditorData.find((kreditor) => kreditor.id === selectedKreditor);
 	let jumlahTagihan = {
-		pertanggal: tagihan.pertanggal,
-		hutangPokok: formatPrice(tagihan.hutangPokok),
-		bunga: formatPrice(tagihan.bunga),
-		denda: formatPrice(tagihan.denda),
+		pertanggal: '',
+		hutangPokok: '',
+		bunga: '',
+		denda: '',
 		totalTagihan: ''
 	};
 	$: jumlahTagihan.totalTagihan = formatPrice(
@@ -81,105 +62,25 @@
 			parseFloat(unformatPrice(jumlahTagihan.bunga) || 0)
 	);
 	let sifatTagihan = {
-		id: tagihan.sifatTagihanId,
-		jumlahTagihan: tagihan.jumlahTagihan
+		id: '',
+		jumlahTagihan: ''
 	};
-	$: sifatTagihan.id !== tagihan.sifatTagihanId &&
-		(buktiTagihan = [
-			{
-				tipeDokumenId: '',
-				dokumen: '',
-				dokumen_url: '',
-				nama_dokumen: '',
-				id: ''
-			}
-		]);
 	let kurunTunggakan = {
-		mulaiTertunggak: tagihan.mulaiTertunggak,
-		jumlahHari: tagihan.jumlahHari
+		mulaiTertunggak: '',
+		jumlahHari: ''
 	};
 
 	//inputan dinamis
 	const handleAddTagihan = () => {
-		buktiTagihan = [
-			...buktiTagihan,
-			{ tipeDokumenId: '', dokumen: null, dokumen_url: '', nama_dokumen: '', id: '' }
-		];
+		buktiTagihan = [...buktiTagihan, { tipeDokumenId: '', dokumen: null }];
 	};
 
-	if (tagihan.DokumenTagihan.length > 0) {
-		buktiTagihan = tagihan.DokumenTagihan.map((data) => ({
-			tipeDokumenId: data.tipeDokumenId,
-			dokumen: '',
-			dokumen_url: data.dokumen_url,
-			nama_dokumen: data.nama_dokumen,
-			id: data.id
-		}));
-	}
+	const handleRemoveTagihan = (index) => {
+		const list = [...buktiTagihan];
+		list.splice(index, 1);
+		buktiTagihan = list;
+	};
 
-	let deleteTargetId;
-	let deleteTarget;
-	let buktiTagihanDokumenId;
-	let loadingBukti = false;
-	const handleRemoveTagihan = (index, buktiDokumenId, buktiDokumenNama) => {
-		if (buktiTagihan[index].dokumen_url !== '') {
-			deleteModal = true;
-			deleteTargetId = buktiDokumenId;
-			deleteTarget = buktiDokumenNama;
-			buktiTagihanDokumenId = index;
-		} else {
-			const list = [...buktiTagihan];
-			list.splice(index, 1);
-			buktiTagihan = list;
-		}
-	};
-	const handleDelete = async () => {
-		loadingBukti = true;
-		try {
-			const response = await fetch(`/api/dokumentagihan/${deleteTargetId}`, {
-				method: 'DELETE',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			});
-			const result = await response.json();
-			if (result.success) {
-				const list = [...buktiTagihan];
-				list.splice(buktiTagihanDokumenId, 1);
-				buktiTagihan = list;
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
-			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
-			}
-		} catch (error) {
-			console.error(error);
-		} finally {
-			deleteTargetId = null;
-			deleteTarget = null;
-			deleteModal = false;
-			loadingBukti = false;
-		}
-	};
-	$: if (!buktiTagihan.length > 0) {
-		handleAddTagihan();
-	}
 	//add kreditor form
 	let kreditor = {
 		userId,
@@ -219,7 +120,7 @@
 					noTelp: '',
 					alamat: ''
 				};
-				const updatedDataResponse = await fetch(`/api/kreditor`, {
+				const updatedDataResponse = await fetch(`/api/kreditor?userId=${userId}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -227,8 +128,7 @@
 					}
 				});
 				const updatedData = await updatedDataResponse.json();
-				const formattedData = updatedData.filter((data) => data.userId === userId);
-				kreditorData = formattedData;
+				kreditorData = updatedData.data;
 			} else {
 				showToast = true;
 				toastData = {
@@ -277,7 +177,7 @@
 					showToast = false;
 					clearToastData();
 				}, 2000);
-				const updatedDataResponse = await fetch(`/api/kreditor`, {
+				const updatedDataResponse = await fetch(`/api/kreditor?userId=${userId}`, {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -285,8 +185,7 @@
 					}
 				});
 				const updatedData = await updatedDataResponse.json();
-				const formattedData = updatedData.filter((data) => data.userId === userId);
-				kreditorData = formattedData;
+				kreditorData = updatedData.data;
 			} else {
 				showToast = true;
 				toastData = {
@@ -331,25 +230,25 @@
 		loading = true;
 		submitted = true;
 		const formData = new FormData(event.currentTarget);
-		buktiTagihan.forEach((item) => {
-			formData.append(`dokumen_url`, item.dokumen_url);
-			formData.append(`oldDokumenId`, item.id);
+		value.forEach((value) => {
+			formData.append(`dokumen`, value);
 		});
 		formData.append('kreditorId', selectedKreditor);
 		formData.append('debitorId', debitorId);
 		formData.append('userId', userId);
 		try {
-			const response = await fetch(`/api/tagihan/${tagihan.id}`, {
-				method: 'PUT',
+			const response = await fetch('/api/tagihan', {
+				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${token}`
 				},
 				body: formData
 			});
 			const result = await response.json();
+			console.log(result)
 			if (result.success) {
-				goto('../', {
-					replaceState: true,
+				goto('/tagihan', {
+					replaceState: false,
 					state: {
 						statusSuccess: true,
 						message: result.message
@@ -365,35 +264,48 @@
 					};
 					showToast = true;
 					setTimeout(() => {
-						showToast = false;
-						clearToastData();
-					}, 2000);
+							showToast = false;
+							clearToastData();
+						}, 2000);
+					}
 				}
+			} catch (err) {
+				console.error('client', err);
+			} finally {
+				loading = false;
 			}
-		} catch (err) {
-			console.error('client', err);
-		} finally {
-			loading = false;
+		};
+
+	const formatPrice = (price) => {
+		if (typeof price !== 'string') {
+			price = price.toString(); // Convert to string if it's not already
 		}
+		const digits = price.replace(/,/g, '');
+		const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+		return formatted;
 	};
 
+	function unformatPrice(price) {
+		const formatted = price.replace(/,/g, '');
+		return formatted;
+	}
 	const clearToastData = () => {
 		toastData = null;
 	};
 
 	$: {
-		if (sifatTagihan.id !== '') {
-			submitted = false;
-		}
-		if (buktiTagihan.tipeDokumenId !== '') {
-			submitted = false;
-		}
-	}
+    if (sifatTagihan.id !== '') {
+        submitted = false;
+    }
+	if (buktiTagihan.tipeDokumenId !== '') {
+        submitted = false;
+    }
+}
 </script>
 
 {#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-15 fixed end-5 z-50">
-		<Toast color={toastData?.success ? 'green' : 'red'}>
+	<div transition:fly={{ x: 200 }} class="top-15 fixed z-50 end-5">
+		<Toast color={toastData?.success ? 'green' : 'red'} >
 			<svelte:fragment slot="icon">
 				{#if toastData?.success}
 					<CheckCircleSolid class="h-5 w-5" />
@@ -407,15 +319,15 @@
 		</Toast>
 	</div>
 {/if}
+
 <Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
-	<BreadcrumbItem href="/" home>List Debitor</BreadcrumbItem>
-	<BreadcrumbItem href="../">List Tagihan</BreadcrumbItem>
-	<BreadcrumbItem>Edit Tagihan</BreadcrumbItem>
+	<BreadcrumbItem href="/tagihan" home>List Tagihan</BreadcrumbItem>
+	<BreadcrumbItem>Form Tagihan</BreadcrumbItem>
 </Breadcrumb>
 <h2
 	class="mb-4 text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight"
 >
-	Edit Tagihan
+	Form Tagihan
 </h2>
 <form on:submit|preventDefault={handleSubmit} enctype="multipart/form-data">
 	<div class="space-y-4">
@@ -567,7 +479,6 @@
 							datepicker-autohide
 							name="pertanggal"
 							type="text"
-							bind:value={jumlahTagihan.pertanggal}
 							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'pertanggal') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 							placeholder="Pilih Tanggal"
 						/>
@@ -778,9 +689,9 @@
 							datepicker-autohide
 							type="text"
 							name="mulaiTertunggak"
-							bind:value={kurunTunggakan.mulaiTertunggak}
 							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'mulaiTertunggak') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 							placeholder="Pilih Tanggal"
+							
 						/>
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'mulaiTertunggak')}
@@ -815,93 +726,71 @@
 			<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">
 				Daftar Bukti Tagihan (Foto Copy)
 			</h3>
-			{#if loadingBukti}
-				<div class="flex justify-center py-10">
-					<Spinner color="blue" size={8} />
-				</div>
-			{:else}
-				<div class="space-y-4">
-					{#each buktiTagihan as bukti, index (bukti)}
-						<div>
-							<label
-								for={`tipeDokumenId_${index}`}
-								class={`mb-2 block text-sm font-medium ${submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-								>Tipe Dokumen</label
+			<div class="space-y-4">
+				{#each buktiTagihan as bukti, index (bukti)}
+					<div>
+						<label
+							for="tipeDokumenId"
+							class={`mb-2 block text-sm font-medium ${submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+							>Tipe Dokumen</label
+						>
+						<div class="flex flex-row gap-4">
+							<Select
+								class={`${submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 disabled:text-red-900 dark:border-red-500 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-primary-500 focus:ring-primary-500 disabled:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500'} rounded-lg border`}
+								bind:value={bukti.tipeDokumenId}
+								name="tipeDokumenId"
+								placeholder="Pilih Sifat/Golongan Tagihan Terlebih Dahulu"
+								disabled={sifatTagihan.id === ''}
 							>
-							<div class="flex flex-row gap-4">
-								<Select
-									class={`${submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 disabled:text-red-900 dark:border-red-500 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-primary-500 focus:ring-primary-500 disabled:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500'} rounded-lg border`}
-									bind:value={bukti.tipeDokumenId}
-									name="tipeDokumenId"
-									id={`tipeDokumenId_${index}`}
-									placeholder="Pilih Sifat/Golongan Tagihan Terlebih Dahulu"
-									disabled={sifatTagihan.id === ''}
+								{#each tipeDokumenData as { id, tipe, sifatTagihanId }}
+									{#if sifatTagihanId === sifatTagihan.id}
+										<option value={id}>{tipe}</option>
+									{/if}
+								{/each}
+							</Select>
+							{#if buktiTagihan.length !== 1}
+								<Button color="red" on:click={() => handleRemoveTagihan(index)}
+									><MinusSolid class="h-5 w-5" /></Button
 								>
-									{#each tipeDokumenData as { id, tipe, sifatTagihanId }}
-										{#if sifatTagihanId === sifatTagihan.id}
-											<option value={id}>{tipe}</option>
-										{/if}
-									{/each}
-								</Select>
-								{#if buktiTagihan[index].dokumen_url}
-									<Button
-										type="button"
-										color="red"
-										on:click={() => handleRemoveTagihan(index, bukti.id, bukti.nama_dokumen)}
-										><MinusSolid class="h-5 w-5" /></Button
-									>
-								{:else if buktiTagihan.length !== 1}
-									<Button
-										type="button"
-										color="red"
-										on:click={() => handleRemoveTagihan(index, bukti.id, bukti.nama_dokumen)}
-										><MinusSolid class="h-5 w-5" /></Button
-									>
-								{/if}
-								{#if buktiTagihan.length - 1 === index}
-									<Button on:click={() => handleAddTagihan()}><PlusSolid class="h-5 w-5" /></Button>
-								{/if}
-							</div>
-							{#if submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === ''}
-								<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-									Tipe dokumen tidak boleh kosong!
-								</p>
+							{/if}
+							{#if buktiTagihan.length - 1 === index}
+								<Button on:click={() => handleAddTagihan()}><PlusSolid class="h-5 w-5" /></Button>
 							{/if}
 						</div>
-						<div>
-							<label
-								for={`dokumen_${index}`}
-								class={`mb-2 block text-sm font-medium ${!buktiTagihan[index].dokumen_url && submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-								>Bukti Dokumen : {buktiTagihan[index].dokumen_url ? bukti?.nama_dokumen : ''}</label
-							>
-							{#if !buktiTagihan[index].dokumen_url}
-								<Fileupload
-									id={`dokumen_${index}`}
-									class="mb-2"
-									accept=".pdf,"
-									name="dokumen"
-									bind:value={bukti.dokumen}
-									disabled={bukti.tipeDokumenId === ''}
-									color={(submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === '') ||
-									(submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === null)
-										? 'red'
-										: ''}
-								/>
-								<Helper>PDF (MAX. 2 MB).</Helper>
-								{#if submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === ''}
-									<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-										Dokumen tidak boleh kosong!
-									</p>
-								{:else if form?.errors?.find((error) => error.field === `dokumen.${index}`)}
-									<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-										{form?.errors?.find((error) => error.field === `dokumen.${index}`).message}
-									</p>
-								{/if}
-							{/if}
-						</div>
-					{/each}
-				</div>
-			{/if}
+						{#if submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === ''}
+							<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+								Tipe dokumen tidak boleh kosong!
+							</p>
+						{/if}
+					</div>
+					<div>
+						<label
+							for="dokumen"
+							class={`mb-2 block text-sm font-medium ${submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+							>Bukti Dokumen</label
+						>
+						<Fileupload
+							id="with_helper"
+							class="mb-2"
+							accept=".pdf,"
+							bind:files={bukti.dokumen}
+							name="dokumen"
+							disabled={bukti.tipeDokumenId === ''}
+							color={submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === '' ? 'red' : ''}
+						/>
+						<Helper>PDF (MAX. 2 MB).</Helper>
+						{#if submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === ''}
+							<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+								Dokumen tidak boleh kosong!
+							</p>
+						{:else if form?.errors?.find((error) => error.field === `dokumen.${index}`)}
+							<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+								{form?.errors?.find((error) => error.field === `dokumen.${index}`).message}
+							</p>
+						{/if}
+					</div>
+				{/each}
+			</div>
 		</Card>
 	</div>
 	<div class="mt-4 flex justify-end">
@@ -1096,15 +985,4 @@
 			{/if}
 		</Button>
 	</form>
-</Modal>
-<!-- Delete Bukti Tagihan Dokumen Modal -->
-<Modal bind:open={deleteModal} size="xs" autoclose>
-	<div class="text-center">
-		<ExclamationCircleOutline class="mx-auto mb-4 h-12 w-12 text-gray-400 dark:text-gray-200" />
-		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-			Anda yakin akan menghapus {deleteTarget}?
-		</h3>
-		<Button color="red" class="me-2" on:click={handleDelete}>Ya, Saya yakin</Button>
-		<Button color="alternative">Tidak, batal</Button>
-	</div>
 </Modal>

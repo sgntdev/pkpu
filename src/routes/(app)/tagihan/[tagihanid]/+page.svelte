@@ -15,8 +15,7 @@
 
 <div class="space-y-4">
 	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
-		<BreadcrumbItem href="/" home>List Debitor</BreadcrumbItem>
-		<BreadcrumbItem href="./">List Tagihan</BreadcrumbItem>
+		<BreadcrumbItem href="/tagihan" home>List Tagihan</BreadcrumbItem>
 		<BreadcrumbItem>Tagihan</BreadcrumbItem>
 	</Breadcrumb>
 	<div

@@ -1,21 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
-export async function load({ locals, fetch, params }) {
+export async function load({ locals, fetch }) {
 	const { token, user } = locals;
 	if (!user) {
 		redirect(301, '/');
 	} else {
-		const debitorRes = await fetch('/api/debitor');
-		const debitors = await debitorRes.json();
-
-		const modifiedDebitors = debitors.data.map((data) => {
-			const link = data.nama.replace(/\s/g, '-').toLowerCase();
-			return {
-				...data,
-				link
-			};
-		});
-
-		const debitor = modifiedDebitors.find((data) => data.link === params.slug);
+		const res = await fetch(`/api/debitor/uid/${user.debitorUid}`);
+		const debitor = await res.json();
 		if (!debitor) {
 			error(404, 'Page Not Found');
 		} else {
@@ -50,7 +40,7 @@ export async function load({ locals, fetch, params }) {
 				status: 200,
 				body: {
 					token,
-					debitorId : debitor.id,
+					debitorId: debitor.data.id,
 					kreditorData: kreditorResult.data,
 					userId: user.id,
 					sifatTagihanData: sifatTagihanResult.data,

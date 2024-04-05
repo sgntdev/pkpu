@@ -18,7 +18,7 @@
 	import { CheckCircleSolid } from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	const { link, tagihan } = data?.body;
+	const { debitor, tagihan } = data?.body;
 	let showToast = false;
 	let loading = false
 	onMount(async () => {
@@ -52,15 +52,14 @@
 {/if}
 
 <Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
-	<BreadcrumbItem href="/" home>List Debitor</BreadcrumbItem>
-	<BreadcrumbItem>List Tagihan</BreadcrumbItem>
+	<BreadcrumbItem href="/" home>List Tagihan</BreadcrumbItem>
 </Breadcrumb>
 <div class="space-y-4">
 	<div class="min-h-max overflow-hidden rounded-lg border border-gray-200 p-8 dark:border-gray-700">
 		<div class="mb-4 flex flex-col items-start justify-between sm:mb-0 md:flex-row">
 			<div class="mb-2 md:mb-5">
 				<p class="text-left text-lg font-semibold text-gray-900 dark:bg-gray-800 dark:text-white">
-					List Tagihan
+					List Tagihan {debitor.nama}
 				</p>
 				<p class="mt-1 text-sm font-light text-gray-500 dark:text-gray-400">
 					Kelola semua tagihan anda yang ada atau tambahkan tagihan baru.
@@ -68,7 +67,7 @@
 			</div>
 			<a
 				data-sveltekit-reload
-				href="./tagihan/create"
+				href="tagihan/create"
 				class="flex h-fit w-full items-center justify-center rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 sm:w-fit"
 			>
 				Tambah tagihan
@@ -130,7 +129,7 @@
 							</TableBodyCell>
 							<TableBodyCell>
 								<a
-									href={`/${link}/tagihan/${data.id}`}
+									href={`/tagihan/${data.id}`}
 									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
 									>Lihat Dokumen</a
 								>
@@ -138,7 +137,7 @@
 							<TableBodyCell
 								><a
 									data-sveltekit-reload
-									href={`/${link}/tagihan/edit/${data.id}`}
+									href={`/tagihan/edit/${data.id}`}
 									class="font-medium text-primary-600 hover:underline dark:text-primary-500">Edit</a
 								></TableBodyCell
 							>
