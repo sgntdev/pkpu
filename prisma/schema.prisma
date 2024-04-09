@@ -36,7 +36,7 @@ model Debitor {
   nama         String
   tglSidang    String
   tempatSidang String
-  uid          String    @unique
+  uid          String    @unique @db.VarChar(5)
   Tagihan      Tagihan[]
 }
 
@@ -100,8 +100,8 @@ model DokumenTagihan {
 model Verified {
   id             Int      @id @default(autoincrement())
   password       String
-  uniqueCode     String   @unique @db.VarChar(25)
-  expirationDate DateTime
+  uniqueCode     String?   @unique @db.VarChar(25)
+  expirationDate DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

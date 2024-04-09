@@ -32,7 +32,7 @@ CREATE TABLE "Debitor" (
     "nama" TEXT NOT NULL,
     "tglSidang" TEXT NOT NULL,
     "tempatSidang" TEXT NOT NULL,
-    "uid" TEXT NOT NULL,
+    "uid" VARCHAR(5) NOT NULL,
 
     CONSTRAINT "Debitor_pkey" PRIMARY KEY ("id")
 );
@@ -100,8 +100,8 @@ CREATE TABLE "DokumenTagihan" (
 CREATE TABLE "Verified" (
     "id" SERIAL NOT NULL,
     "password" TEXT NOT NULL,
-    "uniqueCode" VARCHAR(25) NOT NULL,
-    "expirationDate" TIMESTAMP(3) NOT NULL,
+    "uniqueCode" VARCHAR(25),
+    "expirationDate" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
