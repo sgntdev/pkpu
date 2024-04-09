@@ -107,6 +107,7 @@
 		toastData = null;
 	};
 	const handleResetPass = async () => {
+		loading = true
 		try{
 			const response = await fetch('/api/resetpassword', {
 				method: 'POST',
@@ -140,6 +141,8 @@
 			}
 		}catch(error){
 			console.error(error);
+		} finally {
+			loading = false;
 		}
 	};
 </script>

@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 
 export async function load({ locals, fetch }) {
 	const {user, token} = locals

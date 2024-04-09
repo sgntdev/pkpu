@@ -13,11 +13,11 @@ export async function load({ locals, fetch }) {
 					Authorization: `Bearer ${token}`
 				}
 			});
-			const data = await res.json();
+			const result = await res.json();
 			return {
 				status: 200,
 				body: {
-					verified: data,
+					verified: result.data,
 					token,
 					email : user.email
 				}
