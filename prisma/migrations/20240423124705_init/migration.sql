@@ -63,6 +63,9 @@ CREATE TABLE "Tagihan" (
     "jumlahTagihan" TEXT NOT NULL,
     "mulaiTertunggak" TEXT NOT NULL,
     "jumlahHari" TEXT NOT NULL,
+    "totalVoters" INTEGER NOT NULL DEFAULT 0,
+    "verifiedVote" INTEGER NOT NULL DEFAULT 0,
+    "objectionVote" INTEGER NOT NULL DEFAULT 0,
     "status" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "Tagihan_pkey" PRIMARY KEY ("id")
@@ -108,6 +111,16 @@ CREATE TABLE "Verified" (
     CONSTRAINT "Verified_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "TagihanVote" (
+    "id" SERIAL NOT NULL,
+    "tagihanId" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "vote" INTEGER NOT NULL,
+
+    CONSTRAINT "TagihanVote_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -122,6 +135,9 @@ CREATE UNIQUE INDEX "Debitor_uid_key" ON "Debitor"("uid");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Verified_uniqueCode_key" ON "Verified"("uniqueCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "TagihanVote_userId_tagihanId_key" ON "TagihanVote"("userId", "tagihanId");
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -149,3 +165,9 @@ ALTER TABLE "DokumenTagihan" ADD CONSTRAINT "DokumenTagihan_tagihanId_fkey" FORE
 
 -- AddForeignKey
 ALTER TABLE "DokumenTagihan" ADD CONSTRAINT "DokumenTagihan_tipeDokumenId_fkey" FOREIGN KEY ("tipeDokumenId") REFERENCES "TipeDokumen"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TagihanVote" ADD CONSTRAINT "TagihanVote_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TagihanVote" ADD CONSTRAINT "TagihanVote_tagihanId_fkey" FOREIGN KEY ("tagihanId") REFERENCES "Tagihan"("id") ON DELETE CASCADE ON UPDATE CASCADE;

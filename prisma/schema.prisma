@@ -9,14 +9,15 @@ datasource db {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  email     String     @unique
-  roleId    Int        @default(3)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  Role      Role       @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  Kreditor  Kreditor[]
-  Tagihan   Tagihan[]
+  id          Int           @id @default(autoincrement())
+  email       String        @unique
+  roleId      Int           @default(3)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Role        Role          @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Kreditor    Kreditor[]
+  Tagihan     Tagihan[]
+  TagihanVote TagihanVote[]
 }
 
 model UserVerify {
@@ -64,12 +65,16 @@ model Tagihan {
   jumlahTagihan   String
   mulaiTertunggak String
   jumlahHari      String
+  totalVoters     Int              @default(0)
+  verifiedVote    Int              @default(0)
+  objectionVote   Int              @default(0)
   status          Int              @default(0)
   DokumenTagihan  DokumenTagihan[]
   Debitor         Debitor          @relation(fields: [debitorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   User            User             @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   Kreditor        Kreditor         @relation(fields: [kreditorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  sifatTagihan    SifatTagihan     @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  SifatTagihan    SifatTagihan     @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  TagihanVote     TagihanVote[]
 }
 
 model SifatTagihan {
@@ -98,10 +103,21 @@ model DokumenTagihan {
 }
 
 model Verified {
-  id             Int      @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   password       String
   uniqueCode     String?   @unique @db.VarChar(25)
   expirationDate DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model TagihanVote {
+  id        Int     @id @default(autoincrement())
+  tagihanId Int
+  userId    Int
+  vote      Int
+  User      User    @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Tagihan   Tagihan @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@unique([userId, tagihanId])
 }
