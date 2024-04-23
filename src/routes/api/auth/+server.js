@@ -15,6 +15,7 @@ export async function POST({ request }) {
 		if (new Date(user.expirationDate) < new Date()) {
 			return new Response(JSON.stringify('Expired Unique Code'), { status: 400 });
 		} else {
+			let dataUser
 			// Check if user already exists before creating a new one
 			const existingUser = await prisma.User.findUnique({
 				where: { email: user.email },
@@ -24,18 +25,21 @@ export async function POST({ request }) {
 					roleId: true
 				}
 			});
+			dataUser = existingUser
 			try {
 				if (!existingUser) {
-					await prisma.User.create({
+					const newUser = await prisma.User.create({
 						data: {
 							email: user.email
 						}
 					});
+					dataUser = newUser
 				}
 			} catch (error) {
 				console.error('Error creating user:', error);
 			}
-			let data = { ...existingUser, debitorUid, expirationDate: user.expirationDate };
+			
+			let data = { ...dataUser, debitorUid, expirationDate: user.expirationDate };
 			const authToken = jwt.sign({ user:data }, SECRET_INGREDIENT, { expiresIn: '24h' });
 			return new Response(JSON.stringify({ authToken }));
 		}
