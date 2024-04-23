@@ -15,6 +15,7 @@
 		confirmPassword: ''
 	};
 	let loading = false;
+	let existingData = false;
 	let showToast = false;
 	let toastData;
 	const handleAddPassword = async () => {
@@ -40,6 +41,7 @@
 					clearToastData();
 				}, 2000);
 				verify = {};
+				existingData = true
 			} else {
 				form = result;
 				if (!result.errors) {
@@ -174,7 +176,7 @@
 			<div class="flex min-h-96 items-center justify-center">
 				<Spinner color="blue" size={10} />
 			</div>
-		{:else if verified.length > 0}
+		{:else if existingData || verified.length > 0}
 			<div
 				class="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-md md:mt-0 xl:p-0"
 			>
