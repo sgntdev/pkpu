@@ -29,7 +29,7 @@ export async function GET({ request }) {
 					nama:true
 				}
 			},
-			sifatTagihan : {
+			SifatTagihan : {
 				select:{
 					sifat:true
 				}

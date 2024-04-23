@@ -70,21 +70,29 @@
 									parseFloat(data.denda) + parseFloat(data.hutangPokok) + parseFloat(data.bunga)
 								)}</TableBodyCell
 							>
-							<TableBodyCell>{data.sifatTagihan.sifat}</TableBodyCell>
+							<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
 							<TableBodyCell>{data.jumlahTagihan}</TableBodyCell>
 							<TableBodyCell>{data.mulaiTertunggak}</TableBodyCell>
 							<TableBodyCell>
-								{#if data.status === 0}
-									<Badge color="gray" rounded class="px-2.5 py-0.5">
-										<Indicator color="dark" size="xs" class="me-1" />Pending
-									</Badge>
-								{:else if data.status === 1}
+								{#if data.status === 1}
 									<Badge color="green" rounded class="px-2.5 py-0.5">
 										<Indicator color="green" size="xs" class="me-1" />Verified
 									</Badge>
-								{:else}
+								{:else if data.status === 2}
 									<Badge color="red" rounded class="px-2.5 py-0.5">
 										<Indicator color="red" size="xs" class="me-1" />Objection
+									</Badge>
+								{:else if data.verifiedVote > data.objectionVote}
+									<Badge color="green" rounded class="px-2.5 py-0.5">
+										<Indicator color="green" size="xs" class="me-1" />Pending {data.verifiedVote} / {data.totalVoters}
+									</Badge>
+								{:else if data.objectionVote > data.verifiedVote}
+									<Badge color="red" rounded class="px-2.5 py-0.5">
+										<Indicator color="red" size="xs" class="me-1" />Pending {data.objectionVote} / {data.totalVoters}
+									</Badge>
+								{:else}
+									<Badge color="gray" rounded class="px-2.5 py-0.5">
+										<Indicator color="dark" size="xs" class="me-1" />Pending
 									</Badge>
 								{/if}
 							</TableBodyCell>

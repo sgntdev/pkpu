@@ -207,7 +207,7 @@
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
-							{tagihan.sifatTagihan.sifat}
+							{tagihan.SifatTagihan.sifat}
 						</p>
 					</div>
 				</div>

@@ -109,7 +109,7 @@
 									parseFloat(data.denda) + parseFloat(data.hutangPokok) + parseFloat(data.bunga)
 								)}</TableBodyCell
 							>
-							<TableBodyCell>{data.sifatTagihan.sifat}</TableBodyCell>
+							<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
 							<TableBodyCell>{data.jumlahTagihan}</TableBodyCell>
 							<TableBodyCell>{data.mulaiTertunggak}</TableBodyCell>
 							<TableBodyCell>

@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken';
 
 export async function GET({ params, request }) {
 	let token = request.headers.get('authorization');
+	const url = new URL(request.url);
+	const userId = parseInt(url.searchParams.get('userId'));
 	if (token && token.startsWith('Bearer ')) {
 		token = token.slice(7, token.length);
 	}
@@ -20,10 +22,10 @@ export async function GET({ params, request }) {
 		});
 	}
 	const tagihanId = parseInt(params.tagihanid);
-	const tagihanJoin = await prisma.tagihan.findUnique({
+	const tagihanQuery = {
 		where: { id: tagihanId },
 		include: {
-			sifatTagihan: {
+			SifatTagihan: {
 				select: {
 					sifat: true
 				}
@@ -42,7 +44,13 @@ export async function GET({ params, request }) {
 				}
 			}
 		}
-	});
+	};
+	if (userId) {
+		tagihanQuery.include.TagihanVote = {
+			where: { userId }
+		};
+	}
+	const tagihanJoin = await prisma.tagihan.findUnique(tagihanQuery);
 	if (!tagihanJoin) {
 		return new Response(
 			JSON.stringify({

@@ -29,7 +29,7 @@ export async function GET({ params, request }) {
 		kreditorQuery.include = {
 			Tagihan: {
 				include:{
-					sifatTagihan : {
+					SifatTagihan : {
 						select:{
 							sifat:true
 						}

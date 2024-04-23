@@ -19,7 +19,7 @@
 	import { page } from '$app/stores';
 	const tagihanId = $page.params.tagihanid;
 	export let data;
-	const { token, roleId } = data.body;
+	const { token, roleId, userId } = data.body;
 	let tagihan = data.body.tagihan;
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
@@ -42,12 +42,12 @@
 		loading = true;
 		try {
 			const response = await fetch(`/api/tagihan/${tagihanId}/verify`, {
-				method: 'PUT',
+				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				},
-				body: JSON.stringify(verifyData)
+				body: JSON.stringify({ ...verifyData, userId })
 			});
 			const result = await response.json();
 			if (result.success) {
@@ -127,13 +127,33 @@
 					<span class="me-1 h-2 w-2 rounded-full bg-green-500"></span>
 					Verified
 				</span>
-			{/if}
-			{#if tagihan.status === 2}
+			{:else if tagihan.status === 2}
 				<span
 					class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
 				>
 					<span class="me-1 h-2 w-2 rounded-full bg-red-500"></span>
 					Objection
+				</span>
+			{:else if tagihan.verifiedVote > tagihan.objectionVote}
+				<span
+					class="inline-flex h-max items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+				>
+					<span class="me-1 h-2 w-2 rounded-full bg-green-500"></span>
+					Pending {tagihan.verifiedVote} / {tagihan.totalVoters}
+				</span>
+			{:else if tagihan.objectionVote > tagihan.verifiedVote}
+				<span
+					class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
+				>
+					<span class="me-1 h-2 w-2 rounded-full bg-red-500"></span>
+					Pending {tagihan.objectionVote} / {tagihan.totalVoters}
+				</span>
+			{:else}
+				<span
+					class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+				>
+					<span class="me-1 h-2 w-2 rounded-full bg-gray-900"></span>
+					Pending
 				</span>
 			{/if}
 		</div>
@@ -302,7 +322,7 @@
 					</div>
 					<div class="lg:col-span-5">
 						<p class="text-md font-normal capitalize tracking-tight text-gray-900 dark:text-white">
-							{tagihan.sifatTagihan.sifat}
+							{tagihan.SifatTagihan.sifat}
 						</p>
 					</div>
 				</div>
@@ -392,7 +412,7 @@
 			</div>
 		</div>
 		{#if roleId === 1}
-			{#if tagihan.status === 0}
+			{#if tagihan.TagihanVote.length === 0}
 				<div class="flex justify-end">
 					<Button on:click={() => (verifyModal = true)}>Verify</Button>
 				</div>
@@ -428,7 +448,7 @@
 			>
 				<option value="" selected disabled>Pilih Status Tagihan</option>
 				<option value="1">Verified</option>
-				<option value="2">Objection</option>
+				<option value="0">Objection</option>
 			</select>
 			{#if form?.errors?.find((error) => error.field === 'tagihanStatus')}
 				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
