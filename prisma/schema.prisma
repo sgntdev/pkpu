@@ -75,6 +75,7 @@ model Tagihan {
   Kreditor        Kreditor         @relation(fields: [kreditorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   SifatTagihan    SifatTagihan     @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   TagihanVote     TagihanVote[]
+  tagihanItem     tagihanItem[]
 }
 
 model SifatTagihan {
@@ -82,6 +83,7 @@ model SifatTagihan {
   sifat       String
   Tagihan     Tagihan[]
   TipeDokumen TipeDokumen[]
+  tagihanItem tagihanItem[]
 }
 
 model TipeDokumen {
@@ -118,6 +120,18 @@ model TagihanVote {
   vote      Int
   User      User    @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   Tagihan   Tagihan @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-
+  createdAt      DateTime  @default(now())
   @@unique([userId, tagihanId])
+}
+
+model tagihanItem {
+  id             Int          @id @default(autoincrement())
+  tagihanId      Int
+  sifatTagihanId Int
+  tipe           String
+  amount         String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  SifatTagihan   SifatTagihan @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Tagihan        Tagihan      @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
