@@ -21,7 +21,9 @@
 		ChartOutline,
 		FilterOutline,
 		BadgeCheckSolid,
-		BadgeCheckOutline
+		BadgeCheckOutline,
+		InboxFullOutline,
+		InboxFullSolid
 	} from 'flowbite-svelte-icons';
 	let showSidebar = false;
 	const handleSidebar = () => {
@@ -184,6 +186,19 @@
 						<UsersOutline size="md" class="" />
 					{/if}
 					<span class="ms-3 flex-1 whitespace-nowrap">Debitor</span>
+				</a>
+			</li>
+			<li>
+				<a
+					href={`/tagihandetail`}
+					class={`${activeUrl.startsWith(`/tagihandetail`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
+				>
+					{#if activeUrl.startsWith(`/tagihandetail`)}
+						<InboxFullSolid size="md" class="" />
+					{:else}
+						<InboxFullOutline size="md" class="" />
+					{/if}
+					<span class="ms-3 flex-1 whitespace-nowrap">Tagihan</span>
 				</a>
 			</li>
 			{#if data.body.user.roleId === 1}
