@@ -33,10 +33,15 @@
 	$: activeUrl = $page.url.pathname;
 	export let data;
 	const user = data.body.user;
+	console.log(user);
 
 	// Filter Debitor
 	let debitorData = data.body.debitorData;
-	let chooseDebitor = writable();
+	// Debitor default value from login
+	let dataDebitorLogin = debitorData.filter((debitor) => debitor.uid.includes(user.debitorUid));
+	let idDebitorLogin = dataDebitorLogin[0].id;
+	// --------------------------------
+	let chooseDebitor = writable(idDebitorLogin);
 	setContext('Choose', chooseDebitor);
 	const RadioPilihDebitor = (id) => {
 		$chooseDebitor = id;
