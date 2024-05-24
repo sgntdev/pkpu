@@ -10,99 +10,61 @@
 		BreadcrumbItem,
 		Badge,
 		Indicator,
-		Button
+		Button,
+		Spinner,
+		Toast,
+		Modal
 	} from 'flowbite-svelte';
-	import { slide } from 'svelte/transition';
-	import { PlusSolid, BookmarkOutline } from 'flowbite-svelte-icons';
+	import { goto } from '$app/navigation';
+	import { slide, fly } from 'svelte/transition';
+	import { page } from '$app/stores';
+	import { writable } from 'svelte/store';
+	import { onMount } from 'svelte';
+	import {
+		PlusSolid,
+		ExclamationCircleOutline,
+		ArrowUpDownOutline,
+		MinusSolid,
+		CheckCircleSolid,
+		XCircleSolid
+	} from 'flowbite-svelte-icons';
 	export let data;
+	const { token } = data.body;
 	const { sifatTagihanData } = data.body;
-	const tagihan = [
-		{
-			id: 1,
-			debitorId: 1,
-			userId: 1,
-			kreditorId: 1,
-			pertanggal: '29 January 2024',
-			hutangPokok: '1089000',
-			bunga: '3000000',
-			denda: '4214244',
-			sifatTagihanId: 2,
-			jumlahTagihan: 'Dijamin',
-			mulaiTertunggak: '04 April 2024',
-			jumlahHari: '1234',
-			totalVoters: 0,
-			verifiedVote: 0,
-			objectionVote: 0,
-			status: 0,
-			Kreditor: {
-				nama: 'PT Cahaya Sejahtera'
-			},
-			SifatTagihan: {
-				sifat: 'Preferent'
-			}
-		},
-		{
-			id: 2,
-			debitorId: 1,
-			userId: 1,
-			kreditorId: 1,
-			pertanggal: '29 January 2024',
-			hutangPokok: '1089000',
-			bunga: '13000000',
-			denda: '4214244',
-			sifatTagihanId: 2,
-			jumlahTagihan: 'Dijamin',
-			mulaiTertunggak: '04 April 2024',
-			jumlahHari: '1234',
-			totalVoters: 0,
-			verifiedVote: 0,
-			objectionVote: 0,
-			status: 0,
-			Kreditor: {
-				nama: 'PT Abadi'
-			},
-			SifatTagihan: {
-				sifat: 'Preferent'
-			}
-		}
-	];
-	const dummy = [
-		{
-			id: 1,
-			bunga: '3000000',
-			Kreditor: {
-				nama: 'Bunga'
-			},
-			SifatTagihan: {
-				sifat: 'Preferent'
-			}
-		},
-		{
-			id: 1,
-			bunga: '10000000',
-			Kreditor: {
-				nama: 'Tagihan'
-			},
-			SifatTagihan: {
-				sifat: 'Preferent'
-			}
-		},
-		{
-			id: 1,
-			bunga: '6000000',
-			Kreditor: {
-				nama: 'Denda'
-			},
-			SifatTagihan: {
-				sifat: 'Preferent'
-			}
-		}
-	];
-	// const tagihan = data.body.tagihan;
-	let tagihanInputsByRow = tagihan.map(() => []);
-
+	// let tagihan;
+	const tagihan = writable([]);
+	tagihan.set(data.body.tagihan);
+	let tagihanInputsByRow = $tagihan.map(() => []);
+	let loading = false;
 	let openRow;
-	let details;
+	// Modal Delete
+	let deleteModal = false;
+	let editModal = false;
+	let deleteTargetId;
+	let deleteTargetTagihanId;
+	let showToast = false;
+	let toastData;
+
+	//Edit
+	let dataEdit = {
+		sifatTagihanId: '',
+		tipe: '',
+		amount: ''
+	};
+
+	onMount(() => {
+		if ($page.state.statusSuccess) {
+			showToast = true;
+			toastData = {
+				success: true,
+				message: $page.state.message
+			};
+			setTimeout(() => {
+				showToast = false;
+				clearToastData();
+			}, 2000);
+		}
+	});
 
 	const toggleRow = (i) => {
 		openRow = openRow === i ? null : i;
@@ -116,11 +78,10 @@
 		const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 		return formatted;
 	};
-
-	function tambahInput(index) {
+	function tambahInput(index, id) {
 		tagihanInputsByRow[index] = [
 			...tagihanInputsByRow[index],
-			{ nama: '', amount: 0, sifatTagihan: '' }
+			{ tagihanId: id, tipe: '', amount: 0, sifatTagihanId: '' }
 		];
 	}
 
@@ -134,10 +95,205 @@
 		tagihanInputsByRow[rowIndex][TagihanDetailIndex].amount = event.target.value;
 	}
 
-	function submitForm(rowIndex) {
-		console.log('Tagihan Detail yang disubmit:', tagihanInputsByRow[rowIndex]);
-	}
+	const submitForm = async (rowIndex) => {
+		loading = true;
+		try {
+			const payload = JSON.stringify(tagihanInputsByRow[rowIndex]);
+			const response = await fetch('/api/tagihandetail', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: payload
+			});
+			const result = await response.json();
+			if (result.success) {
+				// Mengubah tagihanInputsByRow[rowIndex] menjadi array kosong
+				tagihanInputsByRow[rowIndex] = [];
+
+				showToast = true;
+				toastData = {
+					success: true,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+				const updatedDataResponse = await fetch('/api/tagihan', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
+					}
+				});
+				const updatedData = await updatedDataResponse.json();
+				tagihan.set(updatedData.data);
+			} else {
+				showToast = true;
+				toastData = {
+					success: false,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+			}
+		} catch (err) {
+			console.error('client', err);
+		} finally {
+			loading = false;
+		}
+	};
+
+	const handleDelete = async () => {
+		try {
+			const response = await fetch(`api/tagihandetail/${deleteTargetTagihanId}/${deleteTargetId}`, {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				}
+			});
+			const result = await response.json();
+			if (result.success) {
+				showToast = true;
+				toastData = {
+					success: true,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+				const updatedDataResponse = await fetch('/api/tagihan', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
+					}
+				});
+				const updatedData = await updatedDataResponse.json();
+				tagihan.set(updatedData.data);
+			} else {
+				showToast = true;
+				toastData = {
+					success: false,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 3000);
+			}
+		} catch (error) {
+			console.error(error);
+		} finally {
+			deleteTargetId = null;
+			deleteTargetTagihanId = null;
+			deleteModal = false;
+		}
+	};
+
+	const handleEdit = async () => {
+		loading = true;
+		try {
+			const payload = JSON.stringify(dataEdit);
+			console.log(payload);
+			const response = await fetch(`api/tagihandetail/${dataEdit.tagihanid}/${dataEdit.id}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				},
+				body: payload
+			});
+			const result = await response.json();
+			if (result.success) {
+				dataEdit = {
+					sifatTagihanId: '',
+					tipe: '',
+					amount: ''
+				};
+
+				showToast = true;
+				toastData = {
+					success: true,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+				const updatedDataResponse = await fetch('/api/tagihan', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
+					}
+				});
+				const updatedData = await updatedDataResponse.json();
+				tagihan.set(updatedData.data);
+			} else {
+				showToast = true;
+				toastData = {
+					success: false,
+					message: result.message
+				};
+				setTimeout(() => {
+					showToast = false;
+					clearToastData();
+				}, 2000);
+			}
+		} catch (err) {
+			console.error('client', err);
+		} finally {
+			loading = false;
+		}
+	};
+
+	const openEditModal = (data) => {
+		console.log(data);
+		dataEdit = {
+			id: data.id,
+			tagihanId: data.tagihanId,
+			sifatTagihanId: data.sifatTagihanId,
+			tipe: data.tipe,
+			amount: data.amount
+		};
+		console.log(dataEdit);
+		editModal = true;
+	};
+
+	const openDeleteModal = (id, idTagihan) => {
+		deleteModal = true;
+		deleteTargetId = id;
+		deleteTargetTagihanId = idTagihan;
+	};
+
+	const clearToastData = () => {
+		toastData = null;
+	};
 </script>
+
+{#if showToast}
+	<div transition:fly={{ x: 200 }} class="top-15 absolute end-5">
+		<Toast color={toastData?.success ? 'green' : 'red'} class="z-50 mb-4">
+			<svelte:fragment slot="icon">
+				{#if toastData?.success}
+					<CheckCircleSolid class="h-5 w-5" />
+					<span class="sr-only">Check icon</span>
+				{:else}
+					<XCircleSolid class="h-5 w-5" />
+					<span class="sr-only">Error icon</span>
+				{/if}
+			</svelte:fragment>
+			{toastData?.message}
+		</Toast>
+	</div>
+{/if}
 
 <div class="space-y-4">
 	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
@@ -179,10 +335,15 @@
 					<TableHeadCell>Tagihan</TableHeadCell>
 					<TableBodyCell>Action</TableBodyCell>
 				</TableHead>
-				<TableBody ableBodyClass="divide-y">
-					{#each tagihan as data, index (data)}
-						<TableBodyRow on:click={() => toggleRow(index)}>
-							<TableBodyCell>{index + 1}</TableBodyCell>
+				<TableBody tableBodyClass="divide-y">
+					{#each $tagihan as data, index (data)}
+						<TableBodyRow>
+							<TableBodyCell
+								style="display: flex; padding-top: 24px; gap: 4px;"
+								on:click={() => toggleRow(index)}
+								>{index + 1}
+								<ArrowUpDownOutline class="text-rose-600" style="outline: none;" /></TableBodyCell
+							>
 							<TableBodyCell>{data.Kreditor.nama}</TableBodyCell>
 							<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.hutangPokok))}</TableBodyCell>
@@ -213,153 +374,287 @@
 								>
 							</TableBodyCell>
 							<TableBodyCell>
-								<Button size="xs" on:click={() => tambahInput(index)}
+								<Button size="xs" on:click={() => tambahInput(index, data.id)}
 									><PlusSolid class="me-2 h-5 w-5" />Tambah</Button
 								>
 							</TableBodyCell>
 						</TableBodyRow>
 						{#if openRow === index}
-							<TableBodyRow on:dblclick={() => (details = index)}>
-								<TableBodyCell colspan="10">
-									{#each tagihanInputsByRow[index] as tagihanDetail, TagihanDetailIndex (tagihanDetail)}
-										<div class="grid gap-4 sm:gap-6 md:grid-cols-3">
-											<div>
-												<label
-													for="sifatTagihan"
-													class={`mb-2 block text-sm font-medium text-gray-900 dark:text-white`}
-													>Sifat/Golongan Tagihan</label
-												>
-												<select
-													id="sifatTagihan"
-													name="sifatTagihanId"
-													bind:value={tagihanDetail.sifatTagihan}
-													class={`block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500`}
-												>
-													<option value="" selected disabled>Pilih Sifat Tagihan</option>
-													{#each sifatTagihanData as { id, sifat }}
-														<option value={id}>{sifat}</option>
-													{/each}
-												</select>
-												<!-- {#if sifatTagihan.id === '' && form?.errors?.find((error) => error.field === 'sifatTagihanId')}
+							{#if tagihanInputsByRow[index].length > 0}
+								<TableBodyRow>
+									<TableBodyCell colspan="11">
+										{#each tagihanInputsByRow[index] as tagihanDetail, TagihanDetailIndex (tagihanDetail)}
+											<div
+												class="grid gap-4 sm:gap-6 md:grid-cols-10"
+												style="margin-bottom: 10px; width: 80%; margin-inline: auto;"
+											>
+												<div class="md:col-span-3">
+													<label
+														for="sifatTagihan"
+														class={`mb-2 block text-sm font-medium text-gray-900 dark:text-white`}
+														>Sifat/Golongan Tagihan</label
+													>
+													<select
+														id="sifatTagihan"
+														name="sifatTagihanId"
+														bind:value={tagihanDetail.sifatTagihanId}
+														class={`block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500`}
+													>
+														<option value="" selected disabled>Pilih Sifat Tagihan</option>
+														{#each sifatTagihanData as { id, sifat }}
+															<option value={id}>{sifat}</option>
+														{/each}
+													</select>
+													<!-- {#if sifatTagihan.id === '' && form?.errors?.find((error) => error.field === 'sifatTagihanId')}
 												<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 													{form?.errors?.find((error) => error.field === 'sifatTagihanId').message}
 												</p>
 											{/if} -->
-											</div>
-											<div>
-												<label
-													for="jumlahTagihan"
-													class={`mb-2 block text-sm font-medium text-gray-900 dark:text-white`}
-													>Tipe Detail Tagihan</label
-												>
-												<select
-													id="jumlahTagihan"
-													name="jumlahTagihan"
-													bind:value={tagihanDetail.nama}
-													class={`block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500`}
-												>
-													<option value="" selected disabled>Pilih Detail Tagihan</option>
-													<option value="bunga">Bunga</option>
-													<option value="denda">Denda</option>
-													<option value="tagihan">Tagihan</option>
-												</select>
-												<!-- {#if sifatTagihan.jumlahTagihan === '' && form?.errors?.find((error) => error.field === 'jumlahTagihan')}
+												</div>
+												<div class="md:col-span-3">
+													<label
+														for="tipeTagihan"
+														class={`mb-2 block text-sm font-medium text-gray-900 dark:text-white`}
+														>Tipe Detail Tagihan</label
+													>
+													<select
+														id="tipeTagihan"
+														name="tipeTagihan"
+														bind:value={tagihanDetail.tipe}
+														class={`block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500`}
+													>
+														<option value="" selected disabled>Pilih Tipe Tagihan</option>
+														<option value="bunga">Bunga</option>
+														<option value="denda">Denda</option>
+														<option value="tagihan">Tagihan</option>
+													</select>
+													<!-- {#if sifatTagihan.jumlahTagihan === '' && form?.errors?.find((error) => error.field === 'jumlahTagihan')}
 												<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 													{form?.errors?.find((error) => error.field === 'jumlahTagihan').message}
 												</p>
 											{/if} -->
-											</div>
-											<div>
-												<label
-													for="hutangPokok"
-													class={`mb-2 block text-sm font-medium ${tagihanDetail.amount === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-													>Hutang Pokok</label
-												>
-												<div class="relative">
-													<div
-														class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5"
-													>
-														<p
-															class={`${tagihanDetail.amount === '' ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
-														>
-															Rp.
-														</p>
-													</div>
-													<input
-														type="text"
-														name="hutangPokok"
-														placeholder="Hutang Pokok"
-														id="hutangPokok"
-														bind:value={tagihanDetail.amount}
-														on:input={(event) => updateAmount(index, TagihanDetailIndex, event)}
-														class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${tagihanDetail.amount === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-													/>
 												</div>
-												<!-- {#if jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok')}
-													<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-														{form?.errors?.find((error) => error.field === 'hutangPokok').message}
-													</p>
-												{/if} -->
-											</div>
-										</div>
-										<div>
-											<button on:click={() => hapusInput(index, TagihanDetailIndex)}>X</button>
-										</div>
-									{/each}
-									{#if tagihanInputsByRow[index].length > 0}
-										<Button size="xs" on:click={() => submitForm(index)}>SUBMIT</Button>
-									{/if}
-								</TableBodyCell>
-							</TableBodyRow>
-							<TableBodyRow>
-								<TableBodyCell colspan="9">
-									<Table shadow>
-										<TableHead>
-											<TableHeadCell>No</TableHeadCell>
-											<TableHeadCell>Sifat/Golongan Tagihan</TableHeadCell>
-											<TableHeadCell>Tipe Detail Tagihan</TableHeadCell>
-											<TableHeadCell>Amount</TableHeadCell>
-											<TableBodyCell>Action</TableBodyCell>
-										</TableHead>
-										<TableBody>
-											{#each dummy as data, index (data)}
-												<TableBodyRow on:click={() => toggleRow(index)}>
-													<TableBodyCell>{index + 1}</TableBodyCell>
-													<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
-													<TableBodyCell>{data.Kreditor.nama}</TableBodyCell>
-													<TableBodyCell>Rp. {formatPrice(parseFloat(data.bunga))}</TableBodyCell>
-													<TableBodyCell>
-														<Button size="xs" on:click={() => tambahInput(index)}
-															><BookmarkOutline class="me-2 h-5 w-5" />Edit</Button
+												<div class="md:col-span-3">
+													<label
+														for="amountTagihan"
+														class={`mb-2 block text-sm font-medium ${tagihanDetail.amount === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+														>Amount</label
+													>
+													<div class="relative">
+														<div
+															class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5"
 														>
-													</TableBodyCell>
-												</TableBodyRow>
-											{/each}
-										</TableBody>
-										<tfoot style="border-top-width: 1px !important;">
-											<tr class="font-semibold text-gray-900 dark:text-white">
-												<td class="px-6 py-3"></td>
-												<th scope="row" class="px-6 py-3 text-base" colspan="2">TOTAL:</th>
-												<td class="px-6 py-3">Rp. {formatPrice(parseFloat(19000000))}</td>
-											</tr>
-										</tfoot>
-									</Table>
+															<p
+																class={`${tagihanDetail.amount === '' ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
+															>
+																Rp.
+															</p>
+														</div>
+														<input
+															type="text"
+															name="Amount Tagihan"
+															placeholder="Amount Tagihan"
+															id="amountTagihan"
+															bind:value={tagihanDetail.amount}
+															on:input={(event) => updateAmount(index, TagihanDetailIndex, event)}
+															class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${tagihanDetail.amount === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+														/>
+													</div>
+													{#if tagihanDetail.amount === ''}
+														<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+															Amount Tagihan tidak boleh kosong
+														</p>
+													{/if}
+												</div>
+												<div style="position: relative;">
+													<Button
+														style="padding: 5px 10px; position: absolute; top: 45%;"
+														color="red"
+														on:click={() => hapusInput(index, TagihanDetailIndex)}
+														><MinusSolid style="outline: none;" /></Button
+													>
+												</div>
+											</div>
+										{/each}
+
+										<Button size="xs" on:click={() => submitForm(index)}>
+											{#if loading}
+												<Spinner color="white" size={4} />
+											{:else}
+												SUBMIT
+											{/if}
+										</Button>
+									</TableBodyCell>
+								</TableBodyRow>
+							{/if}
+							<TableBodyRow>
+								<TableBodyCell colspan="11">
+									<div
+										transition:slide={{ duration: 300, axis: 'y' }}
+										style="width: 80%; margin-inline: auto;"
+									>
+										<Table shadow>
+											<TableHead>
+												<TableHeadCell>No</TableHeadCell>
+												<TableHeadCell>Sifat/Golongan Tagihan</TableHeadCell>
+												<TableHeadCell>Tipe Detail Tagihan</TableHeadCell>
+												<TableHeadCell>Amount</TableHeadCell>
+												<TableBodyCell>Action</TableBodyCell>
+											</TableHead>
+											<TableBody>
+												{#each data.tagihanItem as data, index (data)}
+													<TableBodyRow>
+														<TableBodyCell>{index + 1}</TableBodyCell>
+														<TableBodyCell>{data.sifatTagihanId}</TableBodyCell>
+														<TableBodyCell style="text-transform: capitalize;"
+															>{data.tipe}</TableBodyCell
+														>
+														<TableBodyCell>Rp. {formatPrice(parseFloat(data.amount))}</TableBodyCell
+														>
+														<TableBodyCell>
+															<Button on:click={() => openEditModal(data)}>
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	fill="currentColor"
+																	class="h-5 w-5 shrink-0"
+																	role="img"
+																	aria-label="edit solid"
+																	viewBox="0 0 24 24"
+																	><path
+																		fill="currentColor"
+																		fill-rule="evenodd"
+																		d="M11.3 6.2H5a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h11c1.1 0 2-1 2-2.1V11l-4 4.2c-.3.3-.7.6-1.2.7l-2.7.6c-1.7.3-3.3-1.3-3-3.1l.6-2.9c.1-.5.4-1 .7-1.3l3-3.1Z"
+																		clip-rule="evenodd"
+																	></path><path
+																		fill="currentColor"
+																		fill-rule="evenodd"
+																		d="M19.8 4.3a2.1 2.1 0 0 0-1-1.1 2 2 0 0 0-2.2.4l-.6.6 2.9 3 .5-.6a2.1 2.1 0 0 0 .6-1.5c0-.2 0-.5-.2-.8Zm-2.4 4.4-2.8-3-4.8 5-.1.3-.7 3c0 .3.3.7.6.6l2.7-.6.3-.1 4.7-5Z"
+																		clip-rule="evenodd"
+																	></path></svg
+																>
+															</Button>
+															<Button
+																color="red"
+																on:click={() => openDeleteModal(data.id, data.tagihanId)}
+															>
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	fill="currentColor"
+																	class="h-5 w-5 shrink-0"
+																	role="img"
+																	aria-label="trash bin solid"
+																	viewBox="0 0 24 24"
+																	><path
+																		fill="currentColor"
+																		fill-rule="evenodd"
+																		d="M8.6 2.6A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4c0-.5.2-1 .6-1.4ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
+																		clip-rule="evenodd"
+																	></path></svg
+																></Button
+															>
+														</TableBodyCell>
+													</TableBodyRow>
+												{/each}
+											</TableBody>
+											<tfoot style="border-top-width: 1px !important;">
+												<tr class="font-semibold text-gray-900 dark:text-white">
+													<td class="px-6 py-3"></td>
+													<th scope="row" class="px-6 py-3 text-base" colspan="2">TOTAL:</th>
+													<td class="px-6 py-3"
+														>Rp. {formatPrice(
+															data.tagihanItem.reduce((sum, item) => sum + parseInt(item.amount), 0)
+														)}</td
+													>
+												</tr>
+											</tfoot>
+										</Table>
+									</div>
 								</TableBodyCell>
 							</TableBodyRow>
 						{/if}
-						<!-- <TableBodyRow>
-							<TableBodyCell></TableBodyCell>
-							<TableBodyCell></TableBodyCell>
-							<TableBodyCell>TOTAL :</TableBodyCell>
-							<TableBodyCell
-								>Rp. {formatPrice(
-									parseFloat(data.denda) + parseFloat(data.hutangPokok) + parseFloat(data.bunga)
-								)}</TableBodyCell
-							>
-						</TableBodyRow> -->
 					{/each}
 				</TableBody>
 			</Table>
 		{/if}
 	</div>
 </div>
+<!-- delete modal -->
+<Modal bind:open={deleteModal} size="xs" autoclose>
+	<div class="text-center">
+		<ExclamationCircleOutline class="mx-auto mb-4 h-12 w-12 text-gray-400 dark:text-gray-200" />
+		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+			Anda yakin akan menghapus tagihan detail ini?
+		</h3>
+		<Button color="red" class="me-2" on:click={handleDelete}>Ya, Saya yakin</Button>
+		<Button color="alternative">Tidak, batal</Button>
+	</div>
+</Modal>
+
+<Modal bind:open={editModal} size="xs" autoclose>
+	<div class="text-center">
+		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">Edit Detail Tagihan</h3>
+		<div class="grid sm:gap-3 md:grid-cols-1" style="margin-bottom: 30px;">
+			<div>
+				<label
+					for="sifatTagihan"
+					class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
+				>
+					Sifat/Golongan Tagihan
+				</label>
+				<select
+					id="sifatTagihan"
+					name="sifatTagihanId"
+					bind:value={dataEdit.sifatTagihanId}
+					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-left text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+				>
+					<option value="" selected disabled>Pilih Sifat Tagihan</option>
+					{#each sifatTagihanData as { id, sifat }}
+						<option value={id}>{sifat}</option>
+					{/each}
+				</select>
+			</div>
+			<div>
+				<label
+					for="tipeTagihan"
+					class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
+				>
+					Tipe Detail Tagihan
+				</label>
+				<select
+					id="tipeTagihan"
+					name="tipeTagihan"
+					bind:value={dataEdit.tipe}
+					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+				>
+					<option value="" selected disabled>Pilih Tipe Tagihan</option>
+					<option value="bunga">Bunga</option>
+					<option value="denda">Denda</option>
+					<option value="tagihan">Tagihan</option>
+				</select>
+			</div>
+			<div>
+				<label
+					for="amountTagihan"
+					class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
+				>
+					Amount
+				</label>
+				<div class="relative">
+					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
+						<p class="text-gray-500">Rp.</p>
+					</div>
+					<input
+						type="text"
+						name="Amount Tagihan"
+						placeholder="Amount Tagihan"
+						id="amountTagihan"
+						bind:value={dataEdit.amount}
+						class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 ps-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+					/>
+				</div>
+			</div>
+			<Button color="blue" class="me-2" on:click={handleEdit}>Edit</Button>
+			<Button color="alternative">Tidak, batal</Button>
+		</div>
+	</div></Modal
+>

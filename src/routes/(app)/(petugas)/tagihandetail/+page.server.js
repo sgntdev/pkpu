@@ -16,6 +16,16 @@ export async function load({ fetch, locals }) {
 			});
 			const tagihan = await res.json();
 
+			const resDetail = await fetch(`/api/tagihandetail/1`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
+				}
+			});
+			const tagihandetail = await resDetail.json();
+			// console.log(tagihan.data[0]);
+
 			const sifatTagihanResponse = await fetch('/api/sifattagihan', {
 				method: 'GET',
 				headers: {
@@ -28,7 +38,9 @@ export async function load({ fetch, locals }) {
 				status: 200,
 				body: {
 					tagihan: tagihan.data,
-					sifatTagihanData: sifatTagihanResult.data
+					tagihanDetail: tagihandetail.data,
+					sifatTagihanData: sifatTagihanResult.data,
+					token
 				}
 			};
 		} else {
