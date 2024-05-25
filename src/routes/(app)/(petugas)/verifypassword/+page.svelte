@@ -14,6 +14,12 @@
 		newPassword: '',
 		confirmPassword: ''
 	};
+
+	//show hide password
+	let showPassword = false;
+	$: type = showPassword ? 'text' : 'password';
+	$: inputProperties = { type };
+	
 	let loading = false;
 	let existingData = false;
 	let showToast = false;
@@ -60,6 +66,7 @@
 			console.error(error);
 		} finally {
 			loading = false;
+			showPassword = false
 		}
 	};
 	const handleEditPassword = async () => {
@@ -103,6 +110,7 @@
 			console.error(error);
 		} finally {
 			loading = false;
+			showPassword = false
 		}
 	};
 	const clearToastData = () => {
@@ -171,7 +179,7 @@
 		<BreadcrumbItem href="/dashboard" home>Dashboard</BreadcrumbItem>
 		<BreadcrumbItem>Verify Password</BreadcrumbItem>
 	</Breadcrumb>
-	<div class="mx-auto flex flex-col items-center justify-center px-6 py-8 lg:py-20">
+	<div class="mx-auto flex flex-col items-center justify-center px-6 py-8 lg:py-14">
 		{#if loading}
 			<div class="flex min-h-96 items-center justify-center">
 				<Spinner color="blue" size={10} />
@@ -198,7 +206,7 @@
 								>Old Password</label
 							>
 							<input
-								type="password"
+								{...inputProperties}
 								name="oldPassword"
 								id="oldPassword"
 								placeholder="•••••••••"
@@ -218,7 +226,7 @@
 								>New Password</label
 							>
 							<input
-								type="password"
+							{...inputProperties}
 								name="newPassword"
 								id="newPassword"
 								placeholder="•••••••••"
@@ -238,7 +246,7 @@
 								>Confirm Password</label
 							>
 							<input
-								type="confirm-password"
+							{...inputProperties}
 								name="confirmPassword"
 								id="confirmPassword"
 								placeholder="•••••••••"
@@ -250,6 +258,19 @@
 									{form?.errors?.find((error) => error.field === 'confirmPassword').message}
 								</p>
 							{/if}
+						</div>
+						<div class="mb-5 flex items-start">
+							<div class="flex h-5 items-center">
+								<input
+									id="showPassword"
+									bind:checked={showPassword}
+									type="checkbox"
+									class="focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800"
+								/>
+							</div>
+							<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+								>Show password</label
+							>
 						</div>
 						<Button type="submit" class="w-full">Ubah password</Button>
 						<div class="flex items-center justify-center gap-1">
@@ -286,7 +307,7 @@
 								>Password</label
 							>
 							<input
-								type="password"
+								{...inputProperties}
 								name="Password"
 								id="Password"
 								placeholder="•••••••••"
@@ -306,7 +327,7 @@
 								>Confirm Password</label
 							>
 							<input
-								type="confirm-password"
+							{...inputProperties}
 								name="confirmPassword"
 								id="confirmPassword"
 								placeholder="•••••••••"
@@ -318,6 +339,19 @@
 									{form?.errors?.find((error) => error.field === 'confirmPassword').message}
 								</p>
 							{/if}
+						</div>
+						<div class="mb-5 flex items-start">
+							<div class="flex h-5 items-center">
+								<input
+									id="showPassword"
+									bind:checked={showPassword}
+									type="checkbox"
+									class="focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800"
+								/>
+							</div>
+							<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+								>Show password</label
+							>
 						</div>
 						<Button type="submit" class="w-full">Simpan password</Button>
 					</form>

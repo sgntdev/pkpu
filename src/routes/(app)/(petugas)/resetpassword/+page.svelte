@@ -11,6 +11,11 @@
 		password: '',
 		confirmPassword: ''
 	};
+
+	//show hide password
+	let showPassword = false;
+	$: type = showPassword ? 'text' : 'password';
+	$: inputProperties = { type };
 	const handleSubmit = async () => {
 		status = null;
 		loading = true;
@@ -73,7 +78,7 @@
 					>New Password</label
 				>
 				<input
-					type="password"
+					{...inputProperties}
 					name="Password"
 					id="Password"
 					placeholder="•••••••••"
@@ -93,7 +98,7 @@
 					>Confirm Password</label
 				>
 				<input
-					type="confirm-password"
+					{...inputProperties}
 					name="confirmPassword"
 					id="confirmPassword"
 					placeholder="•••••••••"
@@ -105,6 +110,19 @@
 						{form?.errors?.find((error) => error.field === 'confirmPassword').message}
 					</p>
 				{/if}
+			</div>
+			<div class="mb-5 flex items-start">
+				<div class="flex h-5 items-center">
+					<input
+						id="showPassword"
+						bind:checked={showPassword}
+						type="checkbox"
+						class="focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800"
+					/>
+				</div>
+				<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+					>Show password</label
+				>
 			</div>
 			<Button type="submit">Reset Password</Button>
 		</form>

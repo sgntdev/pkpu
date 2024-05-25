@@ -58,17 +58,14 @@ export async function POST({ request }) {
 	}
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
-		});
-		if (currentUser.roleId !== 1) {
+		if (decoded.user.roleId !== 1) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
 		}
 
 		const expirationDate = new Date();
-		expirationDate.setDate(expirationDate.getHours() + 2);
+		expirationDate.setHours(expirationDate.getHours() + 2);
 
 		const existingPassword = await prisma.Verified.findFirst({
 			select: {
@@ -133,10 +130,7 @@ export async function PUT({ request }) {
 	}
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
-		});
-		if (currentUser.roleId !== 1) {
+		if (decoded.user.roleId !== 1) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
