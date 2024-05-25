@@ -15,11 +15,11 @@
 		Toast,
 		Modal
 	} from 'flowbite-svelte';
-	import { goto } from '$app/navigation';
 	import { slide, fly } from 'svelte/transition';
 	import { page } from '$app/stores';
-	import { writable } from 'svelte/store';
+	import { writable, derived } from 'svelte/store';
 	import { onMount } from 'svelte';
+	import { getContext } from 'svelte';
 	import {
 		PlusSolid,
 		ExclamationCircleOutline,
@@ -28,10 +28,12 @@
 		CheckCircleSolid,
 		XCircleSolid
 	} from 'flowbite-svelte-icons';
+
 	export let data;
 	const { token } = data.body;
 	const { sifatTagihanData } = data.body;
 	// let tagihan;
+	const chooseDebitor = getContext('Choose');
 	const tagihan = writable([]);
 	tagihan.set(data.body.tagihan);
 	let tagihanInputsByRow = $tagihan.map(() => []);
@@ -45,6 +47,9 @@
 	let showToast = false;
 	let toastData;
 
+	const tagihanByDebitor = derived([chooseDebitor, tagihan], ([$chooseDebitor, $tagihan]) =>
+		$chooseDebitor == null ? $tagihan : $tagihan.filter((item) => item.debitorId === $chooseDebitor)
+	);
 	//Edit
 	let dataEdit = {
 		sifatTagihanId: '',
@@ -79,6 +84,7 @@
 		return formatted;
 	};
 	function tambahInput(index, id) {
+		openRow = openRow === null || openRow === undefined ? index : openRow;
 		tagihanInputsByRow[index] = [
 			...tagihanInputsByRow[index],
 			{ tagihanId: id, tipe: '', amount: 0, sifatTagihanId: '' }
@@ -329,14 +335,13 @@
 					<TableHeadCell>Hutang Pokok</TableHeadCell>
 					<TableHeadCell>Bunga</TableHeadCell>
 					<TableHeadCell>Denda</TableHeadCell>
-					<TableHeadCell>Jumlah Tagihan Seluruhnya</TableHeadCell>
-					<TableHeadCell>Mulai Tertunggak</TableHeadCell>
+					<!-- <TableHeadCell>Jumlah Tagihan Seluruhnya</TableHeadCell> -->
 					<TableHeadCell>Status</TableHeadCell>
 					<TableHeadCell>Tagihan</TableHeadCell>
 					<TableBodyCell>Action</TableBodyCell>
 				</TableHead>
 				<TableBody tableBodyClass="divide-y">
-					{#each $tagihan as data, index (data)}
+					{#each $tagihanByDebitor as data, index (data)}
 						<TableBodyRow>
 							<TableBodyCell
 								style="display: flex; padding-top: 24px; gap: 4px;"
@@ -349,8 +354,7 @@
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.hutangPokok))}</TableBodyCell>
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.bunga))}</TableBodyCell>
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.denda))}</TableBodyCell>
-							<TableBodyCell>{data.jumlahTagihan}</TableBodyCell>
-							<TableBodyCell>{data.mulaiTertunggak}</TableBodyCell>
+							<!-- <TableBodyCell>{data.jumlahTagihan}</TableBodyCell> -->
 							<TableBodyCell>
 								{#if data.status === 0}
 									<Badge color="gray" rounded class="px-2.5 py-0.5">
