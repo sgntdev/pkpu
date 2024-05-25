@@ -368,7 +368,7 @@
 							</TableBodyCell>
 							<TableBodyCell>
 								<a
-									href={`/tagihan/tagihan`}
+									href={`/kreditor/${data.kreditorId}/tagihan/${data.id}`}
 									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
 									>Lihat Dokumen</a
 								>
