@@ -505,7 +505,7 @@
 												{#each data.tagihanItem as data, index (data)}
 													<TableBodyRow>
 														<TableBodyCell>{index + 1}</TableBodyCell>
-														<TableBodyCell>{data.sifatTagihanId}</TableBodyCell>
+														<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
 														<TableBodyCell style="text-transform: capitalize;"
 															>{data.tipe}</TableBodyCell
 														>
