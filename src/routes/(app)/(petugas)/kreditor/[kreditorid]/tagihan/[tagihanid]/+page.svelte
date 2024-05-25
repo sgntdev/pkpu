@@ -479,7 +479,7 @@
 				</p>
 			{/if}
 		</label>
-		<div class="mb-5 flex items-start">
+		<!-- <div class="mb-5 flex items-start">
 			<div class="flex h-5 items-center">
 				<input
 					id="showPassword"
@@ -491,7 +491,7 @@
 			<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
 				>Show password</label
 			>
-		</div>
+		</div> -->
 
 		<Button type="submit">
 			{#if loading}
