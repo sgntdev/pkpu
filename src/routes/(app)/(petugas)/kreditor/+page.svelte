@@ -7,11 +7,7 @@
 		TableHead,
 		TableHeadCell,
 		Breadcrumb,
-		BreadcrumbItem,
-		Button,
-		Dropdown,
-		Radio,
-		Search
+		BreadcrumbItem
 	} from 'flowbite-svelte';
 	import { getContext } from 'svelte';
 
@@ -50,7 +46,7 @@
 				</h1>
 			</div>
 		{:else}
-			<Table divClass="mt-2 overflow-auto">
+			<Table divClass="mt-2 overflow-x-auto lg:overflow-hidden">
 				<TableHead>
 					<TableHeadCell>No</TableHeadCell>
 					<TableHeadCell>User</TableHeadCell>
@@ -58,7 +54,7 @@
 					<TableHeadCell>Email</TableHeadCell>
 					<TableHeadCell>No Telepon</TableHeadCell>
 					<TableHeadCell>Alamat</TableHeadCell>
-					<TableHeadCell>List Tagihan</TableHeadCell>
+					<!-- <TableHeadCell>List Tagihan</TableHeadCell> -->
 				</TableHead>
 				<TableBody>
 					{#each tagihanByDebitor as data, index (data)}
@@ -68,14 +64,14 @@
 							<TableBodyCell>{data.nama}</TableBodyCell>
 							<TableBodyCell>{data.email}</TableBodyCell>
 							<TableBodyCell>{data.noTelp}</TableBodyCell>
-							<TableBodyCell>{data.alamat}</TableBodyCell>
-							<TableBodyCell>
+							<TableBodyCell tdClass="px-6 py-4 whitespace-normal font-medium">{data.alamat}</TableBodyCell>
+							<!-- <TableBodyCell>
 								<a
 									href={`/kreditor/${data.id}/tagihan`}
 									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
 									>Lihat Tagihan</a
 								>
-							</TableBodyCell>
+							</TableBodyCell> -->
 						</TableBodyRow>
 					{/each}
 				</TableBody>
