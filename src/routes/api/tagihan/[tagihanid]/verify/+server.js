@@ -21,10 +21,7 @@ export async function POST({ params, request }) {
 	};
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
-		});
-		if (currentUser.roleId !== 1) {
+		if (decoded.user.roleId !== 1) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
@@ -129,6 +126,9 @@ export async function POST({ params, request }) {
 								}
 							}
 						}
+					},
+					TagihanVote : {
+						where : {userId : decoded.user.id}
 					}
 				}
 			});
@@ -141,6 +141,7 @@ export async function POST({ params, request }) {
 			);
 		}
 	} catch (error) {
+		console.log(error)
 		return new Response(
 			JSON.stringify({ success: false, code: 500, message: 'Proses verify gagal!' }),
 			{ status: 500 }
@@ -166,10 +167,7 @@ export async function PUT({ params, request }) {
 	};
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
-		});
-		if (currentUser.roleId !== 1) {
+		if (decoded.user.roleId !== 1) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
@@ -226,6 +224,9 @@ export async function PUT({ params, request }) {
 								}
 							}
 						}
+					},
+					TagihanVote : {
+						where : {userId : decoded.user.id}
 					}
 				}
 			});
@@ -237,6 +238,7 @@ export async function PUT({ params, request }) {
 			);
 		}
 	} catch (error) {
+		console.log(error)
 		return new Response(
 			JSON.stringify({ success: false, code: 500, message: 'Proses verify gagal!' }),
 			{ status: 500 }

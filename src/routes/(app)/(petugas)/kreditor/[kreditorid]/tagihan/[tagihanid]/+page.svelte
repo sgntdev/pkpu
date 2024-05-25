@@ -38,6 +38,10 @@
 	let form;
 	let showToast = false;
 	let toastData;
+	let showPassword = false;
+	$: type = showPassword ? 'text' : 'password';
+	$: inputProperties = { type };
+
 	const handleEntryPassword = async () => {
 		loading = true;
 		try {
@@ -462,10 +466,11 @@
 		>
 			<span>Password</span>
 			<input
-				type="text"
+				{...inputProperties}
 				bind:value={verifyData.password}
 				id="password"
 				name="password"
+				placeholder = '•••••••••'
 				class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'password') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 			/>
 			{#if form?.errors?.find((error) => error.field === 'password')}
@@ -474,6 +479,19 @@
 				</p>
 			{/if}
 		</label>
+		<div class="mb-5 flex items-start">
+			<div class="flex h-5 items-center">
+				<input
+					id="showPassword"
+					bind:checked={showPassword}
+					type="checkbox"
+					class="focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800"
+				/>
+			</div>
+			<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+				>Show password</label
+			>
+		</div>
 
 		<Button type="submit">
 			{#if loading}
