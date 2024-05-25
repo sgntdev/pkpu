@@ -38,7 +38,11 @@ export async function GET({ request }) {
 	}
 
 	if (decoded.user.roleId === 1) {
-		tagihanQuery.include.tagihanItem = true;
+		tagihanQuery.include.tagihanItem = {
+			include: {
+				SifatTagihan: true
+			}
+		};
 	}
 	const tagihan = await prisma.tagihan.findMany(tagihanQuery);
 	if (!tagihan) {
