@@ -33,7 +33,6 @@
 	$: activeUrl = $page.url.pathname;
 	export let data;
 	const user = data.body.user;
-	console.log(user);
 
 	// Filter Debitor
 	let debitorData = data.body.debitorData;
@@ -47,8 +46,8 @@
 		$chooseDebitor = id;
 	};
 	// for still checked radio in other page
-	let checkedDebitor;
 	// End checked
+	let checkedDebitor = idDebitorLogin;
 	let searchDebitor = '';
 	$: filterDebitors = debitorData.filter((debitor) =>
 		debitor.nama.toLowerCase().includes(searchDebitor.toLowerCase())
