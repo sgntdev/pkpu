@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 export async function load({ locals, fetch }) {
 	const { token, user } = locals;
-	if (!user) {
+	if (!user || user.roleId !== 3 ) {
 		redirect(301, '/');
 	} else {
 		const res = await fetch(`/api/debitor/uid/${user.debitorUid}`);
