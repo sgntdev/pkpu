@@ -259,7 +259,7 @@
 								</p>
 							{/if}
 						</div>
-						<div class="mb-5 flex items-start">
+						<!-- <div class="mb-5 flex items-start">
 							<div class="flex h-5 items-center">
 								<input
 									id="showPassword"
@@ -271,7 +271,7 @@
 							<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
 								>Show password</label
 							>
-						</div>
+						</div> -->
 						<Button type="submit" class="w-full">Ubah password</Button>
 						<div class="flex items-center justify-center gap-1">
 							<p class="text-sm text-gray-500">Forgot your old password?</p>
@@ -340,7 +340,7 @@
 								</p>
 							{/if}
 						</div>
-						<div class="mb-5 flex items-start">
+						<!-- <div class="mb-5 flex items-start">
 							<div class="flex h-5 items-center">
 								<input
 									id="showPassword"
@@ -352,7 +352,7 @@
 							<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
 								>Show password</label
 							>
-						</div>
+						</div> -->
 						<Button type="submit" class="w-full">Simpan password</Button>
 					</form>
 				</div>
