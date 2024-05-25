@@ -84,6 +84,7 @@
 		return formatted;
 	};
 	function tambahInput(index, id) {
+		openRow = openRow === null || openRow === undefined ? index : openRow;
 		tagihanInputsByRow[index] = [
 			...tagihanInputsByRow[index],
 			{ tagihanId: id, tipe: '', amount: 0, sifatTagihanId: '' }
