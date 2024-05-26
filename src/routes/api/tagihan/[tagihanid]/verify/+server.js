@@ -53,24 +53,23 @@ export async function POST({ params, request }) {
 			});
 		} else {
 			const tagihan = await prisma.tagihan.findUnique({
-				where: { id: tagihanId }
+				where: { id: tagihanId },
+				include:{
+					Debitor:{
+						select:{
+							petugasAccess : true
+						}
+					}
+				}
 			});
 
 			let objectionVote = tagihan.objectionVote;
 			let verifiedVote = tagihan.verifiedVote;
-			let totalVoters = tagihan.totalVoters;
+			let totalVoters = tagihan.Debitor.petugasAccess.length;
 			if (vote === 0) {
 				objectionVote++;
 			} else {
 				verifiedVote++;
-			}
-
-			if (totalVoters === 0) {
-				totalVoters = await prisma.user.count({
-					where: {
-						roleId: 1
-					}
-				});
 			}
 
 			const updatedTagihan = await prisma.tagihan.update({

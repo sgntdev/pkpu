@@ -86,7 +86,8 @@ export async function POST({ request }) {
 		sifatTagihanId,
 		jumlahTagihan,
 		mulaiTertunggak,
-		jumlahHari
+		jumlahHari, 
+		totalVoters
 	} = Object.fromEntries(formData);
 	const allowedFileTypes = ['application/pdf'];
 	const maxFileSize = 2 * 1024 * 1024; // 2 MB
@@ -177,7 +178,8 @@ export async function POST({ request }) {
 				sifatTagihanId: parseInt(sifatTagihanId),
 				jumlahTagihan,
 				mulaiTertunggak,
-				jumlahHari
+				jumlahHari,
+				totalVoters: parseInt(totalVoters),
 			}
 		});
 

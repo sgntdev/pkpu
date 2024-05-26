@@ -21,7 +21,7 @@
 	import { goto } from '$app/navigation';
 	import { fly } from 'svelte/transition';
 	export let data;
-	const { token, debitorId, userId, sifatTagihanData, tipeDokumenData } = data.body;
+	const { token, debitorId, userId, sifatTagihanData, tipeDokumenData, totalVoters } = data.body;
 	let kreditorData = data.body.kreditorData;
 	let buktiTagihan = [
 		{
@@ -225,7 +225,6 @@
 		};
 	};
 	//
-
 	const handleSubmit = async (event) => {
 		loading = true;
 		submitted = true;
@@ -235,6 +234,7 @@
 		});
 		formData.append('kreditorId', selectedKreditor);
 		formData.append('debitorId', debitorId);
+		formData.append('totalVoters', totalVoters);
 		formData.append('userId', userId);
 		try {
 			const response = await fetch('/api/tagihan', {
