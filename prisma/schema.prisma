@@ -33,12 +33,13 @@ model Role {
 }
 
 model Debitor {
-  id           Int       @id @default(autoincrement())
-  nama         String
-  tglSidang    String
-  tempatSidang String
-  uid          String    @unique @db.VarChar(5)
-  Tagihan      Tagihan[]
+  id            Int       @id @default(autoincrement())
+  nama          String
+  tglSidang     String
+  tempatSidang  String
+  uid           String    @unique @db.VarChar(5)
+  petugasAccess Int[]
+  Tagihan       Tagihan[]
 }
 
 model Kreditor {
@@ -114,13 +115,14 @@ model Verified {
 }
 
 model TagihanVote {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   tagihanId Int
   userId    Int
   vote      Int
-  User      User    @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  Tagihan   Tagihan @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  createdAt      DateTime  @default(now())
+  User      User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Tagihan   Tagihan  @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  createdAt DateTime @default(now())
+
   @@unique([userId, tagihanId])
 }
 
@@ -130,8 +132,8 @@ model tagihanItem {
   sifatTagihanId Int
   tipe           String
   amount         String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   SifatTagihan   SifatTagihan @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   Tagihan        Tagihan      @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }

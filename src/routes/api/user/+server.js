@@ -6,6 +6,8 @@ import jwt from 'jsonwebtoken';
 
 export async function GET({ request }) {
 	let token = request.headers.get('authorization');
+	const url = new URL(request.url);
+	const roleId = url.searchParams.get('roleId');
 	if (token && token.startsWith('Bearer ')) {
 		token = token.slice(7, token.length);
 	}
@@ -15,20 +17,22 @@ export async function GET({ request }) {
 		});
 	}
 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
-	const currentUser = await prisma.User.findUnique({
-		where: { email: decoded.user.email }
-	});
-	if (currentUser.roleId !== 1) {
+	if (decoded.user.roleId !== 1) {
 		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 			status: 403
 		});
 	}
-	const users = await prisma.user.findMany({
+	let userQuery = {
 		orderBy: { id: 'asc' },
 		include: {
 			Role: true
 		}
-	});
+	};
+
+	if (roleId) {
+		userQuery.where = {roleId : parseInt(roleId)};
+	}
+	const users = await prisma.user.findMany(userQuery);
 	if (!users) {
 		return new Response(
 			JSON.stringify({ success: false, code: 404, message: 'Users tidak ditemukan!' }),

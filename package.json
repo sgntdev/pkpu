@@ -43,6 +43,7 @@
 		"flowbite-svelte": "^0.44.23",
 		"jsonwebtoken": "^9.0.2",
 		"nodemailer": "^6.9.8",
+		"svelte-multiselect": "^10.3.0",
 		"tailwind-merge": "^2.2.1"
 	},
 	"prisma": {

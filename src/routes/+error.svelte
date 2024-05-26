@@ -1,7 +1,7 @@
 <script>
     import '../app.pcss';
 	import { page } from '$app/stores';
-    console.log($page.error)
+    // console.log($page.error, $page)
 </script>
 
 <section class="relative ">

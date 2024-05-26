@@ -9,7 +9,7 @@ export async function handle({ event, resolve }) {
 	if (!event.url.pathname.startsWith('/api')) {
 		if (token) {
 			try {
-				console.log('hooks server', event.url.pathname);
+				// console.log('hooks server', event.url.pathname);
 				let decoded = jwt.verify(token, SECRET_INGREDIENT);
 				if (new Date(decoded.user.expirationDate) < new Date()) {
 					redirect(303, '/');

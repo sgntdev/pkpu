@@ -14,10 +14,7 @@ export async function GET({ request, params }) {
 		});
 	}
 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
-	// const currentUser = await prisma.User.findUnique({
-	// 	where: { email: decoded.user.email }
-	// });
-	// if (currentUser.roleId !== 1) {
+	// if (decoded.user.roleId !== 1) {
 	// 	return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 	// 		status: 403
 	// 	});
@@ -53,17 +50,16 @@ export async function PUT({ request, params }) {
 		});
 	}
 	const formData = await request.formData();
-	const { nama, tglSidang, tempatSidang } = Object.fromEntries(formData);
+	let { nama, tglSidang, tempatSidang, petugas } = Object.fromEntries(formData);
+	petugas = JSON.parse(petugas)
+	let petugasAccess = petugas.map(item => (item.value))
 	const validation = {
 		success: false,
 		errors: []
 	};
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
-		});
-		if (currentUser.roleId !== 1) {
+		if (decoded.user.roleId !== 1) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
@@ -80,6 +76,12 @@ export async function PUT({ request, params }) {
 				message: 'Tempat sidang tidak boleh kosong!'
 			});
 		}
+		if (petugas.length === 0) {
+			validation.errors.push({
+				field: 'petugas',
+				message: 'Petugas tidak boleh kosong!'
+			});
+		}
 		if (validation?.errors.length > 0) {
 			return new Response(JSON.stringify(validation), { status: 400 });
 		}
@@ -88,7 +90,8 @@ export async function PUT({ request, params }) {
 			data: {
 				nama,
 				tglSidang,
-				tempatSidang
+				tempatSidang,
+				petugasAccess
 			}
 		});
 		return new Response(
@@ -117,10 +120,7 @@ export async function DELETE({ request, params }) {
 	}
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
-		});
-		if (currentUser.roleId !== 1) {
+		if (decoded.user.roleId !== 1) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});

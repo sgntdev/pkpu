@@ -2,7 +2,9 @@ import { SECRET_INGREDIENT } from '$env/static/private';
 import jwt from 'jsonwebtoken';
 import { prisma } from '$lib/prisma.server.js';
 export async function GET() {
-	const debitors = await prisma.Debitor.findMany();
+	const debitors = await prisma.Debitor.findMany({
+		orderBy: { id: 'asc' },
+	});
 	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: debitors }), {
 		status: 200
 	});
@@ -47,7 +49,9 @@ export async function POST({ request }) {
 		});
 	}
 	const formData = await request.formData();
-	const { nama, tglSidang, tempatSidang } = Object.fromEntries(formData);
+	let { nama, tglSidang, tempatSidang, petugas } = Object.fromEntries(formData);
+	petugas = JSON.parse(petugas)
+	let petugasAccess = petugas.map(item => (item.value))
 	const validation = {
 		success: false,
 		errors: []
@@ -55,10 +59,7 @@ export async function POST({ request }) {
 	let debitorUid = null;
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		const currentUser = await prisma.User.findUnique({
-			where: { email: decoded.user.email }
-		});
-		if (currentUser.roleId !== 1) {
+		if (decoded.user.roleId !== 1) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
@@ -75,6 +76,12 @@ export async function POST({ request }) {
 				message: 'Tempat sidang tidak boleh kosong!'
 			});
 		}
+		if (petugas.length === 0) {
+			validation.errors.push({
+				field: 'petugas',
+				message: 'Petugas tidak boleh kosong!'
+			});
+		}
 		if (validation?.errors.length > 0) {
 			return new Response(JSON.stringify(validation), { status: 400 });
 		}
@@ -84,7 +91,8 @@ export async function POST({ request }) {
 				nama,
 				tglSidang,
 				tempatSidang,
-				uid: debitorUid
+				uid: debitorUid,
+				petugasAccess
 			}
 		});
 
