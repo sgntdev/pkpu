@@ -25,12 +25,12 @@
 	import { onMount } from 'svelte';
 	import { getContext } from 'svelte';
 	import {
-		PlusSolid,
 		EditSolid,
 		ExclamationCircleOutline,
 		MinusSolid,
 		CheckCircleSolid,
-		XCircleSolid
+		XCircleSolid,
+		DotsHorizontalOutline
 	} from 'flowbite-svelte-icons';
 
 	export let data;
@@ -241,7 +241,6 @@
 		loading = true;
 		try {
 			const payload = JSON.stringify(dataEdit);
-			console.log(payload);
 			const response = await fetch(`api/tagihandetail/${dataEdit.tagihanid}/${dataEdit.id}`, {
 				method: 'PUT',
 				headers: {
@@ -295,7 +294,6 @@
 	};
 
 	const openEditModal = (data) => {
-		console.log(data);
 		dataEdit = {
 			id: data.id,
 			tagihanId: data.tagihanId,
@@ -401,7 +399,11 @@
 								{/if}
 							</TableBodyCell>
 							<TableBodyCell>
-								<div class="acs{index} cursor-pointer text-cyan-600">Tagihan</div>
+								<div class="acs{index} cursor-pointer text-cyan-600">
+									<!-- <Button size="xs" outline color="dark"> -->
+									<DotsHorizontalOutline class="dots-menu dark:text-white" />
+									<!-- </Button> -->
+								</div>
 								<Dropdown triggeredBy=".acs{index}">
 									<div slot="header" class="px-4 py-2">
 										<span class="block truncate text-sm font-medium">{data.Kreditor.nama}</span>
@@ -413,7 +415,7 @@
 											>Lihat Dokumen</a
 										>
 									</DropdownItem>
-									<DropdownItem on:click={() => toggleRow(index)}>Detail Tagihan</DropdownItem>
+									<DropdownItem on:click={() => toggleRow(index)}>Revisi</DropdownItem>
 								</Dropdown>
 							</TableBodyCell>
 							<TableBodyCell></TableBodyCell>
@@ -539,10 +541,12 @@
 							<TableBodyRow>
 								<TableBodyCell colspan="11">
 									{#if tagihanInputsByRow[index].length === 0}
-										<div class="mb-6 ml-8 mt-3 flex justify-start">
-											<Button size="xs" on:click={() => tambahInput(index, data.id)}
-												><EditSolid class="me-2 h-5 w-5" />REVISI</Button
-											>
+										<div class="mb-6 mr-8 mt-3 flex justify-end">
+											{#if data.status !== 1}
+												<Button size="xs" on:click={() => tambahInput(index, data.id)}
+													><EditSolid class="me-2 h-5 w-5" />REVISI</Button
+												>
+											{/if}
 										</div>
 									{/if}
 									<div
