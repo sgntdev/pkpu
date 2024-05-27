@@ -13,7 +13,11 @@
 		Button,
 		Spinner,
 		Toast,
-		Modal
+		Modal,
+		Dropdown,
+		DropdownItem,
+		DropdownHeader,
+		DropdownDivider
 	} from 'flowbite-svelte';
 	import { slide, fly } from 'svelte/transition';
 	import { page } from '$app/stores';
@@ -22,8 +26,8 @@
 	import { getContext } from 'svelte';
 	import {
 		PlusSolid,
+		EditSolid,
 		ExclamationCircleOutline,
-		ArrowUpDownOutline,
 		MinusSolid,
 		CheckCircleSolid,
 		XCircleSolid
@@ -101,58 +105,88 @@
 		tagihanInputsByRow[rowIndex][TagihanDetailIndex].amount = event.target.value;
 	}
 
-	const submitForm = async (rowIndex) => {
-		loading = true;
-		try {
-			const payload = JSON.stringify(tagihanInputsByRow[rowIndex]);
-			const response = await fetch('/api/tagihandetail', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				},
-				body: payload
-			});
-			const result = await response.json();
-			if (result.success) {
-				// Mengubah tagihanInputsByRow[rowIndex] menjadi array kosong
-				tagihanInputsByRow[rowIndex] = [];
+	function validateForm(index) {
+		const inputs = tagihanInputsByRow[index];
+		let isValid = true;
+		inputs.forEach((input) => {
+			if (input.sifatTagihanId === '' || input.tipe === '' || input.amount === '') {
+				isValid = false;
+			}
+		});
+		return isValid;
+	}
 
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
-				const updatedDataResponse = await fetch('/api/tagihan', {
-					method: 'GET',
+	function noValidationPayload(inputs) {
+		return inputs.map(({ showValidation, ...rest }) => rest);
+	}
+
+	async function submitForm(index) {
+		if (validateForm(index)) {
+			loading = true;
+			try {
+				const sanitizedPayload = noValidationPayload(tagihanInputsByRow[index]);
+				const payload = JSON.stringify(sanitizedPayload);
+
+				const response = await fetch('/api/tagihandetail', {
+					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 						Authorization: `Bearer ${token}`
-					}
+					},
+					body: payload
 				});
-				const updatedData = await updatedDataResponse.json();
-				tagihan.set(updatedData.data);
-			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				const result = await response.json();
+				if (result.success) {
+					// Mengubah tagihanInputsByRow[rowIndex] menjadi array kosong
+					tagihanInputsByRow[index] = [];
+
+					showToast = true;
+					toastData = {
+						success: true,
+						message: result.message
+					};
+					setTimeout(() => {
+						showToast = false;
+						clearToastData();
+					}, 2000);
+					const updatedDataResponse = await fetch('/api/tagihan', {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json',
+							Authorization: `Bearer ${token}`
+						}
+					});
+					const updatedData = await updatedDataResponse.json();
+					tagihan.set(updatedData.data);
+				} else {
+					showToast = true;
+					toastData = {
+						success: false,
+						message: result.message
+					};
+					setTimeout(() => {
+						showToast = false;
+						clearToastData();
+					}, 2000);
+				}
+			} catch (err) {
+				console.error('client', err);
+			} finally {
+				loading = false;
 			}
-		} catch (err) {
-			console.error('client', err);
-		} finally {
-			loading = false;
+		} else {
+			// Show validation errors
+			tagihanInputsByRow = tagihanInputsByRow.map((row, rowIndex) => {
+				if (rowIndex === index) {
+					return row.map((input) => ({
+						...input,
+						showValidation: true
+					}));
+				}
+				return row;
+			});
 		}
-	};
+	}
 
 	const handleDelete = async () => {
 		try {
@@ -338,23 +372,19 @@
 					<!-- <TableHeadCell>Jumlah Tagihan Seluruhnya</TableHeadCell> -->
 					<TableHeadCell>Status</TableHeadCell>
 					<TableHeadCell>Tagihan</TableHeadCell>
-					<TableBodyCell>Action</TableBodyCell>
+					<!-- <TableBodyCell>Action</TableBodyCell> -->
 				</TableHead>
 				<TableBody tableBodyClass="divide-y">
 					{#each $tagihanByDebitor as data, index (data)}
 						<TableBodyRow>
-							<TableBodyCell
-								style="display: flex; padding-top: 24px; gap: 4px;"
-								on:click={() => toggleRow(index)}
+							<TableBodyCell style="display: flex; padding-top: 24px; gap: 4px;"
 								>{index + 1}
-								<ArrowUpDownOutline class="text-rose-600" style="outline: none;" /></TableBodyCell
-							>
+							</TableBodyCell>
 							<TableBodyCell>{data.Kreditor.nama}</TableBodyCell>
 							<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.hutangPokok))}</TableBodyCell>
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.bunga))}</TableBodyCell>
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.denda))}</TableBodyCell>
-							<!-- <TableBodyCell>{data.jumlahTagihan}</TableBodyCell> -->
 							<TableBodyCell>
 								{#if data.status === 0}
 									<Badge color="gray" rounded class="px-2.5 py-0.5">
@@ -371,128 +401,150 @@
 								{/if}
 							</TableBodyCell>
 							<TableBodyCell>
-								<a
-									href={`/kreditor/${data.kreditorId}/tagihan/${data.id}`}
-									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
-									>Lihat Dokumen</a
-								>
+								<div class="acs{index} cursor-pointer text-cyan-600">Tagihan</div>
+								<Dropdown triggeredBy=".acs{index}">
+									<div slot="header" class="px-4 py-2">
+										<span class="block truncate text-sm font-medium">{data.Kreditor.nama}</span>
+									</div>
+									<DropdownItem>
+										<a
+											href={`/tagihandetail/${data.id}`}
+											class="font-medium text-primary-600 hover:underline dark:text-primary-500"
+											>Lihat Dokumen</a
+										>
+									</DropdownItem>
+									<DropdownItem on:click={() => toggleRow(index)}>Detail Tagihan</DropdownItem>
+								</Dropdown>
 							</TableBodyCell>
-							<TableBodyCell>
-								<Button size="xs" on:click={() => tambahInput(index, data.id)}
-									><PlusSolid class="me-2 h-5 w-5" />Tambah</Button
-								>
-							</TableBodyCell>
+							<TableBodyCell></TableBodyCell>
 						</TableBodyRow>
 						{#if openRow === index}
 							{#if tagihanInputsByRow[index].length > 0}
 								<TableBodyRow>
 									<TableBodyCell colspan="11">
-										{#each tagihanInputsByRow[index] as tagihanDetail, TagihanDetailIndex (tagihanDetail)}
-											<div
-												class="grid gap-4 sm:gap-6 md:grid-cols-10"
-												style="margin-bottom: 10px; width: 80%; margin-inline: auto;"
-											>
-												<div class="md:col-span-3">
-													<label
-														for="sifatTagihan"
-														class={`mb-2 block text-sm font-medium text-gray-900 dark:text-white`}
-														>Sifat/Golongan Tagihan</label
-													>
-													<select
-														id="sifatTagihan"
-														name="sifatTagihanId"
-														bind:value={tagihanDetail.sifatTagihanId}
-														class={`block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500`}
-													>
-														<option value="" selected disabled>Pilih Sifat Tagihan</option>
-														{#each sifatTagihanData as { id, sifat }}
-															<option value={id}>{sifat}</option>
-														{/each}
-													</select>
-													<!-- {#if sifatTagihan.id === '' && form?.errors?.find((error) => error.field === 'sifatTagihanId')}
-												<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-													{form?.errors?.find((error) => error.field === 'sifatTagihanId').message}
-												</p>
-											{/if} -->
-												</div>
-												<div class="md:col-span-3">
-													<label
-														for="tipeTagihan"
-														class={`mb-2 block text-sm font-medium text-gray-900 dark:text-white`}
-														>Tipe Detail Tagihan</label
-													>
-													<select
-														id="tipeTagihan"
-														name="tipeTagihan"
-														bind:value={tagihanDetail.tipe}
-														class={`block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500`}
-													>
-														<option value="" selected disabled>Pilih Tipe Tagihan</option>
-														<option value="bunga">Bunga</option>
-														<option value="denda">Denda</option>
-														<option value="tagihan">Tagihan</option>
-													</select>
-													<!-- {#if sifatTagihan.jumlahTagihan === '' && form?.errors?.find((error) => error.field === 'jumlahTagihan')}
-												<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-													{form?.errors?.find((error) => error.field === 'jumlahTagihan').message}
-												</p>
-											{/if} -->
-												</div>
-												<div class="md:col-span-3">
-													<label
-														for="amountTagihan"
-														class={`mb-2 block text-sm font-medium ${tagihanDetail.amount === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-														>Amount</label
-													>
-													<div class="relative">
-														<div
-															class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5"
+										{#each tagihanInputsByRow as tagihanInputs, index}
+											{#each tagihanInputs as tagihanDetail, TagihanDetailIndex (tagihanDetail)}
+												<div
+													class="grid gap-4 sm:gap-6 md:grid-cols-10"
+													style="margin-bottom: 10px; width: 80%; margin-inline: auto;"
+												>
+													<div class="md:col-span-3">
+														<label
+															for="sifatTagihan"
+															class={`mb-2 block text-sm font-medium ${tagihanDetail.showValidation && tagihanDetail.sifatTagihanId === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+															>Sifat/Golongan Tagihan</label
 														>
-															<p
-																class={`${tagihanDetail.amount === '' ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
-															>
-																Rp.
+														<select
+															id="sifatTagihan"
+															name="sifatTagihanId"
+															bind:value={tagihanDetail.sifatTagihanId}
+															class={`block w-full rounded-lg border p-2.5 text-sm ${tagihanDetail.showValidation && tagihanDetail.sifatTagihanId === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+														>
+															<option value="" selected disabled>Pilih Sifat Tagihan</option>
+															{#each sifatTagihanData as { id, sifat }}
+																<option value={id}>{sifat}</option>
+															{/each}
+														</select>
+														{#if tagihanDetail.showValidation && tagihanDetail.sifatTagihanId === ''}
+															<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+																Sifat Tagihan harus dipilih
 															</p>
-														</div>
-														<input
-															type="text"
-															name="Amount Tagihan"
-															placeholder="Amount Tagihan"
-															id="amountTagihan"
-															bind:value={tagihanDetail.amount}
-															on:input={(event) => updateAmount(index, TagihanDetailIndex, event)}
-															class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${tagihanDetail.amount === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-														/>
+														{/if}
 													</div>
-													{#if tagihanDetail.amount === ''}
-														<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-															Amount Tagihan tidak boleh kosong
-														</p>
-													{/if}
+													<div class="md:col-span-3">
+														<label
+															for="tipeTagihan"
+															class={`mb-2 block text-sm font-medium ${tagihanDetail.showValidation && tagihanDetail.tipe === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+															>Tipe Detail Tagihan</label
+														>
+														<select
+															id="tipeTagihan"
+															name="tipeTagihan"
+															bind:value={tagihanDetail.tipe}
+															class={`block w-full rounded-lg border p-2.5 text-sm ${tagihanDetail.showValidation && tagihanDetail.tipe === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+														>
+															<option value="" selected disabled>Pilih Tipe Tagihan</option>
+															<option value="bunga">Bunga</option>
+															<option value="denda">Denda</option>
+															<option value="tagihan">Tagihan</option>
+														</select>
+														{#if tagihanDetail.showValidation && tagihanDetail.tipe === ''}
+															<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+																Tipe Tagihan harus dipilih
+															</p>
+														{/if}
+													</div>
+													<div class="md:col-span-3">
+														<label
+															for="amountTagihan"
+															class={`mb-2 block text-sm font-medium ${tagihanDetail.showValidation && tagihanDetail.amount === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+															>Amount</label
+														>
+														<div class="relative">
+															<div
+																class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5"
+															>
+																<p
+																	class={`${tagihanDetail.showValidation && tagihanDetail.amount === '' ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
+																>
+																	Rp.
+																</p>
+															</div>
+															<input
+																type="text"
+																name="Amount Tagihan"
+																placeholder="Amount Tagihan"
+																id="amountTagihan"
+																bind:value={tagihanDetail.amount}
+																on:input={(event) => updateAmount(index, TagihanDetailIndex, event)}
+																class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${tagihanDetail.showValidation && tagihanDetail.amount === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+															/>
+														</div>
+														{#if tagihanDetail.showValidation && tagihanDetail.amount === ''}
+															<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+																Amount Tagihan tidak boleh kosong
+															</p>
+														{/if}
+													</div>
+													<div style="position: relative;">
+														<Button
+															style="padding: 5px 10px; position: absolute; top: 45%;"
+															color="red"
+															on:click={() => hapusInput(index, TagihanDetailIndex)}
+															><MinusSolid style="outline: none;" /></Button
+														>
+													</div>
 												</div>
-												<div style="position: relative;">
-													<Button
-														style="padding: 5px 10px; position: absolute; top: 45%;"
-														color="red"
-														on:click={() => hapusInput(index, TagihanDetailIndex)}
-														><MinusSolid style="outline: none;" /></Button
-													>
-												</div>
-											</div>
+											{/each}
 										{/each}
-
-										<Button size="xs" on:click={() => submitForm(index)}>
-											{#if loading}
-												<Spinner color="white" size={4} />
-											{:else}
-												SUBMIT
-											{/if}
-										</Button>
+										<div
+											style="display: flex;
+										justify-content: space-between;
+										padding: 20px 40px 0px 40px"
+										>
+											<Button size="xs" on:click={() => submitForm(index)}>
+												{#if loading}
+													<Spinner color="white" size={4} />
+												{:else}
+													SUBMIT
+												{/if}
+											</Button>
+											<Button size="xs" color="green" on:click={() => tambahInput(index, data.id)}
+												>TAMBAH INPUT</Button
+											>
+										</div>
 									</TableBodyCell>
 								</TableBodyRow>
 							{/if}
 							<TableBodyRow>
 								<TableBodyCell colspan="11">
+									{#if tagihanInputsByRow[index].length === 0}
+										<div class="mb-6 ml-8 mt-3 flex justify-start">
+											<Button size="xs" on:click={() => tambahInput(index, data.id)}
+												><EditSolid class="me-2 h-5 w-5" />REVISI</Button
+											>
+										</div>
+									{/if}
 									<div
 										transition:slide={{ duration: 300, axis: 'y' }}
 										style="width: 80%; margin-inline: auto;"
