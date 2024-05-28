@@ -1,72 +1,7 @@
-<!-- <script>
-	import { goto } from '$app/navigation';
-	import {
-		Table,
-		TableBody,
-		TableBodyCell,
-		TableBodyRow,
-		TableHead,
-		TableHeadCell
-	} from 'flowbite-svelte';
-	import { onMount } from 'svelte';
-	export let data;
-	const { debitor } = data.body;
-	onMount(() => {
-		if (data.body.user) {
-			if (data.body.user.roleId === 1 || data.body.user.roleId === 2) {
-				goto('/dashboard', {
-					replaceState: true
-				});
-			}
-		}
-	});
-</script>
-
-<div class="space-y-4">
-	<h1 class="text-3xl font-bold tracking-tight text-gray-900">List Debitor PKPU</h1>
-	<div class="overflow-hidden border border-gray-200 dark:border-gray-700 md:rounded-lg">
-		{#if debitor.length === 0}
-			<div
-				class="border-1 flex w-full items-center justify-center rounded-md border border-gray-300 py-40"
-			>
-				<h1 class="text-md font-medium text-gray-400 dark:text-white">
-					List debitor masih kosong.
-				</h1>
-			</div>
-		{:else}
-			<Table>
-				<TableHead>
-					<TableHeadCell>No</TableHeadCell>
-					<TableHeadCell>Nama</TableHeadCell>
-					<TableHeadCell>Tanggal Sidang</TableHeadCell>
-					<TableHeadCell>Tempat Sidang</TableHeadCell>
-					<TableHeadCell>Link</TableHeadCell>
-				</TableHead>
-				<TableBody>
-					{#each debitor as data, index (data)}
-						<TableBodyRow>
-							<TableBodyCell>{index + 1}</TableBodyCell>
-							<TableBodyCell>{data.nama}</TableBodyCell>
-							<TableBodyCell>{data.tglSidang}</TableBodyCell>
-							<TableBodyCell>{data.tempatSidang}</TableBodyCell>
-							<TableBodyCell>
-								<a
-									href={`/${data.link}/tagihan`}
-									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
-									>{data.nama}</a
-								>
-							</TableBodyCell>
-						</TableBodyRow>
-					{/each}
-				</TableBody>
-			</Table>
-		{/if}
-	</div>
-</div> -->
 <script>
 	import { page } from '$app/stores';
 	let { slug } = $page.params;
-	import { Spinner, Card, Button, Label, Input, Helper, Toast } from 'flowbite-svelte';
+	import { Spinner, Card, Button, Label, Input, Helper } from 'flowbite-svelte';
 	import {
 		BadgeCheckSolid,
 		ExclamationCircleSolid,
@@ -74,20 +9,21 @@
 	let loading = false;
 	let status = null;
 	let form;
-	let data = {
+	let dataLogin = {
 		debitorUid :'',
 		email:''
 	}
+	export let data;
 	const handleSubmit = async () => {
 		status = null;
 		loading = true;
 		if(slug){
-			data.debitorUid = slug
+			dataLogin.debitorUid = data.uid
 		}
 		try {
 			const response = await fetch('/api/user', {
 				method: 'POST',
-				body: JSON.stringify(data)
+				body: JSON.stringify(dataLogin)
 			});
 
 			const result = await response.json();
@@ -145,7 +81,7 @@
 					<Input
 						type="text"
 						name="debitorUid"
-						bind:value={data.debitorUid}
+						bind:value={dataLogin.debitorUid}
 						placeholder="Kode debitor"
 						color={form?.errors?.find((error) => error.field === 'debitorUid') ? 'red' : undefined}
 					/>
@@ -164,7 +100,7 @@
 				<Input
 					type="text"
 					name="email"
-					bind:value={data.email}
+					bind:value={dataLogin.email}
 					placeholder="name@company.com"
 					color={form?.errors?.find((error) => error.field === 'email') ? 'red' : undefined}
 				/>

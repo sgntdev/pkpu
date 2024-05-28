@@ -1,4 +1,5 @@
-import { SITE_URL, SECRET_INGREDIENT } from '$env/static/private';
+import { SECRET_INGREDIENT } from '$env/static/private';
+import { PUBLIC_SITE_URL } from '$env/static/public';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
 import jwt from 'jsonwebtoken';
@@ -90,7 +91,7 @@ export async function POST({ request }) {
 			}
 		}
 
-		const link = `${SITE_URL}/resetpassword/${uniqueCode}`;
+		const link = `${PUBLIC_SITE_URL}/resetpassword/${uniqueCode}`;
 		let html = `<h2>Hi!</h2><p>Click the following link to access reset the verify password: <a href="${link}">${link}</a></p>`;
 
 		const message = {
