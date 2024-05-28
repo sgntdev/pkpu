@@ -41,7 +41,15 @@ export async function GET({ params, request }) {
 					}
 				}
 			},
-			TagihanVote : true
+			TagihanVote : {
+				include : {
+					User:{
+						select:{
+							email:true
+						}
+					}
+				}
+			}
 		}
 	};
 	const tagihanJoin = await prisma.tagihan.findUnique(tagihanQuery);

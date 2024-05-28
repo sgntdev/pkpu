@@ -8,7 +8,7 @@ export async function load({ params, fetch, locals }) {
 		redirect(303, '/');
 	} else {
 		if (user.roleId === 1 || user.roleId === 2) {
-			const tagihanResponse = await fetch(`/api/tagihan/${tagihanId}?userId=${user.id}`, {
+			const tagihanResponse = await fetch(`/api/tagihan/${tagihanId}`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',

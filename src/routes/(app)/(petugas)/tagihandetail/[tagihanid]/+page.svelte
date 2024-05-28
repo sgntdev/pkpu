@@ -21,6 +21,8 @@
 	export let data;
 	const { token, roleId, userId } = data.body;
 	let tagihan = data.body.tagihan;
+	console.log(tagihan.TagihanVote);
+	const hasVoted = tagihan.TagihanVote.some((item) => item.userId === userId);
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
 			price = price.toString();
@@ -179,7 +181,8 @@
 				</span>
 			{/if}
 		</div>
-		<div>
+		<!-- Identitas Kreditor -->
+		<div class="border-gray-100 border-t-2 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				identitas kreditor
 			</h2>
@@ -242,7 +245,8 @@
 				</div>
 			</div>
 		</div>
-		<div>
+		<!-- Jumlah Tagihan -->
+		<div class="border-gray-100 border-t-2 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				jumlah tagihan
 			</h2>
@@ -329,7 +333,8 @@
 				</div>
 			</div>
 		</div>
-		<div>
+		<!-- Sifat/Golongan Tagihan -->
+		<div class="border-gray-100 border-t-2 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				sifat/golongan tagihan
 			</h2>
@@ -364,7 +369,8 @@
 				</div>
 			</div>
 		</div>
-		<div>
+		<!-- Kurun Tunggakan -->
+		<div class="border-gray-100 border-t-2 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				kurun tunggakan
 			</h2>
@@ -399,7 +405,8 @@
 				</div>
 			</div>
 		</div>
-		<div>
+		<!-- Daftar Bukti Tagihan -->
+		<div class="border-gray-100 border-t-2 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				daftar bukti tagihan
 			</h2>
@@ -433,8 +440,35 @@
 				{/if}
 			</div>
 		</div>
-		{#if roleId === 1}
-			{#if tagihan.TagihanVote.length === 0}
+		<!-- Verified by -->
+		<div class="border-gray-100 border-t-2 py-3">
+			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
+				Verified by
+			</h2>
+			<div class="grid gap-4 md:px-4">
+				{#each tagihan.TagihanVote as item, index}
+					<div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-2">
+						<p
+							class="text-md font-normal tracking-tight text-gray-900 dark:text-white"
+						>
+							{index + 1}. {item.User.email}
+						</p>
+						{#if item.vote === 1}
+						<svg class="w-3 h-3 text-green-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+							<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+						</svg>
+							{:else}
+							<svg class="w-3 h-3 text-red-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+								<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>
+							</svg>
+						{/if}
+						
+					</div>
+				{/each}
+			</div>
+		</div>
+		{#if roleId === 1 && tagihan.status === 0}
+			{#if !hasVoted}
 				<div class="flex justify-end">
 					<Button on:click={() => (verifyModal = true)}>Verify</Button>
 				</div>
