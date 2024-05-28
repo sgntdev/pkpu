@@ -114,6 +114,7 @@ export async function POST({ params, request }) {
 						}
 					},
 					Kreditor: true,
+					Debitor:true,
 					DokumenTagihan: {
 						select: {
 							tipeDokumenId: true,
@@ -127,7 +128,13 @@ export async function POST({ params, request }) {
 						}
 					},
 					TagihanVote : {
-						where : {userId : decoded.user.id}
+						include : {
+							User:{
+								select:{
+									email:true
+								}
+							}
+						}
 					}
 				}
 			});

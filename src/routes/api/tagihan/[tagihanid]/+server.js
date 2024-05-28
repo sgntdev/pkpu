@@ -29,6 +29,7 @@ export async function GET({ params, request }) {
 				}
 			},
 			Kreditor: true,
+			Debitor:true,
 			DokumenTagihan: {
 				select: {
 					tipeDokumenId: true,
