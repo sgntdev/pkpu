@@ -95,7 +95,7 @@
 						></path>
 					</svg>
 				</button>
-				<a href="https://flowbite.com" class="ms-2 flex md:me-24">
+				<a href="/" class="ms-2 flex md:me-24">
 					<span
 						class="self-center whitespace-nowrap text-xl font-semibold dark:text-white sm:text-2xl"
 						>PKPU</span
@@ -130,10 +130,15 @@
 					</Dropdown>
 					<Button color="light"><p>{user.email.slice(0, user.email.indexOf('@'))}</p></Button>
 					<Dropdown>
-						<div slot="header" class="px-4 py-2">
-							<span class="block truncate text-sm font-medium">{user.email}</span>
+						<div class="px-4 py-3">
+							<span class="block text-sm font-semibold text-gray-900 dark:text-white"
+								>{user.email}</span
+							>
+							<span class="block truncate text-sm text-gray-900 dark:text-white"
+								>{user.roleId === 1 ? 'Pengurus' : 'Assisten'}</span
+							>
 						</div>
-						<DropdownItem on:click={handleLogout}>Logout</DropdownItem>
+						<DropdownItem on:click={handleLogout}>Log out</DropdownItem>
 					</Dropdown>
 				{:else}
 					<Button href="/login">Login</Button>

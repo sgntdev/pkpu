@@ -1,5 +1,6 @@
 <script>
 	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+	import { PUBLIC_SITE_URL } from '$env/static/public';
 	injectSpeedInsights();
 	import { dev } from '$app/environment';
 	import { inject } from '@vercel/analytics';
@@ -35,8 +36,13 @@
 				{#if user}
 					<Button color="light"><p>{user.slice(0, user.indexOf('@'))}</p></Button>
 					<Dropdown>
-						<div slot="header" class="px-4 py-2">
-							<span class="block truncate text-sm font-medium">{user}</span>
+						<div class="px-4 py-3">
+							<span class="block text-sm font-semibold text-gray-900 dark:text-white"
+								>{user}</span
+							>
+							<span class="block truncate text-sm text-gray-900 dark:text-white"
+								>Kreditor</span
+							>
 						</div>
 						<DropdownItem on:click={handleLogout}>Logout</DropdownItem>
 					</Dropdown>
