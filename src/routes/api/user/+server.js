@@ -1,4 +1,4 @@
-import { PUBLIC_SITE_URL } from '$env/static/public';
+import { SITE_URL } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
 import { SECRET_INGREDIENT } from '$env/static/private';
@@ -140,7 +140,7 @@ export async function POST({ request }) {
 			}
 		}
 
-		const link = `${PUBLIC_SITE_URL}/verify/${debitorUid}/${uniqueCode}`;
+		const link = `${SITE_URL}/verify/${debitorUid}/${uniqueCode}`;
 		let html = `<h2>Hi!</h2><p>Click the following link to access the form: <a href="${link}">${link}</a></p>`;
 
 		const message = {
