@@ -1,4 +1,5 @@
 <script>
+	import { PUBLIC_SITE_URL } from '$env/static/public';
 	import {
 		Table,
 		TableBody,
@@ -87,6 +88,11 @@
 	const clearToastData = () => {
 		toastData = null;
 	};
+
+	async function copyText(name) {
+		const link = name.replace(/\s/g, '-').toLowerCase();
+		await navigator.clipboard.writeText(`${PUBLIC_SITE_URL}/${link}`);
+	}
 </script>
 
 {#if showToast}
@@ -144,6 +150,7 @@
 				<TableHead>
 					<TableHeadCell>No</TableHeadCell>
 					<TableHeadCell>Nama</TableHeadCell>
+					<TableHeadCell>Uid</TableHeadCell>
 					<TableHeadCell>Tanggal Sidang</TableHeadCell>
 					<TableHeadCell>Tempat Sidang</TableHeadCell>
 					{#if roleId === 1}
@@ -155,10 +162,28 @@
 						<TableBodyRow>
 							<TableBodyCell>{index + 1}</TableBodyCell>
 							<TableBodyCell>{data.nama}</TableBodyCell>
+							<TableBodyCell>{data.uid}</TableBodyCell>
 							<TableBodyCell>{data.tglSidang}</TableBodyCell>
 							<TableBodyCell>{data.tempatSidang}</TableBodyCell>
 							{#if roleId === 1}
 								<TableBodyCell>
+									<Button data-sveltekit-reload on:click={() => copyText(data.nama)}>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											class="h-5 w-5 shrink-0"
+											role="img"
+											aria-label="link outline"
+											viewBox="0 0 24 24"
+											><path
+												stroke="currentColor"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M13.2 9.8a3.4 3.4 0 0 0-4.8 0L5 13.2A3.4 3.4 0 0 0 9.8 18l.3-.3m-.3-4.5a3.4 3.4 0 0 0 4.8 0L18 9.8A3.4 3.4 0 0 0 13.2 5l-1 1"
+											></path></svg
+										>
+									</Button>
 									<Button data-sveltekit-reload href={`debitor/${data.id}`}>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
