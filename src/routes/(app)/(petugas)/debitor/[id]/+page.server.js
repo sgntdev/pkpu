@@ -13,20 +13,20 @@ export async function load({ locals, fetch, params }) {
 				}
             })
             const debitor = await res.json()
-			const petugasRes = await fetch(`/api/user?roleId=1`, {
+			const pengurusRes = await fetch(`/api/user?roleId=1`, {
                 method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				}
             })
-			const petugas = await petugasRes.json()
+			const pengurus = await pengurusRes.json()
 			return {
 				status: 200,
 				body: {
 					token, 
                     debitor : debitor.data,
-					petugas : petugas.data
+					pengurus : pengurus.data
 				}
 			};
 		} else {

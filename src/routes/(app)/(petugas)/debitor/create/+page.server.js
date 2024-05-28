@@ -5,19 +5,19 @@ export async function load({ locals, fetch }) {
 		redirect(303, '/');
 	} else {
 		if (user.roleId === 1) {
-			const petugasRes = await fetch(`/api/user?roleId=1`, {
+			const pengurusRes = await fetch(`/api/user?roleId=1`, {
                 method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				}
             })
-			const petugas = await petugasRes.json()
+			const pengurus = await pengurusRes.json()
 			return {
 				status: 200,
 				body: {
 					token,
-					petugas : petugas.data
+					pengurus : pengurus.data
 				}
 			};
 		} else {

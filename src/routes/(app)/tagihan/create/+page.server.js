@@ -45,7 +45,7 @@ export async function load({ locals, fetch }) {
 					userId: user.id,
 					sifatTagihanData: sifatTagihanResult.data,
 					tipeDokumenData: tipeDokumenResult.data,
-					totalVoters : debitor.data.petugasAccess.length
+					totalVoters : debitor.data.pengurusAccess.length
 				}
 			};
 		}

@@ -57,7 +57,7 @@ export async function POST({ params, request }) {
 				include:{
 					Debitor:{
 						select:{
-							petugasAccess : true
+							pengurusAccess : true
 						}
 					}
 				}
@@ -65,7 +65,7 @@ export async function POST({ params, request }) {
 
 			let objectionVote = tagihan.objectionVote;
 			let verifiedVote = tagihan.verifiedVote;
-			let totalVoters = tagihan.Debitor.petugasAccess.length;
+			let totalVoters = tagihan.Debitor.pengurusAccess.length;
 			if (vote === 0) {
 				objectionVote++;
 			} else {

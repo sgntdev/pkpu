@@ -49,9 +49,9 @@ export async function POST({ request }) {
 		});
 	}
 	const formData = await request.formData();
-	let { nama, tglSidang, tempatSidang, petugas } = Object.fromEntries(formData);
-	petugas = JSON.parse(petugas)
-	let petugasAccess = petugas.map(item => (item.value))
+	let { nama, tglSidang, tempatSidang, pengurus } = Object.fromEntries(formData);
+	pengurus = JSON.parse(pengurus)
+	let pengurusAccess = pengurus.map(item => (item.value))
 	const validation = {
 		success: false,
 		errors: []
@@ -76,10 +76,10 @@ export async function POST({ request }) {
 				message: 'Tempat sidang tidak boleh kosong!'
 			});
 		}
-		if (petugas.length === 0) {
+		if (pengurus.length === 0) {
 			validation.errors.push({
-				field: 'petugas',
-				message: 'Petugas tidak boleh kosong!'
+				field: 'pengurus',
+				message: 'Pengurus tidak boleh kosong!'
 			});
 		}
 		if (validation?.errors.length > 0) {
@@ -92,7 +92,7 @@ export async function POST({ request }) {
 				tglSidang,
 				tempatSidang,
 				uid: debitorUid,
-				petugasAccess
+				pengurus
 			}
 		});
 

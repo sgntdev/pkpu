@@ -33,13 +33,13 @@ model Role {
 }
 
 model Debitor {
-  id            Int       @id @default(autoincrement())
-  nama          String
-  tglSidang     String
-  tempatSidang  String
-  uid           String    @unique @db.VarChar(5)
-  petugasAccess Int[]
-  Tagihan       Tagihan[]
+  id             Int       @id @default(autoincrement())
+  nama           String
+  tglSidang      String
+  tempatSidang   String
+  uid            String    @unique @db.VarChar(5)
+  pengurusAccess Int[]
+  Tagihan        Tagihan[]
 }
 
 model Kreditor {

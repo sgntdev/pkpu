@@ -4,12 +4,12 @@
 	import { Breadcrumb, BreadcrumbItem, Button, Spinner } from 'flowbite-svelte';
 	let form;
 	export let data;
-	const { token, debitor, petugas } = data.body;
-	const listPetugas = petugas.map((item) => ({
+	const { token, debitor, pengurus } = data.body;
+	const listPengurus = pengurus.map((item) => ({
 		label: item.email,
 		value: item.id
 	}));
-	const selectedPetugas = listPetugas.filter((petugas) => debitor.petugasAccess.includes(petugas.value))
+	const selectedPengurus = listPengurus.filter((pengurus) => debitor.pengurusAccess.includes(pengurus.value))
 	let loading = false;
 	const handleEditDebitor = async (event) => {
 		loading = true;
@@ -143,31 +143,31 @@
 				</div>
 				<div>
 					<label
-						for="Petugas"
-						class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'petugas') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						for="Pengurus"
+						class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'pengurus') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 					>
-						<span>Petugas</span>
+						<span>Pengurus</span>
 						<MultiSelect
 							--sms-border-radius="0.5rem"
-							--sms-border={` 1px solid ${form?.errors?.find((error) => error.field === 'petugas') ? '#ef4444' : '#d1d5db'}`}
-							--sms-focus-border={` 2px solid ${form?.errors?.find((error) => error.field === 'petugas') ? '#ef4444' : '#3b82f6'}`}
+							--sms-border={` 1px solid ${form?.errors?.find((error) => error.field === 'pengurus') ? '#ef4444' : '#d1d5db'}`}
+							--sms-focus-border={` 2px solid ${form?.errors?.find((error) => error.field === 'pengurus') ? '#ef4444' : '#3b82f6'}`}
 							--sms-padding="0.625rem"
-							--sms-bg={` ${form?.errors?.find((error) => error.field === 'petugas') ? '#fef2f2' : '#f9fafb'}`}
-							--sms-text-color={` ${form?.errors?.find((error) => error.field === 'petugas') ? '#7f1d1d' : '#111827'}`}
-							--sms-placeholder-color={` ${form?.errors?.find((error) => error.field === 'petugas') ? '#b91c1c' : '#9ca3af'}`}
+							--sms-bg={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#fef2f2' : '#f9fafb'}`}
+							--sms-text-color={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#7f1d1d' : '#111827'}`}
+							--sms-placeholder-color={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#b91c1c' : '#9ca3af'}`}
 							--sms-font-size="0.875rem"
 							--sms-margin="8px 0"
-							options={listPetugas}
-							selected={selectedPetugas}
-							placeholder="Pilih petugas"
-							name="petugas"
+							options={listPengurus}
+							selected={selectedPengurus}
+							placeholder="Pilih pengurus"
+							name="pengurus"
 							let:option
 						>
 							<span>{option.label}</span>
 						</MultiSelect>
-						{#if form?.errors?.find((error) => error.field === 'petugas')}
+						{#if form?.errors?.find((error) => error.field === 'pengurus')}
 							<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-								{form?.errors?.find((error) => error.field === 'petugas').message}
+								{form?.errors?.find((error) => error.field === 'pengurus').message}
 							</p>
 						{/if}
 					</label>
