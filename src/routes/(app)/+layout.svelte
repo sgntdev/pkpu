@@ -1,12 +1,12 @@
 <script>
 	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
-	import { PUBLIC_SITE_URL } from '$env/static/public';
 	injectSpeedInsights();
 	import { dev } from '$app/environment';
 	import { inject } from '@vercel/analytics';
 	inject({ mode: dev ? 'development' : 'production' });
 	import '../../app.pcss';
 	import { goto } from '$app/navigation';
+	import Toast from './../../lib/components/Toast.svelte';
 	import { Button, Dropdown, DropdownItem } from 'flowbite-svelte';
 	export let data;
 	const { user } = data;
@@ -54,5 +54,6 @@
 	</div>
 </nav>
 <main class="p-4">
+	<Toast/>
 	<slot />
 </main>

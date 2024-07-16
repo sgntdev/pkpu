@@ -25,6 +25,7 @@
 		InboxFullOutline,
 		InboxFullSolid
 	} from 'flowbite-svelte-icons';
+	import Toast from '../../../lib/components/Toast.svelte';
 	let showSidebar = false;
 	const handleSidebar = () => {
 		showSidebar = !showSidebar;
@@ -244,6 +245,7 @@
 
 <main class="p-4 sm:ml-64">
 	<div class="mt-16">
+		<Toast/>
 		<slot />
 	</div>
 </main>
