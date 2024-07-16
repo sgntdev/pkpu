@@ -7,19 +7,12 @@
 		Spinner,
 		Breadcrumb,
 		BreadcrumbItem,
-		Toast,
 		Fileupload,
-		Helper,
+		Helper
 	} from 'flowbite-svelte';
-	import {
-		PlusSolid,
-		MinusSolid,
-		CloseSolid,
-		XCircleSolid,
-		CheckCircleSolid
-	} from 'flowbite-svelte-icons';
+	import { PlusSolid, MinusSolid, CloseSolid } from 'flowbite-svelte-icons';
+	import { showToast } from '$lib/toastStore';
 	import { goto } from '$app/navigation';
-	import { fly } from 'svelte/transition';
 	export let data;
 	const { token, debitorId, userId, sifatTagihanData, tipeDokumenData, totalVoters } = data.body;
 	let kreditorData = data.body.kreditorData;
@@ -32,8 +25,6 @@
 	let formModal = false;
 	let editModal = false;
 	let editTargetId;
-	let showToast = false;
-	let toastData;
 	let loading = false;
 	let submitted = false;
 	let form;
@@ -50,7 +41,7 @@
 	};
 	$: selectedKreditorData = kreditorData.find((kreditor) => kreditor.id === selectedKreditor);
 	let jumlahTagihan = {
-		pertanggal: '',
+		pertanggal: null,
 		hutangPokok: '',
 		bunga: '',
 		denda: '',
@@ -66,8 +57,8 @@
 		jumlahTagihan: ''
 	};
 	let kurunTunggakan = {
-		mulaiTertunggak: '',
-		jumlahHari: ''
+		mulaiTertunggak: null,
+		jumlahHari: null
 	};
 
 	//inputan dinamis
@@ -104,15 +95,7 @@
 			form = result;
 			if (result.success) {
 				formModal = false;
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success');
 				kreditor = {
 					userId,
 					nama: '',
@@ -130,15 +113,7 @@
 				const updatedData = await updatedDataResponse.json();
 				kreditorData = updatedData.data;
 			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'error');
 			}
 		} catch (error) {
 			console.log(error);
@@ -168,15 +143,7 @@
 					noTelp: '',
 					alamat: ''
 				};
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success');
 				const updatedDataResponse = await fetch(`/api/kreditor?userId=${userId}`, {
 					method: 'GET',
 					headers: {
@@ -187,15 +154,7 @@
 				const updatedData = await updatedDataResponse.json();
 				kreditorData = updatedData.data;
 			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'error');
 			}
 		} catch (error) {
 			console.log(error);
@@ -225,6 +184,24 @@
 		};
 	};
 	//
+	const calculateDay = (event) => {
+		event.preventDefault();
+		const formData = new FormData(document.getElementById('formTagihan'));
+		let pertanggalDate = new Date(
+			formData.get('pertanggal') ? formData.get('pertanggal') : jumlahTagihan.pertanggal
+		);
+		jumlahTagihan.pertanggal = formData.get('pertanggal');
+		let mulaiTertunggakDate = new Date(
+			formData.get('mulaiTertunggak')
+				? formData.get('mulaiTertunggak')
+				: kurunTunggakan.mulaiTertunggak
+		);
+		kurunTunggakan.mulaiTertunggak = formData.get('mulaiTertunggak')
+		const timeDifference = pertanggalDate - mulaiTertunggakDate;
+		let daysDifference = timeDifference / (1000 * 3600 * 24);
+		kurunTunggakan.jumlahHari = daysDifference || 0;
+	};
+
 	const handleSubmit = async (event) => {
 		loading = true;
 		submitted = true;
@@ -236,6 +213,7 @@
 		formData.append('debitorId', debitorId);
 		formData.append('totalVoters', totalVoters);
 		formData.append('userId', userId);
+		formData.set('jumlahHari', kurunTunggakan.jumlahHari);
 		try {
 			const response = await fetch('/api/tagihan', {
 				method: 'POST',
@@ -245,36 +223,22 @@
 				body: formData
 			});
 			const result = await response.json();
-			console.log(result)
 			if (result.success) {
-				goto('/tagihan', {
-					replaceState: false,
-					state: {
-						statusSuccess: true,
-						message: result.message
-					}
-				});
+				showToast(result.message, 'success');
+				goto('/tagihan');
 			} else {
 				submitted = true;
 				form = result;
 				if (!result.errors) {
-					toastData = {
-						success: false,
-						message: result.message
-					};
-					showToast = true;
-					setTimeout(() => {
-							showToast = false;
-							clearToastData();
-						}, 2000);
-					}
+					showToast(result.message, 'error');
 				}
-			} catch (err) {
-				console.error('client', err);
-			} finally {
-				loading = false;
 			}
-		};
+		} catch (err) {
+			console.error(err);
+		} finally {
+			loading = false;
+		}
+	};
 
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
@@ -289,36 +253,16 @@
 		const formatted = price.replace(/,/g, '');
 		return formatted;
 	}
-	const clearToastData = () => {
-		toastData = null;
-	};
 
 	$: {
-    if (sifatTagihan.id !== '') {
-        submitted = false;
-    }
-	if (buktiTagihan.tipeDokumenId !== '') {
-        submitted = false;
-    }
-}
+		if (sifatTagihan.id !== '') {
+			submitted = false;
+		}
+		if (buktiTagihan.tipeDokumenId !== '') {
+			submitted = false;
+		}
+	}
 </script>
-
-{#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-15 fixed z-50 end-5">
-		<Toast color={toastData?.success ? 'green' : 'red'} >
-			<svelte:fragment slot="icon">
-				{#if toastData?.success}
-					<CheckCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Check icon</span>
-				{:else}
-					<XCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Error icon</span>
-				{/if}
-			</svelte:fragment>
-			{toastData?.message}
-		</Toast>
-	</div>
-{/if}
 
 <Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
 	<BreadcrumbItem href="/tagihan" home>List Tagihan</BreadcrumbItem>
@@ -329,7 +273,7 @@
 >
 	Form Tagihan
 </h2>
-<form on:submit|preventDefault={handleSubmit} enctype="multipart/form-data">
+<form on:submit|preventDefault={handleSubmit} enctype="multipart/form-data" id="formTagihan">
 	<div class="space-y-4">
 		<Card size="none" padding="lg">
 			<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Identitas Kreditor</h3>
@@ -481,6 +425,8 @@
 							type="text"
 							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'pertanggal') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 							placeholder="Pilih Tanggal"
+							autocomplete="off"
+							bind:value={jumlahTagihan.pertanggal}
 						/>
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'pertanggal')}
@@ -691,7 +637,8 @@
 							name="mulaiTertunggak"
 							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'mulaiTertunggak') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 							placeholder="Pilih Tanggal"
-							
+							autocomplete="off"
+							bind:value={kurunTunggakan.mulaiTertunggak}
 						/>
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'mulaiTertunggak')}
@@ -706,14 +653,17 @@
 						class={`mb-2 block text-sm font-medium ${kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Jumlah Hari</label
 					>
-					<input
-						type="text"
-						name="jumlahHari"
-						id="jumlahHari"
-						bind:value={kurunTunggakan.jumlahHari}
-						placeholder="Jumlah Hari Tunggakan"
-						class={`block w-full rounded-lg border p-2.5 text-sm ${kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-					/>
+					<div class="flex flex-row gap-2">
+						<input
+							type="text"
+							name="jumlahHari"
+							id="jumlahHari"
+							bind:value={kurunTunggakan.jumlahHari}
+							placeholder="Jumlah Hari Tunggakan"
+							class={`block w-full rounded-lg border p-2.5 text-sm ${kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+						/>
+						<Button type="button" on:click={(e) => calculateDay(e)} color="light">Calculate</Button>
+					</div>
 					{#if kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 							{form?.errors?.find((error) => error.field === 'jumlahHari').message}
@@ -778,7 +728,7 @@
 							disabled={bukti.tipeDokumenId === ''}
 							color={submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === '' ? 'red' : ''}
 						/>
-						<Helper>PDF (MAX. 2 MB).</Helper>
+						<Helper>PDF (MAX. 25 MB).</Helper>
 						{#if submitted && bukti.tipeDokumenId !== '' && bukti.dokumen === ''}
 							<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 								Dokumen tidak boleh kosong!

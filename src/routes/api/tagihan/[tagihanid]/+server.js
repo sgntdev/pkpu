@@ -29,9 +29,10 @@ export async function GET({ params, request }) {
 				}
 			},
 			Kreditor: true,
-			Debitor:true,
+			Debitor: true,
 			DokumenTagihan: {
 				select: {
+					id: true,
 					tipeDokumenId: true,
 					nama_dokumen: true,
 					dokumen_url: true,
@@ -42,11 +43,11 @@ export async function GET({ params, request }) {
 					}
 				}
 			},
-			TagihanVote : {
-				include : {
-					User:{
-						select:{
-							email:true
+			TagihanVote: {
+				include: {
+					User: {
+						select: {
+							email: true
 						}
 					}
 				}
@@ -103,7 +104,7 @@ export async function PUT({ params, request }) {
 		jumlahHari
 	} = Object.fromEntries(formData);
 	const allowedFileTypes = ['application/pdf'];
-	const maxFileSize = 2 * 1024 * 1024; // 2 MB
+	const maxFileSize = 25 * 1024 * 1024; // 2 MB
 	const validation = {
 		success: false,
 		errors: []
@@ -244,7 +245,6 @@ export async function PUT({ params, request }) {
 				data
 			});
 		}
-
 		return new Response(
 			JSON.stringify({
 				success: true,
@@ -257,7 +257,7 @@ export async function PUT({ params, request }) {
 			JSON.stringify({
 				success: false,
 				code: 500,
-				message: 'Tagihan gagal ditambahkan!'
+				message: 'Tagihan gagal diubah!'
 			}),
 			{ status: 500 }
 		);
