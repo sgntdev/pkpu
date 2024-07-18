@@ -60,7 +60,7 @@
 	};
 	let kurunTunggakan = {
 		mulaiTertunggak: null,
-		jumlahHari: null
+		jumlahHari: ''
 	};
 
 	//inputan dinamis
@@ -223,8 +223,9 @@
 			});
 			const result = await response.json();
 			if (result.success) {
+				goto('/tagihan')
 				showToast(result.message, 'success');
-				goto('/tagihan');
+				
 			} else {
 				submitted = true;
 				form = result;
@@ -262,6 +263,14 @@
 		}
 	}
 </script>
+
+{#if loading}
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-gray-900/50 dark:bg-gray-900/80"
+	>
+		<Spinner color="white" size={10} />
+	</div>
+{/if}
 
 <Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
 	<BreadcrumbItem href="/tagihan" home>List Tagihan</BreadcrumbItem>
@@ -304,7 +313,7 @@
 						placeholder="Cari Kreditor..."
 					/>
 				</div>
-				<Button size="xs" on:click={() => openAddModal()}
+				<Button size="xs" on:click={() => openAddModal()} color="light"
 					><PlusSolid class="me-2 h-5 w-5" />Tambah</Button
 				>
 				{#if searchKreditor !== ''}
@@ -414,7 +423,10 @@
 								/>
 							</svg>
 						</div>
-						<DatePicker bind:startDate={jumlahTagihan.pertanggal} />
+						<DatePicker
+							bind:startDate={jumlahTagihan.pertanggal}
+							invalid={form?.errors?.find((error) => error.field === 'pertanggal')}
+						/>
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'pertanggal')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
@@ -614,7 +626,10 @@
 								/>
 							</svg>
 						</div>
-						<DatePicker bind:startDate={kurunTunggakan.mulaiTertunggak} />
+						<DatePicker
+							bind:startDate={kurunTunggakan.mulaiTertunggak}
+							invalid={form?.errors?.find((error) => error.field === 'mulaiTertunggak')}
+						/>
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'mulaiTertunggak')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
@@ -674,12 +689,14 @@
 								{/each}
 							</Select>
 							{#if buktiTagihan.length !== 1}
-								<Button color="red" on:click={() => handleRemoveTagihan(index)}
+								<Button color="light" on:click={() => handleRemoveTagihan(index)}
 									><MinusSolid class="h-5 w-5" /></Button
 								>
 							{/if}
 							{#if buktiTagihan.length - 1 === index}
-								<Button on:click={() => handleAddTagihan()}><PlusSolid class="h-5 w-5" /></Button>
+								<Button on:click={() => handleAddTagihan()} color="light"
+									><PlusSolid class="h-5 w-5" /></Button
+								>
 							{/if}
 						</div>
 						{#if submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === ''}
@@ -718,13 +735,9 @@
 			</div>
 		</Card>
 	</div>
-	<div class="mt-4 flex justify-end">
-		<Button type="submit">
-			{#if loading}<Spinner color="white" size={4} />
-			{:else}
-				Submit
-			{/if}
-		</Button>
+	<div class="my-4 flex justify-end gap-2">
+		<Button type="submit">Submit tagihan</Button>
+		<Button href="../" color="red">Batal</Button>
 	</div>
 </form>
 <!-- Add Kreditor Modal -->

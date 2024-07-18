@@ -311,8 +311,8 @@
 			});
 			const result = await response.json();
 			if (result.success) {
-				showToast(result.message, 'success');
 				goto('/tagihan');
+				showToast(result.message, 'success');
 			} else {
 				submitted = true;
 				form = result;
@@ -323,7 +323,7 @@
 		} catch (err) {
 			console.error(err);
 		} finally {
-			loading = false;
+			// loading = false;
 		}
 	};
 
@@ -336,6 +336,12 @@
 		}
 	}
 </script>
+
+{#if loading}
+<div class="bg-gray-900/50 dark:bg-gray-900/80 fixed inset-0 z-40 justify-center flex items-center">
+	<Spinner color="white" size={10} />
+</div>
+{/if}
 
 <Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
 	<BreadcrumbItem href="/tagihan" home>List Tagihan</BreadcrumbItem>
@@ -378,7 +384,7 @@
 						placeholder="Cari Kreditor..."
 					/>
 				</div>
-				<Button size="xs" on:click={() => openAddModal()}
+				<Button size="xs" on:click={() => openAddModal()} color="light"
 					><PlusSolid class="me-2 h-5 w-5" />Tambah</Button
 				>
 				{#if searchKreditor !== ''}
@@ -756,20 +762,20 @@
 								{#if buktiTagihan[index].dokumen_url}
 									<Button
 										type="button"
-										color="red"
+										color="light"
 										on:click={() => handleRemoveTagihan(index, bukti.id, bukti.nama_dokumen)}
 										><MinusSolid class="h-5 w-5" /></Button
 									>
 								{:else if buktiTagihan.length !== 1}
 									<Button
 										type="button"
-										color="red"
+										color="light"
 										on:click={() => handleRemoveTagihan(index, bukti.id, bukti.nama_dokumen)}
 										><MinusSolid class="h-5 w-5" /></Button
 									>
 								{/if}
 								{#if buktiTagihan.length - 1 === index}
-									<Button on:click={() => handleAddTagihan()}><PlusSolid class="h-5 w-5" /></Button>
+									<Button on:click={() => handleAddTagihan()} color="light"><PlusSolid class="h-5 w-5" /></Button>
 								{/if}
 							</div>
 							{#if submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === ''}
@@ -814,12 +820,12 @@
 			{/if}
 		</Card>
 	</div>
-	<div class="mt-4 flex justify-end">
+	<div class="my-4 flex justify-end gap-2">
 		<Button type="submit">
-			{#if loading}<Spinner color="white" size={4} />
-			{:else}
-				Submit
-			{/if}
+				Ubah tagihan
+		</Button>
+		<Button href="../" color="red">
+				Batal
 		</Button>
 	</div>
 </form>
