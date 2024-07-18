@@ -11,6 +11,8 @@
 		Helper
 	} from 'flowbite-svelte';
 	import { PlusSolid, MinusSolid, CloseSolid } from 'flowbite-svelte-icons';
+	import DatePicker from '../../../../lib/components/DatePicker.svelte';
+	import { format } from 'date-fns';
 	import { showToast } from '$lib/toastStore';
 	import { goto } from '$app/navigation';
 	export let data;
@@ -184,19 +186,14 @@
 		};
 	};
 	//
-	const calculateDay = (event) => {
-		event.preventDefault();
-		const formData = new FormData(document.getElementById('formTagihan'));
-		let pertanggalDate = new Date(
-			formData.get('pertanggal') ? formData.get('pertanggal') : jumlahTagihan.pertanggal
-		);
-		jumlahTagihan.pertanggal = formData.get('pertanggal');
-		let mulaiTertunggakDate = new Date(
-			formData.get('mulaiTertunggak')
-				? formData.get('mulaiTertunggak')
-				: kurunTunggakan.mulaiTertunggak
-		);
-		kurunTunggakan.mulaiTertunggak = formData.get('mulaiTertunggak')
+	const formatDate = (date) => (date ? format(new Date(date), 'dd MMMM yyyy') : '');
+
+	$: jumlahTagihan.pertanggal = formatDate(jumlahTagihan.pertanggal);
+	$: kurunTunggakan.mulaiTertunggak = formatDate(kurunTunggakan.mulaiTertunggak);
+
+	const calculateDay = () => {
+		let pertanggalDate = new Date(jumlahTagihan.pertanggal);
+		let mulaiTertunggakDate = new Date(kurunTunggakan.mulaiTertunggak);
 		const timeDifference = pertanggalDate - mulaiTertunggakDate;
 		let daysDifference = timeDifference / (1000 * 3600 * 24);
 		kurunTunggakan.jumlahHari = daysDifference || 0;
@@ -213,6 +210,8 @@
 		formData.append('debitorId', debitorId);
 		formData.append('totalVoters', totalVoters);
 		formData.append('userId', userId);
+		formData.set('pertanggal', jumlahTagihan.pertanggal);
+		formData.set('mulaiTertunggak', kurunTunggakan.mulaiTertunggak);
 		formData.set('jumlahHari', kurunTunggakan.jumlahHari);
 		try {
 			const response = await fetch('/api/tagihan', {
@@ -273,7 +272,7 @@
 >
 	Form Tagihan
 </h2>
-<form on:submit|preventDefault={handleSubmit} enctype="multipart/form-data" id="formTagihan">
+<form on:submit|preventDefault={handleSubmit} enctype="multipart/form-data">
 	<div class="space-y-4">
 		<Card size="none" padding="lg">
 			<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Identitas Kreditor</h3>
@@ -415,19 +414,7 @@
 								/>
 							</svg>
 						</div>
-						<input
-							id="pertanggal"
-							datepicker
-							datepicker-format="dd MM yyyy"
-							datepicker-title="Pertanggal"
-							datepicker-autohide
-							name="pertanggal"
-							type="text"
-							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'pertanggal') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-							placeholder="Pilih Tanggal"
-							autocomplete="off"
-							bind:value={jumlahTagihan.pertanggal}
-						/>
+						<DatePicker bind:startDate={jumlahTagihan.pertanggal} />
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'pertanggal')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
@@ -627,19 +614,7 @@
 								/>
 							</svg>
 						</div>
-						<input
-							id="mulaiTertunggak"
-							datepicker
-							datepicker-format="dd MM yyyy"
-							datepicker-title="Mulai Tertunggak Sejak"
-							datepicker-autohide
-							type="text"
-							name="mulaiTertunggak"
-							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${form?.errors?.find((error) => error.field === 'mulaiTertunggak') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-							placeholder="Pilih Tanggal"
-							autocomplete="off"
-							bind:value={kurunTunggakan.mulaiTertunggak}
-						/>
+						<DatePicker bind:startDate={kurunTunggakan.mulaiTertunggak} />
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'mulaiTertunggak')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
@@ -662,7 +637,7 @@
 							placeholder="Jumlah Hari Tunggakan"
 							class={`block w-full rounded-lg border p-2.5 text-sm ${kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 						/>
-						<Button type="button" on:click={(e) => calculateDay(e)} color="light">Calculate</Button>
+						<Button type="button" on:click={calculateDay} color="light">Calculate</Button>
 					</div>
 					{#if kurunTunggakan.jumlahHari === '' && form?.errors?.find((error) => error.field === 'jumlahHari')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">

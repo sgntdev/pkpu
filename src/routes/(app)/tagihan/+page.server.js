@@ -25,6 +25,8 @@ export async function load({ fetch, locals }) {
 		return {
 			status: 200,
 			body: {
+				user,
+				token,
                 debitor: debitor.data,
 				tagihan: tagihan.data
 			}

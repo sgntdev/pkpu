@@ -42,7 +42,8 @@
 				</span>
 			{/if}
 		</div>
-		<div>
+		<!-- Identitas Kreditor -->
+		<div class="border-t-2 border-gray-100 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				identitas kreditor
 			</h2>
@@ -105,7 +106,8 @@
 				</div>
 			</div>
 		</div>
-		<div>
+		<!-- Jumlah Tagihan -->
+		<div class="border-t-2 border-gray-100 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				jumlah tagihan
 			</h2>
@@ -192,7 +194,8 @@
 				</div>
 			</div>
 		</div>
-		<div>
+		<!-- Sifat/Golongan Tagihan -->
+		<div class="border-t-2 border-gray-100 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				sifat/golongan tagihan
 			</h2>
@@ -227,7 +230,8 @@
 				</div>
 			</div>
 		</div>
-		<div>
+		<!-- Kurun Tunggakan -->
+		<div class="border-t-2 border-gray-100 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				kurun tunggakan
 			</h2>
@@ -262,7 +266,8 @@
 				</div>
 			</div>
 		</div>
-		<div>
+		<!-- Daftar Bukti Tagihan -->
+		<div class="border-t-2 border-gray-100 py-3">
 			<h2 class="mb-4 text-2xl font-bold capitalize tracking-tight text-gray-900 dark:text-white">
 				daftar bukti tagihan
 			</h2>
