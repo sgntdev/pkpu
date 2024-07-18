@@ -12,14 +12,10 @@
 		Select,
 		Breadcrumb,
 		BreadcrumbItem,
-		Toast
 	} from 'flowbite-svelte';
 	import {
-		CheckCircleSolid,
-		CloseSolid,
 		ExclamationCircleOutline
 	} from 'flowbite-svelte-icons';
-	import { fly } from 'svelte/transition';
 	export let data;
 	const { user, roleData, token } = data.body;
 	let users = data.body.users;
@@ -30,8 +26,6 @@
 	let deleteTarget;
 	let editModal = false;
 	let deleteModal = false;
-	let showToast = false;
-	let toastData;
 
 	const openEditModal = (email, newRole) => {
 		editTarget = email;
@@ -52,27 +46,11 @@
 			const result = await response.json();
 			if (result.success) {
 				editModal = false;
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success')
 				users = result.data;
 				role = '';
 			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'error')
 			}
 		} catch (error) {
 			console.error(error);
@@ -95,26 +73,10 @@
 			});
 			const result = await response.json();
 			if (result.success) {
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success')
 				users = result.data;
 			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'error')
 			}
 		} catch (error) {
 			console.error(error);
@@ -123,27 +85,8 @@
 			deleteModal = false;
 		}
 	};
-	const clearToastData = () => {
-		toastData = null;
-	};
 </script>
 
-{#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-15 absolute end-5">
-		<Toast color={toastData?.success ? 'green' : 'red'} class="z-50 mb-4">
-			<svelte:fragment slot="icon">
-				{#if toastData?.success}
-					<CheckCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Check icon</span>
-				{:else}
-					<CloseSolid class="h-5 w-5" />
-					<span class="sr-only">Error icon</span>
-				{/if}
-			</svelte:fragment>
-			{toastData?.message}
-		</Toast>
-	</div>
-{/if}
 <div class="space-y-4">
 	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
 		<BreadcrumbItem href="/dashboard" home>Dashboard</BreadcrumbItem>

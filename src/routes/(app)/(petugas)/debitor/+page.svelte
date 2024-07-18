@@ -1,4 +1,5 @@
 <script>
+	import { showToast } from '$lib/toastStore';
 	import { PUBLIC_SITE_URL } from '$env/static/public';
 	import {
 		Table,
@@ -10,33 +11,14 @@
 		Breadcrumb,
 		BreadcrumbItem,
 		Button,
-		Toast,
 		Modal
 	} from 'flowbite-svelte';
-	import { CheckCircleSolid, ExclamationCircleOutline, XCircleSolid } from 'flowbite-svelte-icons';
-	import { page } from '$app/stores';
-	import { fly } from 'svelte/transition';
-	import { onMount } from 'svelte';
+	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
 	export let data;
 	const { token, roleId } = data.body;
 	let debitor = data.body.debitor;
 	let deleteModal = false;
 	let deleteTargetId;
-	let showToast = false;
-	let toastData;
-	onMount(() => {
-		if ($page.state.statusSuccess) {
-			showToast = true;
-			toastData = {
-				success: true,
-				message: $page.state.message
-			};
-			setTimeout(() => {
-				showToast = false;
-				clearToastData();
-			}, 2000);
-		}
-	});
 	const openDeleteModal = (id) => {
 		deleteTargetId = id;
 		deleteModal = true;
@@ -52,30 +34,14 @@
 			});
 			const result = await response.json();
 			if (result.success) {
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success')
 				const updatedDataResponse = await fetch('/api/debitor', {
 					method: 'GET'
 				});
 				const updatedData = await updatedDataResponse.json();
 				debitor = updatedData;
 			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'error')
 			}
 		} catch (error) {
 			console.error(error);
@@ -85,32 +51,11 @@
 		}
 	};
 
-	const clearToastData = () => {
-		toastData = null;
-	};
-
 	async function copyText(name) {
 		const link = name.replace(/\s/g, '-').toLowerCase();
 		await navigator.clipboard.writeText(`${PUBLIC_SITE_URL}/${link}`);
 	}
 </script>
-
-{#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-15 absolute end-5">
-		<Toast color={toastData?.success ? 'green' : 'red'} class="z-50 mb-4">
-			<svelte:fragment slot="icon">
-				{#if toastData?.success}
-					<CheckCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Check icon</span>
-				{:else}
-					<XCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Error icon</span>
-				{/if}
-			</svelte:fragment>
-			{toastData?.message}
-		</Toast>
-	</div>
-{/if}
 
 <div class="space-y-4">
 	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">

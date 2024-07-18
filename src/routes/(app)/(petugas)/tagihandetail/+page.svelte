@@ -8,28 +8,20 @@
 		TableHeadCell,
 		Breadcrumb,
 		BreadcrumbItem,
-		Badge,
-		Indicator,
 		Button,
 		Spinner,
-		Toast,
 		Modal,
 		Dropdown,
 		DropdownItem,
-		DropdownHeader,
-		DropdownDivider
 	} from 'flowbite-svelte';
-	import { slide, fly } from 'svelte/transition';
-	import { page } from '$app/stores';
+	import { showToast } from '$lib/toastStore';
+	import { slide } from 'svelte/transition';
 	import { writable, derived } from 'svelte/store';
-	import { onMount } from 'svelte';
 	import { getContext } from 'svelte';
 	import {
 		EditSolid,
 		ExclamationCircleOutline,
 		MinusSolid,
-		CheckCircleSolid,
-		XCircleSolid,
 		DotsHorizontalOutline
 	} from 'flowbite-svelte-icons';
 
@@ -48,8 +40,6 @@
 	let editModal = false;
 	let deleteTargetId;
 	let deleteTargetTagihanId;
-	let showToast = false;
-	let toastData;
 
 	const tagihanByDebitor = derived([chooseDebitor, tagihan], ([$chooseDebitor, $tagihan]) =>
 		$chooseDebitor == null ? $tagihan : $tagihan.filter((item) => item.debitorId === $chooseDebitor)
@@ -60,20 +50,6 @@
 		tipe: '',
 		amount: ''
 	};
-
-	onMount(() => {
-		if ($page.state.statusSuccess) {
-			showToast = true;
-			toastData = {
-				success: true,
-				message: $page.state.message
-			};
-			setTimeout(() => {
-				showToast = false;
-				clearToastData();
-			}, 2000);
-		}
-	});
 
 	const toggleRow = (i) => {
 		openRow = openRow === i ? null : i;
@@ -139,16 +115,7 @@
 				if (result.success) {
 					// Mengubah tagihanInputsByRow[rowIndex] menjadi array kosong
 					tagihanInputsByRow[index] = [];
-
-					showToast = true;
-					toastData = {
-						success: true,
-						message: result.message
-					};
-					setTimeout(() => {
-						showToast = false;
-						clearToastData();
-					}, 2000);
+					showToast(result.message, 'success')
 					const updatedDataResponse = await fetch('/api/tagihan', {
 						method: 'GET',
 						headers: {
@@ -159,15 +126,7 @@
 					const updatedData = await updatedDataResponse.json();
 					tagihan.set(updatedData.data);
 				} else {
-					showToast = true;
-					toastData = {
-						success: false,
-						message: result.message
-					};
-					setTimeout(() => {
-						showToast = false;
-						clearToastData();
-					}, 2000);
+					showToast(result.message, 'error')
 				}
 			} catch (err) {
 				console.error('client', err);
@@ -199,15 +158,7 @@
 			});
 			const result = await response.json();
 			if (result.success) {
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success')
 				const updatedDataResponse = await fetch('/api/tagihan', {
 					method: 'GET',
 					headers: {
@@ -218,15 +169,7 @@
 				const updatedData = await updatedDataResponse.json();
 				tagihan.set(updatedData.data);
 			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 3000);
+				showToast(result.message, 'error')
 			}
 		} catch (error) {
 			console.error(error);
@@ -256,16 +199,7 @@
 					tipe: '',
 					amount: ''
 				};
-
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success')
 				const updatedDataResponse = await fetch('/api/tagihan', {
 					method: 'GET',
 					headers: {
@@ -276,15 +210,7 @@
 				const updatedData = await updatedDataResponse.json();
 				tagihan.set(updatedData.data);
 			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'error')
 			}
 		} catch (err) {
 			console.error('client', err);
@@ -311,27 +237,7 @@
 		deleteTargetTagihanId = idTagihan;
 	};
 
-	const clearToastData = () => {
-		toastData = null;
-	};
 </script>
-
-{#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-15 absolute end-5">
-		<Toast color={toastData?.success ? 'green' : 'red'} class="z-50 mb-4">
-			<svelte:fragment slot="icon">
-				{#if toastData?.success}
-					<CheckCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Check icon</span>
-				{:else}
-					<XCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Error icon</span>
-				{/if}
-			</svelte:fragment>
-			{toastData?.message}
-		</Toast>
-	</div>
-{/if}
 
 <div class="space-y-4">
 	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
@@ -384,18 +290,41 @@
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.bunga))}</TableBodyCell>
 							<TableBodyCell>Rp. {formatPrice(parseFloat(data.denda))}</TableBodyCell>
 							<TableBodyCell>
-								{#if data.status === 0}
-									<Badge color="gray" rounded class="px-2.5 py-0.5">
-										<Indicator color="dark" size="xs" class="me-1" />Pending
-									</Badge>
-								{:else if data.status === 1}
-									<Badge color="green" rounded class="px-2.5 py-0.5">
-										<Indicator color="green" size="xs" class="me-1" />Verified
-									</Badge>
+								{#if data.status === 1}
+									<span
+										class="inline-flex h-max items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+									>
+										<span class="me-1 h-2 w-2 rounded-full bg-green-500"></span>
+										Verified
+									</span>
+								{:else if data.status === 2}
+									<span
+										class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
+									>
+										<span class="me-1 h-2 w-2 rounded-full bg-red-500"></span>
+										Objection
+									</span>
+								{:else if data.verifiedVote > data.objectionVote}
+									<span
+										class="inline-flex h-max items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+									>
+										<span class="me-1 h-2 w-2 rounded-full bg-green-500"></span>
+										Pending {data.verifiedVote} / {data.totalVoters}
+									</span>
+								{:else if data.objectionVote > data.verifiedVote}
+									<span
+										class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
+									>
+										<span class="me-1 h-2 w-2 rounded-full bg-red-500"></span>
+										Pending {data.objectionVote} / {data.totalVoters}
+									</span>
 								{:else}
-									<Badge color="red" rounded class="px-2.5 py-0.5">
-										<Indicator color="red" size="xs" class="me-1" />Objection
-									</Badge>
+									<span
+										class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+									>
+										<span class="me-1 h-2 w-2 rounded-full bg-gray-900"></span>
+										Pending
+									</span>
 								{/if}
 							</TableBodyCell>
 							<TableBodyCell>
@@ -418,7 +347,6 @@
 									<DropdownItem on:click={() => toggleRow(index)}>Revisi</DropdownItem>
 								</Dropdown>
 							</TableBodyCell>
-							<TableBodyCell></TableBodyCell>
 						</TableBodyRow>
 						{#if openRow === index}
 							{#if tagihanInputsByRow[index].length > 0}

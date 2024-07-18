@@ -1,7 +1,5 @@
 <script>
-	import { Button, Breadcrumb, BreadcrumbItem, Spinner, Toast } from 'flowbite-svelte';
-	import { CheckCircleSolid, XCircleSolid } from 'flowbite-svelte-icons';
-	import { fly } from 'svelte/transition';
+	import { Button, Breadcrumb, BreadcrumbItem, Spinner } from 'flowbite-svelte';
 	export let data;
 	const { token, verified, email } = data.body;
 	let form;
@@ -22,8 +20,6 @@
 	
 	let loading = false;
 	let existingData = false;
-	let showToast = false;
-	let toastData;
 	const handleAddPassword = async () => {
 		loading = true;
 		try {
@@ -37,29 +33,13 @@
 			});
 			const result = await response.json();
 			if (result.success) {
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success')
 				verify = {};
 				existingData = true
 			} else {
 				form = result;
 				if (!result.errors) {
-					showToast = true;
-					toastData = {
-						success: false,
-						message: result.message
-					};
-					setTimeout(() => {
-						showToast = false;
-						clearToastData();
-					}, 2000);
+					showToast(result.message, 'error')
 				}
 			}
 		} catch (error) {
@@ -82,28 +62,12 @@
 			});
 			const result = await response.json();
 			if (result.success) {
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success')
 				newVerify = {};
 			} else {
 				form = result;
 				if (!result.errors) {
-					showToast = true;
-					toastData = {
-						success: false,
-						message: result.message
-					};
-					setTimeout(() => {
-						showToast = false;
-						clearToastData();
-					}, 2000);
+					showToast(result.message, 'error')
 				}
 			}
 		} catch (error) {
@@ -113,9 +77,7 @@
 			showPassword = false
 		}
 	};
-	const clearToastData = () => {
-		toastData = null;
-	};
+
 	const handleResetPass = async () => {
 		loading = true
 		try{
@@ -129,25 +91,9 @@
 			})
 			const result = await response.json()
 			if (result.success) {
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success')
 			} else {
-				showToast = true;
-				toastData = {
-					success: false,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'error')
 			}
 		}catch(error){
 			console.error(error);
@@ -156,23 +102,6 @@
 		}
 	};
 </script>
-
-{#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-15 absolute end-5">
-		<Toast color={toastData?.success ? 'green' : 'red'} class="z-50 mb-4">
-			<svelte:fragment slot="icon">
-				{#if toastData?.success}
-					<CheckCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Check icon</span>
-				{:else}
-					<XCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Error icon</span>
-				{/if}
-			</svelte:fragment>
-			{toastData?.message}
-		</Toast>
-	</div>
-{/if}
 
 <div class="space-y-4">
 	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">

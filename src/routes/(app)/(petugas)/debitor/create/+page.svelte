@@ -1,4 +1,5 @@
 <script>
+	import { showToast } from '$lib/toastStore';
 	import { goto } from '$app/navigation';
 	import { Breadcrumb, BreadcrumbItem, Button, Spinner } from 'flowbite-svelte';
 	import MultiSelect from 'svelte-multiselect';
@@ -25,13 +26,8 @@
 			});
 			const result = await response.json();
 			if (result.success) {
-				goto('./', {
-					replaceState: true,
-					state: {
-						statusSuccess: true,
-						message: result.message
-					}
-				});
+				showToast(result.message, 'success')
+				goto('./');
 			} else {
 				form = result;
 			}

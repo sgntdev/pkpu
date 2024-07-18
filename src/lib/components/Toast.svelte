@@ -18,7 +18,7 @@
 </script>
 
 {#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-95 fixed end-3 z-30">
+	<div transition:fly={{ x: 200 }} class="top-95 fixed end-3 z-[60]">
 		<Toast color={toastType === 'success' ? 'green' : toastType === 'error' ? 'red' : 'orange'}>
 			<svelte:fragment slot="icon">
 				{#if toastType === 'success'}

@@ -1,9 +1,9 @@
 <script>
-	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
-	injectSpeedInsights();
-	import { dev } from '$app/environment';
-	import { inject } from '@vercel/analytics';
-	inject({ mode: dev ? 'development' : 'production' });
+	// import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+	// injectSpeedInsights();
+	// import { dev } from '$app/environment';
+	// import { inject } from '@vercel/analytics';
+	// inject({ mode: dev ? 'development' : 'production' });
 	import '../../app.pcss';
 	import { goto } from '$app/navigation';
 	import Toast from './../../lib/components/Toast.svelte';
@@ -20,7 +20,7 @@
 </svelte:head>
 <nav
 	data-sveltekit-reload
-	class="relative top-0 z-50 w-full border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+	class="relative top-0 z-40 w-full border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
 >
 	<div class="px-3 py-3 lg:px-5 lg:pl-3">
 		<div class="flex items-center justify-between">

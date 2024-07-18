@@ -5,17 +5,14 @@
 		Button,
 		Modal,
 		Spinner,
-		Toast,
 		ButtonGroup
 	} from 'flowbite-svelte';
 	import {
 		PlusSolid,
-		CheckCircleSolid,
-		XCircleSolid,
 		DownloadSolid,
 		EyeSolid
 	} from 'flowbite-svelte-icons';
-	import { fly } from 'svelte/transition';
+	import { showToast } from '$lib/toastStore';
 	import { page } from '$app/stores';
 	const tagihanId = $page.params.tagihanid;
 	export let data;
@@ -24,7 +21,7 @@
 	//cek apakah user memiliki akses
 	const hasAccess = tagihan.Debitor.pengurusAccess.includes(userId);
 	//cek apakah user sudah melakukan voting
-	const hasVoted = tagihan.TagihanVote.some((item) => item.userId === userId);
+	$: hasVoted = tagihan.TagihanVote.some((item) => item.userId === userId);
 	//memformat harga
 	const formatPrice = (price) => {
 		if (typeof price !== 'string') {
@@ -41,8 +38,6 @@
 		password: ''
 	};
 	let form;
-	let showToast = false;
-	let toastData;
 	let showPassword = false;
 	$: type = showPassword ? 'text' : 'password';
 	$: inputProperties = { type };
@@ -61,15 +56,7 @@
 			const result = await response.json();
 			if (result.success) {
 				verifyModal = false;
-				showToast = true;
-				toastData = {
-					success: true,
-					message: result.message
-				};
-				setTimeout(() => {
-					showToast = false;
-					clearToastData();
-				}, 2000);
+				showToast(result.message, 'success');
 				verifyData = {
 					tagihanStatus: '',
 					password: ''
@@ -78,24 +65,14 @@
 			} else {
 				form = result;
 				if (!result.errors) {
-					toastData = {
-						success: false,
-						message: result.message
-					};
-					showToast = true;
-					setTimeout(() => {
-						showToast = false;
-						clearToastData();
-					}, 2000);
+					showToast(result.message, 'error');
 				}
 			}
 		} finally {
 			loading = false;
 		}
 	};
-	const clearToastData = () => {
-		toastData = null;
-	};
+
 	async function downloadFile(url) {
 		try {
 			const response = await fetch(url);
@@ -116,23 +93,6 @@
 		}
 	}
 </script>
-
-{#if showToast}
-	<div transition:fly={{ x: 200 }} class="top-15 fixed end-5 z-[60]">
-		<Toast color={toastData?.success ? 'green' : 'red'} class="mb-4">
-			<svelte:fragment slot="icon">
-				{#if toastData?.success}
-					<CheckCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Check icon</span>
-				{:else}
-					<XCircleSolid class="h-5 w-5" />
-					<span class="sr-only">Error icon</span>
-				{/if}
-			</svelte:fragment>
-			{toastData?.message}
-		</Toast>
-	</div>
-{/if}
 
 <div class="space-y-4">
 	<Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
@@ -551,25 +511,12 @@
 				</p>
 			{/if}
 		</label>
-		<!-- <div class="mb-5 flex items-start">
-			<div class="flex h-5 items-center">
-				<input
-					id="showPassword"
-					bind:checked={showPassword}
-					type="checkbox"
-					class="focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800"
-				/>
-			</div>
-			<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-				>Show password</label
-			>
-		</div> -->
 
 		<Button type="submit">
 			{#if loading}
 				<Spinner class="me-2" size="4" color="white" />
 			{:else}
-				Enter password
+				Vote Tagihan
 			{/if}
 		</Button>
 	</form>
