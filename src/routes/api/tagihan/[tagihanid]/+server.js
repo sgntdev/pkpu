@@ -1,5 +1,5 @@
 import { prisma } from '$lib/prisma.server.js';
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN, SECRET_INGREDIENT } from '$env/static/private';
 import jwt from 'jsonwebtoken';
 
@@ -104,7 +104,7 @@ export async function PUT({ params, request }) {
 		jumlahHari
 	} = Object.fromEntries(formData);
 	const allowedFileTypes = ['application/pdf'];
-	const maxFileSize = 25 * 1024 * 1024; // 2 MB
+	const maxFileSize = 25 * 1024 * 1024; // 25 MB
 	const validation = {
 		success: false,
 		errors: []
@@ -259,6 +259,57 @@ export async function PUT({ params, request }) {
 				code: 500,
 				message: 'Tagihan gagal diubah!'
 			}),
+			{ status: 500 }
+		);
+	}
+}
+
+export async function DELETE({ request, params }) {
+	let token = request.headers.get('authorization');
+	const id = parseInt(params.tagihanid);
+	if (token && token.startsWith('Bearer ')) {
+		token = token.slice(7, token.length);
+	}
+	if (!token) {
+		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+			status: 401
+		});
+	}
+	try {
+		let decoded = jwt.verify(token, SECRET_INGREDIENT);
+		if (!decoded) {
+			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+				status: 403
+			});
+		}
+		const tagihan = await prisma.Tagihan.findUnique({ where: { id } });
+		const dokumenTagihan = await prisma.dokumenTagihan.findMany({
+			where: { tagihanId: id },
+			select: { dokumen_url: true }
+		});
+		if (!tagihan) {
+			return new Response(
+				JSON.stringify({ success: false, code: 404, message: 'Tagihan tidak ditemukan!' }),
+				{
+					status: 404
+				}
+			);
+		}
+
+		await prisma.Tagihan.delete({
+			where: { id }
+		});
+
+		for (const data of dokumenTagihan) {
+			await del(data.dokumen_url, { token: BLOB_READ_WRITE_TOKEN });
+		}
+		return new Response(JSON.stringify({ success: true, message: 'Tagihan berhasil dihapus!' }), {
+			status: 200
+		});
+	} catch (error) {
+		console.log(error);
+		return new Response(
+			JSON.stringify({ success: false, code: 500, message: 'Tagihan gagal dihapus!' }),
 			{ status: 500 }
 		);
 	}
