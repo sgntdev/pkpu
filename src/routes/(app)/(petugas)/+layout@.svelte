@@ -1,11 +1,11 @@
 <script>
 	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
-	import { setContext } from 'svelte';
-	import { writable } from 'svelte/store';
 	injectSpeedInsights();
 	import { dev } from '$app/environment';
 	import { inject } from '@vercel/analytics';
 	inject({ mode: dev ? 'development' : 'production' });
+	import { setContext } from 'svelte';
+	import { writable } from 'svelte/store';
 	import '../../../app.pcss';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -32,6 +32,10 @@
 	};
 	let activeUrl;
 	$: activeUrl = $page.url.pathname;
+	$: {
+		$page.url;
+		showSidebar = false;
+	}
 	export let data;
 	const user = data.body.user;
 
@@ -76,6 +80,7 @@
 				<button
 					on:click={handleSidebar}
 					data-drawer-target="logo-sidebar"
+					data-drawer-show="logo-sidebar"
 					data-drawer-toggle="logo-sidebar"
 					aria-controls="logo-sidebar"
 					type="button"
@@ -154,6 +159,7 @@
 	class={`${showSidebar ? 'transform-none' : '-translate-x-full'} fixed left-0 top-0 z-30 h-screen w-64 border-r border-gray-200 bg-white pt-20 transition-transform dark:border-gray-700 dark:bg-gray-800 sm:translate-x-0`}
 	aria-label="Sidebar"
 	aria-modal="true"
+	tabindex="-1"
 	role="dialog"
 	aria-hidden={!showSidebar}
 >
@@ -242,10 +248,12 @@
 		</ul>
 	</div>
 </aside>
-
+{#if showSidebar}
+	<div drawer-backdrop="" class="fixed inset-0 z-20 bg-gray-900/50 dark:bg-gray-900/80" />
+{/if}
 <main class="p-4 sm:ml-64">
 	<div class="mt-16">
-		<Toast/>
+		<Toast />
 		<slot />
 	</div>
 </main>
