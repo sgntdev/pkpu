@@ -92,10 +92,9 @@ export async function POST({ request }) {
 				tglSidang,
 				tempatSidang,
 				uid: debitorUid,
-				pengurus
+				pengurusAccess
 			}
 		});
-
 		return new Response(
 			JSON.stringify({ success: true, message: 'Debitor berhasil ditambahkan!', data: debitor }),
 			{
