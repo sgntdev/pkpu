@@ -11,7 +11,7 @@ datasource db {
 model User {
   id          Int           @id @default(autoincrement())
   email       String        @unique
-  roleId      Int           @default(3)
+  roleId      Int           @default(4)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Role        Role          @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
@@ -76,7 +76,7 @@ model Tagihan {
   Kreditor        Kreditor         @relation(fields: [kreditorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   SifatTagihan    SifatTagihan     @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   TagihanVote     TagihanVote[]
-  tagihanItem     tagihanItem[]
+  TagihanItem     TagihanItem[]
 }
 
 model SifatTagihan {
@@ -84,7 +84,7 @@ model SifatTagihan {
   sifat       String
   Tagihan     Tagihan[]
   TipeDokumen TipeDokumen[]
-  tagihanItem tagihanItem[]
+  TagihanItem TagihanItem[]
 }
 
 model TipeDokumen {
@@ -126,7 +126,7 @@ model TagihanVote {
   @@unique([userId, tagihanId])
 }
 
-model tagihanItem {
+model TagihanItem {
   id             Int          @id @default(autoincrement())
   tagihanId      Int
   sifatTagihanId Int
