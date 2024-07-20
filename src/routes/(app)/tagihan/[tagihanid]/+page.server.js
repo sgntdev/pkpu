@@ -4,7 +4,7 @@ export async function load({ params, fetch, locals }) {
 	const { user, token } = locals;
 	const { tagihanid } = params;
 	const tagihanId = parseInt(tagihanid);
-	if (!user || user.roleId !== 3 ) {
+	if (!user || user.roleId !== 4 ) {
 		redirect(303, '/');
 	} else {
 		const tagihanResponse = await fetch(`/api/tagihan/${tagihanId}`, {

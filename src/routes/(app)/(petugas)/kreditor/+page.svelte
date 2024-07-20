@@ -16,7 +16,7 @@
 	let kreditorData = data.body.kreditorData;
 
 	$: tagihanByDebitor =
-		$chooseDebitor == null
+		$chooseDebitor === ''
 			? kreditorData
 			: kreditorData.filter((item) => item.debitorId === $chooseDebitor);
 </script>

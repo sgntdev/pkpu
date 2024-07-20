@@ -3,7 +3,7 @@ export const prerender = false;
 export async function load({ locals, fetch, params }) {
 	const { token, user } = locals;
 	const id = parseInt(params.id);
-	if (!user || user.roleId !== 3 ) {
+	if (!user || user.roleId !== 4 ) {
 		redirect(301, '/');
 	} else {
 		const res = await fetch(`/api/debitor/uid/${user.debitorUid}`);

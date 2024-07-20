@@ -5,7 +5,7 @@ export async function load({ locals, fetch }) {
 	if (!user) {
 		redirect(303, '/');
 	} else {
-		if (user.roleId === 1) {
+		if (user.roleId === 1 || user.roleId === 2) {
 			const res = await fetch('/api/verifypassword', {
 				method: 'GET',
 				headers: {

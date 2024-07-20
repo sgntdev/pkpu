@@ -1,4 +1,5 @@
 <script>
+	import { showToast } from '$lib/toastStore';
 	import {
 		Table,
 		TableBody,

@@ -449,7 +449,7 @@
 				{/if}
 			</div>
 		</div>
-		{#if roleId === 1 && !hasVoted && hasAccess}
+		{#if (roleId === 1 || roleId === 2) && !hasVoted && hasAccess}
 			<div class="flex justify-end">
 				<Button on:click={() => (verifyModal = true)}>Verify</Button>
 			</div>

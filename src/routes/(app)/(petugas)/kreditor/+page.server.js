@@ -5,7 +5,7 @@ export async function load({ locals, fetch }) {
 	if (!user) {
 		redirect(303, '/');
 	} else {
-		if (user.roleId === 1 || user.roleId === 2) {
+		if (user.roleId === 1 || user.roleId === 2 || user.roleId === 3) {
 			const kreditorWithTagihanRes = await fetch(`/api/kreditor?tagihan=true`, {
 				method: 'GET',
 				headers: {

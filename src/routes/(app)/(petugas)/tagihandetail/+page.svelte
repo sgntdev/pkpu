@@ -42,7 +42,7 @@
 	let deleteTargetTagihanId;
 
 	const tagihanByDebitor = derived([chooseDebitor, tagihan], ([$chooseDebitor, $tagihan]) =>
-		$chooseDebitor == null ? $tagihan : $tagihan.filter((item) => item.debitorId === $chooseDebitor)
+		$chooseDebitor === '' ? $tagihan : $tagihan.filter((item) => item.debitorId === $chooseDebitor)
 	);
 	//Edit
 	let dataEdit = {

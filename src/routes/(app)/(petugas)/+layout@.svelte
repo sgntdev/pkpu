@@ -1,9 +1,4 @@
 <script>
-	import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
-	injectSpeedInsights();
-	import { dev } from '$app/environment';
-	import { inject } from '@vercel/analytics';
-	inject({ mode: dev ? 'development' : 'production' });
 	import { setContext } from 'svelte';
 	import { writable } from 'svelte/store';
 	import '../../../app.pcss';
@@ -42,8 +37,11 @@
 	// Filter Debitor
 	let debitorData = data.body.debitorData;
 	// Debitor default value from login
-	let dataDebitorLogin = debitorData.filter((debitor) => debitor.uid.includes(user.debitorUid));
-	let idDebitorLogin = dataDebitorLogin[0].id;
+	let dataDebitorLogin =
+		user.debitorUid !== ''
+			? debitorData.filter((debitor) => debitor.uid.includes(user.debitorUid))
+			: null;
+	let idDebitorLogin = dataDebitorLogin ? dataDebitorLogin[0].id : '';
 	// --------------------------------
 	let chooseDebitor = writable(idDebitorLogin);
 	setContext('Choose', chooseDebitor);
@@ -65,6 +63,50 @@
 	const handleLogout = () => {
 		goto('/logout');
 	};
+	const menuConfig = [
+		{
+			href: '/dashboard',
+			label: 'Dashboard',
+			icon: { active: PieChartSolid, inactive: ChartOutline },
+			roles: [1, 2, 3]
+		},
+		{
+			href: '/kreditor',
+			label: 'Kreditor',
+			icon: { active: UsersGroupSolid, inactive: UsersGroupOutline },
+			roles: [1, 2, 3]
+		},
+		{
+			href: '/debitor',
+			label: 'Debitor',
+			icon: { active: UsersSolid, inactive: UsersOutline },
+			roles: [1, 2]
+		},
+		{
+			href: '/tagihandetail',
+			label: 'Tagihan',
+			icon: { active: InboxFullSolid, inactive: InboxFullOutline },
+			roles: [1, 2, 3]
+		},
+		{
+			href: '/users',
+			label: 'Users',
+			icon: { active: UserSolid, inactive: UserOutline },
+			roles: [1]
+		},
+		{
+			href: '/verifypassword',
+			label: 'Verify Password',
+			icon: { active: BadgeCheckSolid, inactive: BadgeCheckOutline },
+			roles: [1, 2]
+		}
+	];
+
+	function getMenuItemsForRole(roleId) {
+		return menuConfig.filter((item) => item.roles.includes(roleId));
+	}
+
+	let menu = getMenuItemsForRole(user.roleId);
 </script>
 
 <svelte:head>
@@ -110,30 +152,35 @@
 			</div>
 			<div class="flex items-center lg:order-2">
 				{#if user}
-					<Button color="light" class="mr-2 h-fit w-full md:w-fit"
-						>{$chooseDebitor == null ? 'Pilih Debitor' : namaDebitor($chooseDebitor)}<FilterOutline
-							class="ms-2 h-4 w-4 text-gray-900"
-						/></Button
-					>
-					<Dropdown placement="bottom" class="max-h-44 min-h-5 overflow-y-auto px-3 pb-3 text-sm">
-						<div slot="header" class="p-3">
-							<Search size="md" bind:value={searchDebitor} />
-						</div>
-						{#each filterDebitors as { id, nama }}
-							<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
-								<Radio
-									value={id}
-									bind:group={checkedDebitor}
-									on:change={() => RadioPilihDebitor(id)}
-									name="debitor">{nama}</Radio
+					{#if user.debitorUid}
+						<Button color="light" class="mr-2 h-fit w-full md:w-fit"
+							>{$chooseDebitor == null
+								? 'Pilih Debitor'
+								: namaDebitor($chooseDebitor)}<FilterOutline
+								class="ms-2 h-4 w-4 text-gray-900"
+							/></Button
+						>
+						<Dropdown placement="bottom" class="max-h-44 min-h-5 overflow-y-auto px-3 pb-3 text-sm">
+							<div slot="header" class="p-3">
+								<Search size="md" bind:value={searchDebitor} />
+							</div>
+							{#each filterDebitors as { id, nama }}
+								<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
+									<Radio
+										value={id}
+										bind:group={checkedDebitor}
+										on:change={() => RadioPilihDebitor(id)}
+										name="debitor">{nama}</Radio
+									>
+								</li>
+							{/each}
+							<div slot="footer" class="px-3 py-1">
+								<Button size="xs" color="light" on:click={() => ($chooseDebitor = null)}
+									>Reset</Button
 								>
-							</li>
-						{/each}
-						<div slot="footer" class="px-3 py-1">
-							<Button size="xs" color="light" on:click={() => ($chooseDebitor = null)}>Reset</Button
-							>
-						</div>
-					</Dropdown>
+							</div>
+						</Dropdown>
+					{/if}
 					<Button color="light"><p>{user.email.slice(0, user.email.indexOf('@'))}</p></Button>
 					<Dropdown>
 						<div class="px-4 py-3">
@@ -165,86 +212,21 @@
 >
 	<div class="h-full overflow-y-auto bg-white px-3 pb-4 dark:bg-gray-800">
 		<ul class="space-y-2 font-medium">
-			<li>
-				<a
-					href={`/dashboard`}
-					class={`${activeUrl === `/dashboard` ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
-				>
-					{#if activeUrl === `/dashboard`}
-						<PieChartSolid size="md" class="" />
-					{:else}
-						<ChartOutline size="md" class="" />
-					{/if}
-					<span class="ms-3">Dashboard</span>
-				</a>
-			</li>
-			<li>
-				<a
-					href={`/kreditor`}
-					class={`${activeUrl.startsWith(`/kreditor`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
-				>
-					{#if activeUrl.startsWith(`/kreditor`)}
-						<UsersGroupSolid size="md" class="" />
-					{:else}
-						<UsersGroupOutline size="md" class="" />
-					{/if}
-					<span class="ms-3 flex-1 whitespace-nowrap">Kreditor</span>
-				</a>
-			</li>
-			<li>
-				<a
-					href={`/debitor`}
-					class={`${activeUrl.startsWith(`/debitor`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
-				>
-					{#if activeUrl.startsWith(`/debitor`)}
-						<UsersSolid size="md" class="" />
-					{:else}
-						<UsersOutline size="md" class="" />
-					{/if}
-					<span class="ms-3 flex-1 whitespace-nowrap">Debitor</span>
-				</a>
-			</li>
-			<li>
-				<a
-					href={`/tagihandetail`}
-					class={`${activeUrl.startsWith(`/tagihandetail`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
-				>
-					{#if activeUrl.startsWith(`/tagihandetail`)}
-						<InboxFullSolid size="md" class="" />
-					{:else}
-						<InboxFullOutline size="md" class="" />
-					{/if}
-					<span class="ms-3 flex-1 whitespace-nowrap">Tagihan</span>
-				</a>
-			</li>
-			{#if data.body.user.roleId === 1}
+			{#each menu as item}
 				<li>
 					<a
-						href={`/users`}
-						class={`${activeUrl.startsWith(`/users`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
+						href={item.href}
+						class={`${activeUrl.startsWith(item.href) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
 					>
-						{#if activeUrl.startsWith(`/users`)}
-							<UserSolid size="md" class="" />
+						{#if activeUrl.startsWith(item.href)}
+							<svelte:component this={item.icon.active} size="md" class="" />
 						{:else}
-							<UserOutline size="md" class="" />
+							<svelte:component this={item.icon.inactive} size="md" class="" />
 						{/if}
-						<span class="ms-3 flex-1 whitespace-nowrap">Users</span>
+						<span class="ms-3 flex-1 whitespace-nowrap">{item.label}</span>
 					</a>
 				</li>
-				<li>
-					<a
-						href={`/verifypassword`}
-						class={`${activeUrl.startsWith(`/verifypassword`) ? 'bg-gray-100 font-semibold text-gray-900' : 'font-medium'} group flex items-center rounded-lg p-2 text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-white dark:hover:bg-gray-700`}
-					>
-						{#if activeUrl.startsWith(`/verifypassword`)}
-							<BadgeCheckSolid size="md" class="" />
-						{:else}
-							<BadgeCheckOutline size="md" class="" />
-						{/if}
-						<span class="ms-3 flex-1 whitespace-nowrap">Verify Password</span>
-					</a>
-				</li>
-			{/if}
+			{/each}
 		</ul>
 	</div>
 </aside>
