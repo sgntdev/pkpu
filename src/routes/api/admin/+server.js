@@ -4,51 +4,47 @@ import { prisma } from '$lib/prisma.server.js';
 import { SECRET_INGREDIENT } from '$env/static/private';
 import jwt from 'jsonwebtoken';
 
-export async function GET({ request }) {
-	let token = request.headers.get('authorization');
-	const url = new URL(request.url);
-	const roleIds = url.searchParams.getAll('roleId');
-	if (token && token.startsWith('Bearer ')) {
-		token = token.slice(7, token.length);
-	}
-	if (!token) {
-		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
-			status: 401
-		});
-	}
-	let decoded = jwt.verify(token, SECRET_INGREDIENT);
-	if (decoded.user.roleId !== 1) {
-		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
-			status: 403
-		});
-	}
-	let userQuery = {
-		orderBy: { id: 'asc' },
-		include: {
-			Role: true
-		}
-	};
+// export async function GET({ request }) {
+// 	let token = request.headers.get('authorization');
+// 	const url = new URL(request.url);
+// 	const roleId = url.searchParams.get('roleId');
+// 	if (token && token.startsWith('Bearer ')) {
+// 		token = token.slice(7, token.length);
+// 	}
+// 	if (!token) {
+// 		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
+// 			status: 401
+// 		});
+// 	}
+// 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
+// 	if (decoded.user.roleId !== 1) {
+// 		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
+// 			status: 403
+// 		});
+// 	}
+// 	let userQuery = {
+// 		orderBy: { id: 'asc' },
+// 		include: {
+// 			Role: true
+// 		}
+// 	};
 
-	if (roleIds.length > 0) {
-		userQuery.where = {
-            roleId: {
-                in: roleIds.map(roleId => parseInt(roleId))
-            }
-        };
-	}
-	const users = await prisma.user.findMany(userQuery);
-	if (!users) {
-		return new Response(
-			JSON.stringify({ success: false, code: 404, message: 'Users tidak ditemukan!' }),
-			{
-				status: 404
-			}
-		);
-	}
-	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: users }), {
-		status: 200
-	});
-}
+// 	if (roleId) {
+// 		userQuery.where = {roleId : parseInt(roleId)};
+// 	}
+// 	const users = await prisma.user.findMany(userQuery);
+// 	if (!users) {
+// 		return new Response(
+// 			JSON.stringify({ success: false, code: 404, message: 'Users tidak ditemukan!' }),
+// 			{
+// 				status: 404
+// 			}
+// 		);
+// 	}
+// 	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: users }), {
+// 		status: 200
+// 	});
+// }
 
 async function generateUniqueCode(length) {
 	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -86,8 +82,9 @@ const sendEmail = async (message) => {
 		throw error;
 	}
 };
+
 export async function POST({ request }) {
-	const { debitorUid, email } = await request.json();
+	const email = await request.json();
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	const validation = {
 		success: false,
@@ -97,21 +94,24 @@ export async function POST({ request }) {
 	try {
 		const expirationDate = new Date();
 		expirationDate.setDate(expirationDate.getDate() + 1);
-
-		if (!debitorUid) {
-			validation.errors.push({ field: 'debitorUid', message: 'Kode debitor tidak boleh kosong!' });
-		}
 		if (!email) {
 			validation.errors.push({ field: 'email', message: 'Email tidak boleh kosong!' });
 		} else if (!emailRegex.test(email)) {
 			validation.errors.push({ field: 'email', message: 'Format email tidak valid!' });
 		}
-		let debitor = await prisma.debitor.findUnique({
-			where: { uid: debitorUid }
-		});
-		if (!debitor) {
-			validation.errors.push({ field: 'debitorUid', message: 'Kode debitor tidak valid!' });
-		}
+        const validAdmin = await prisma.User.findUnique({
+            where: {email},
+            select: {
+                roleId:true
+            }
+        })
+
+        if (!validAdmin) {
+            validation.errors.push({ field: 'email', message: 'Email tidak ditemukan!' });
+        }else if(validAdmin.roleId !== 1){
+            validation.errors.push({ field: 'email', message: 'Email tidak ditemukan!' });
+        }
+
 		if (validation?.errors.length > 0) {
 			return new Response(JSON.stringify(validation), { status: 400 });
 		}
@@ -144,14 +144,14 @@ export async function POST({ request }) {
 			}
 		}
 
-		const link = `${SITE_URL}/verify/${debitorUid}/${uniqueCode}`;
+		const link = `${SITE_URL}/verify/${uniqueCode}`;
 		let html = `<h2>Hi!</h2><p>Click the following link to access the form: <a href="${link}">${link}</a></p>`;
 
 		const message = {
 			from: '"pkpu.co.id" <fotoarchive8@gmail.com>',
 			to: email,
 			bcc: 'www.pkpu.co.id',
-			subject: 'Link to access Form Tagihan',
+			subject: 'Link to access PKPU',
 			text: 'INI BODY',
 			html: html
 		};
@@ -164,13 +164,14 @@ export async function POST({ request }) {
 			{ status: 200 }
 		);
 	} catch (error) {
+        console.log(error);
 		return new Response(
 			JSON.stringify({
 				success: false,
-				code: 500,
+				code: 400,
 				message: 'Email gagal dikirim!'
 			}),
-			{ status: 500 }
+			{ status: 400 }
 		);
 	}
 }

@@ -18,7 +18,7 @@ export async function handle({ event, resolve }) {
 						id: decoded.user.id,
 						email: decoded.user.email,
 						roleId: decoded.user.roleId,
-						debitorUid : decoded.user.debitorUid
+						debitorUid : decoded.user.debitorUid ?? ''
 					};
 				}
 			} catch (error) {

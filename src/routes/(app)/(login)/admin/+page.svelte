@@ -1,6 +1,4 @@
 <script>
-	import { page } from '$app/stores';
-	let { slug } = $page.params;
 	import { Spinner, Card, Button, Label, Input, Helper } from 'flowbite-svelte';
 	import {
 		BadgeCheckSolid,
@@ -9,27 +7,23 @@
 	let loading = false;
 	let status = null;
 	let form;
-	let dataLogin = {
-		debitorUid :'',
-		email:''
-	}
-	export let data;
+	let email = '';
 	const handleSubmit = async () => {
 		status = null;
 		loading = true;
-		if(slug){
-			dataLogin.debitorUid = data.uid
-		}
 		try {
-			const response = await fetch('/api/user', {
+			const response = await fetch('/api/admin', {
 				method: 'POST',
-				body: JSON.stringify(dataLogin)
+				body: JSON.stringify(email)
 			});
 
 			const result = await response.json();
 			form = result;
 			if (result.success) {
 				status = 'success';
+				setTimeout(() => {
+					window.close();
+				}, 2000);
 			} else {
 				if (result.errors.length === 0) {
 					status = 'error';
@@ -67,31 +61,11 @@
 	</p>
 {:else}
 	<p class="mb-4 flex items-center justify-center text-2xl font-semibold dark:text-white lg:mb-6">
-		Welcome to PKPU
+		Welcome Admin
 	</p>
 	<Card size="sm" padding="lg">
 		<form class="flex flex-col space-y-6" on:submit|preventDefault={handleSubmit}>
 			<h3 class="text-xl font-medium text-gray-900 dark:text-white">Sign in to our platform</h3>
-			{#if !slug}
-				<Label
-					class="space-y-2"
-					color={form?.errors?.find((error) => error.field === 'debitorUid') ? 'red' : undefined}
-				>
-					<span>Kode Debitor</span>
-					<Input
-						type="text"
-						name="debitorUid"
-						bind:value={dataLogin.debitorUid}
-						placeholder="Kode debitor"
-						color={form?.errors?.find((error) => error.field === 'debitorUid') ? 'red' : undefined}
-					/>
-					{#if form?.errors?.find((error) => error.field === 'debitorUid')}
-						<Helper class="mt-2" color="red"
-							>{form?.errors?.find((error) => error.field === 'debitorUid').message}</Helper
-						>
-					{/if}
-				</Label>
-			{/if}
 			<Label
 				class="space-y-2"
 				color={form?.errors?.find((error) => error.field === 'email') ? 'red' : undefined}
@@ -100,7 +74,7 @@
 				<Input
 					type="text"
 					name="email"
-					bind:value={dataLogin.email}
+					bind:value={email}
 					placeholder="name@company.com"
 					color={form?.errors?.find((error) => error.field === 'email') ? 'red' : undefined}
 				/>
