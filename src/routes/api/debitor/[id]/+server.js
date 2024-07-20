@@ -49,10 +49,9 @@ export async function PUT({ request, params }) {
 			status: 401
 		});
 	}
-	const formData = await request.formData();
-	let { nama, tglSidang, tempatSidang, pengurus } = Object.fromEntries(formData);
-	pengurus = JSON.parse(pengurus)
-	let pengurusAccess = pengurus.map(item => (item.value))
+	const data = await request.json();
+	const { nama, tglSidang, tempatSidang, pengurus } = data;
+	let pengurusAccess = pengurus.map((item) => item.value);
 	const validation = {
 		success: false,
 		errors: []
@@ -85,7 +84,7 @@ export async function PUT({ request, params }) {
 		if (validation?.errors.length > 0) {
 			return new Response(JSON.stringify(validation), { status: 400 });
 		}
-		const debitor = await prisma.debitor.update({
+		await prisma.debitor.update({
 			where: { id },
 			data: {
 				nama,
@@ -94,8 +93,11 @@ export async function PUT({ request, params }) {
 				pengurusAccess
 			}
 		});
+		const debitors = await prisma.Debitor.findMany({
+			orderBy: { id: 'asc' }
+		});
 		return new Response(
-			JSON.stringify({ success: true, message: 'Debitor berhasil diubah!', data: debitor }),
+			JSON.stringify({ success: true, message: 'Debitor berhasil diubah!', data: debitors }),
 			{ status: 200 }
 		);
 	} catch (error) {
@@ -137,7 +139,10 @@ export async function DELETE({ request, params }) {
 		await prisma.debitor.delete({
 			where: { id }
 		});
-		return new Response(JSON.stringify({ success: true, message: 'Debitor berhasil dihapus!' }), {
+		const debitors = await prisma.Debitor.findMany({
+			orderBy: { id: 'asc' }
+		});
+		return new Response(JSON.stringify({ success: true, message: 'Debitor berhasil dihapus!', data: debitors }), {
 			status: 200
 		});
 	} catch (error) {

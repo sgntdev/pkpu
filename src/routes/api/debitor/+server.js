@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '$lib/prisma.server.js';
 export async function GET() {
 	const debitors = await prisma.Debitor.findMany({
-		orderBy: { id: 'asc' },
+		orderBy: { id: 'asc' }
 	});
 	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: debitors }), {
 		status: 200
@@ -48,10 +48,9 @@ export async function POST({ request }) {
 			status: 401
 		});
 	}
-	const formData = await request.formData();
-	let { nama, tglSidang, tempatSidang, pengurus } = Object.fromEntries(formData);
-	pengurus = JSON.parse(pengurus)
-	let pengurusAccess = pengurus.map(item => (item.value))
+	const data = await request.json();
+	const { nama, tglSidang, tempatSidang, pengurus } = data;
+	let pengurusAccess = pengurus.map((item) => item.value);
 	const validation = {
 		success: false,
 		errors: []
@@ -76,7 +75,7 @@ export async function POST({ request }) {
 				message: 'Tempat sidang tidak boleh kosong!'
 			});
 		}
-		if (pengurus.length === 0) {
+		if (pengurusAccess.length === 0) {
 			validation.errors.push({
 				field: 'pengurus',
 				message: 'Pengurus tidak boleh kosong!'
@@ -102,6 +101,7 @@ export async function POST({ request }) {
 			}
 		);
 	} catch (error) {
+		console.log(error);
 		return new Response(
 			JSON.stringify({ success: false, code: 500, message: 'Debitor gagal ditambahkan!' }),
 			{ status: 500 }
