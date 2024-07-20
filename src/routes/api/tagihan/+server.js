@@ -38,7 +38,7 @@ export async function GET({ request }) {
 	}
 
 	if (decoded.user.roleId === 1) {
-		tagihanQuery.include.tagihanItem = {
+		tagihanQuery.include.TagihanItem = {
 			include: {
 				SifatTagihan: true
 			}

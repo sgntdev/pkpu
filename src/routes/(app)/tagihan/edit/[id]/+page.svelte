@@ -338,9 +338,11 @@
 </script>
 
 {#if loading}
-<div class="bg-gray-900/50 dark:bg-gray-900/80 fixed inset-0 z-40 justify-center flex items-center">
-	<Spinner color="white" size={10} />
-</div>
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-gray-900/50 dark:bg-gray-900/80"
+	>
+		<Spinner color="white" size={10} />
+	</div>
 {/if}
 
 <Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
@@ -494,7 +496,10 @@
 								/>
 							</svg>
 						</div>
-						<DatePicker bind:startDate={jumlahTagihan.pertanggal} />
+						<DatePicker
+							bind:startDate={jumlahTagihan.pertanggal}
+							invalid={form?.errors?.find((error) => error.field === 'pertanggal')}
+						/>
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'pertanggal')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
@@ -694,7 +699,10 @@
 								/>
 							</svg>
 						</div>
-						<DatePicker bind:startDate={kurunTunggakan.mulaiTertunggak} />
+						<DatePicker
+							bind:startDate={kurunTunggakan.mulaiTertunggak}
+							invalid={form?.errors?.find((error) => error.field === 'mulaiTertunggak')}
+						/>
 					</div>
 					{#if form?.errors?.find((error) => error.field === 'mulaiTertunggak')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
@@ -775,7 +783,9 @@
 									>
 								{/if}
 								{#if buktiTagihan.length - 1 === index}
-									<Button on:click={() => handleAddTagihan()} color="light"><PlusSolid class="h-5 w-5" /></Button>
+									<Button on:click={() => handleAddTagihan()} color="light"
+										><PlusSolid class="h-5 w-5" /></Button
+									>
 								{/if}
 							</div>
 							{#if submitted && sifatTagihan.id !== '' && bukti.tipeDokumenId === ''}
@@ -821,12 +831,8 @@
 		</Card>
 	</div>
 	<div class="my-4 flex justify-end gap-2">
-		<Button type="submit">
-				Ubah tagihan
-		</Button>
-		<Button href="../" color="red">
-				Batal
-		</Button>
+		<Button type="submit">Ubah tagihan</Button>
+		<Button href="../" color="red">Batal</Button>
 	</div>
 </form>
 <!-- Add Kreditor Modal -->
