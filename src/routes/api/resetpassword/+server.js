@@ -24,7 +24,7 @@ async function generateUniqueCode(length) {
 		}
 
 		// Check if the generated code already exists in the database
-		const existingUser = await prisma.Verified.findFirst({
+		const existingUser = await prisma.VerifiedPassword.findFirst({
 			where: { uniqueCode: result }
 		});
 
@@ -50,15 +50,11 @@ export async function POST({ request }) {
 			status: 401
 		});
 	}
-	const email = await request.json();
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	const userId = await request.json();
 	let uniqueCode = null;
-	if (!emailRegex.test(email)) {
-		return new Response({ success: false, code: 400, message: 'Format email tidak valid!' });
-	}
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		if (decoded.user.roleId !== 1) {
+		if (decoded.user.roleId !== 1 && decoded.user.roleId !== 2) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
@@ -67,18 +63,23 @@ export async function POST({ request }) {
 		const expirationDate = new Date();
 		expirationDate.setHours(expirationDate.getHours() + 2);
 
-		const existingPassword = await prisma.Verified.findFirst({
+		const existingPassword = await prisma.VerifiedPassword.findUnique({
+			where: { userId },
 			select: {
 				id: true,
 				expirationDate: true,
-				uniqueCode: true
+				uniqueCode: true,
+				User: {
+					select: {
+						email: true
+					}
+				}
 			}
 		});
-
 		if (existingPassword) {
 			if (new Date(existingPassword.expirationDate) < new Date()) {
 				uniqueCode = await generateUniqueCode(25);
-				await prisma.Verified.update({
+				await prisma.VerifiedPassword.update({
 					where: { id: existingPassword.id },
 					data: {
 						uniqueCode,
@@ -95,7 +96,7 @@ export async function POST({ request }) {
 
 		const message = {
 			from: '"pkpu.co.id" <fotoarchive8@gmail.com>',
-			to: email,
+			to: existingPassword.User.email,
 			bcc: 'www.pkpu.co.id',
 			subject: 'Link to reset password verify Tagihan',
 			text: 'INI BODY',
@@ -109,80 +110,6 @@ export async function POST({ request }) {
 		console.error(error);
 		return new Response(
 			JSON.stringify({ success: false, code: 400, message: 'Reset link failed to sent!' })
-		);
-	}
-}
-
-export async function PUT({ request }) {
-	let token = request.headers.get('authorization');
-	const { uniqueCode, password, confirmPassword } = await request.json();
-	const validation = {
-		success: false,
-		errors: []
-	};
-	if (token && token.startsWith('Bearer ')) {
-		token = token.slice(7, token.length);
-	}
-	if (!token) {
-		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
-			status: 401
-		});
-	}
-	try {
-		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		if (decoded.user.roleId !== 1) {
-			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
-				status: 403
-			});
-		}
-		if (!password) {
-			validation.errors.push({ field: 'password', message: 'Password tidak boleh kosong!' });
-		}
-		if (!confirmPassword) {
-			validation.errors.push({
-				field: 'confirmPassword',
-				message: 'Confirm password tidak boleh kosong!'
-			});
-		}
-		if (password !== confirmPassword) {
-			validation.errors.push({
-				field: 'confirmPassword',
-				message: 'Confirm password tidak sesuai!'
-			});
-		}
-		if (validation?.errors.length > 0) {
-			return new Response(JSON.stringify(validation), { status: 400 });
-		}
-		const existingPassword = await prisma.Verified.findUnique({
-			where:{uniqueCode}
-		});
-		if (!existingPassword) {
-			return new Response(
-				JSON.stringify({ success: false, code: 404, message: 'Password tidak ditemukan!' }),
-				{ status: 404 }
-			);
-		} else {
-			await prisma.Verified.update({
-				where: { id: existingPassword.id },
-				data: {
-					password,
-					uniqueCode: null,
-					expirationDate: null
-				}
-			});
-			return new Response(
-				JSON.stringify({ success: true, message: 'Password berhasil diubah!' }),
-				{ status: 200 }
-			);
-		}
-	} catch (error) {
-		return new Response(
-			JSON.stringify({
-				success: false,
-				code: 500,
-				message: 'Password gagal diubah!'
-			}),
-			{ status: 500 }
 		);
 	}
 }

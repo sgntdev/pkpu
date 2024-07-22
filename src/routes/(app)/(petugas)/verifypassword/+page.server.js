@@ -6,7 +6,7 @@ export async function load({ locals, fetch }) {
 		redirect(303, '/');
 	} else {
 		if (user.roleId === 1 || user.roleId === 2) {
-			const res = await fetch('/api/verifypassword', {
+			const res = await fetch(`/api/verifypassword/${user?.id}`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',
@@ -19,7 +19,7 @@ export async function load({ locals, fetch }) {
 				body: {
 					verified: result.data,
 					token,
-					email : user.email
+					userId : user.id,
 				}
 			};
 		} else {

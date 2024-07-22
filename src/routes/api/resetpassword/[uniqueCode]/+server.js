@@ -1,12 +1,11 @@
-import { prisma } from '$lib/prisma.server.js';
 import { SECRET_INGREDIENT } from '$env/static/private';
+import { prisma } from '$lib/prisma.server.js';
 import jwt from 'jsonwebtoken';
 
-export async function POST({ request }) {
+export async function PUT({ request, params }) {
 	let token = request.headers.get('authorization');
-	const data = await request.json();
-	const { password, confirmPassword } = data;
-	const userId = parseInt(data.userId);
+    const uniqueCode = params.uniqueCode;
+	const { password, confirmPassword } = await request.json();
 	const validation = {
 		success: false,
 		errors: []
@@ -47,34 +46,33 @@ export async function POST({ request }) {
 		if (validation?.errors.length > 0) {
 			return new Response(JSON.stringify(validation), { status: 400 });
 		}
-		const existingData = await prisma.VerifiedPassword.findUnique({
-			where: {
-				userId
-			}
+		const existingPassword = await prisma.VerifiedPassword.findUnique({
+			where: { uniqueCode }
 		});
-		if (existingData) {
+		if (!existingPassword) {
 			return new Response(
-				JSON.stringify({ success: false, code: 400, message: 'Password hanya boleh satu!' }),
-				{ status: 400 }
+				JSON.stringify({ success: false, code: 404, message: 'Password tidak ditemukan!' }),
+				{ status: 404 }
 			);
 		} else {
-			await prisma.VerifiedPassword.create({
+			await prisma.VerifiedPassword.update({
+				where: { id: existingPassword.id },
 				data: {
-					userId,
-					password
+					password,
+					uniqueCode: null,
+					expirationDate: null
 				}
 			});
-			return new Response(
-				JSON.stringify({ success: true, message: 'Password berhasil disimpan!' }),
-				{ status: 200 }
-			);
+			return new Response(JSON.stringify({ success: true, message: 'Password berhasil diubah!' }), {
+				status: 200
+			});
 		}
 	} catch (error) {
 		return new Response(
 			JSON.stringify({
 				success: false,
 				code: 500,
-				message: 'Password gagal disimpan!'
+				message: 'Password gagal diubah!'
 			}),
 			{ status: 500 }
 		);

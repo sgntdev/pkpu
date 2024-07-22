@@ -3,7 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 
 export async function load({ params, cookies }) {
     const { uniqueCode } = params;
-    const verified = await prisma.Verified.findUnique({
+    const verified = await prisma.VerifiedPassword.findUnique({
         where: { uniqueCode }
     });
     

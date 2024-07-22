@@ -7,20 +7,15 @@
 	let status = null;
 	let form;
 	let reset = {
-		uniqueCode,
 		password: '',
 		confirmPassword: ''
 	};
 
-	//show hide password
-	let showPassword = false;
-	$: type = showPassword ? 'text' : 'password';
-	$: inputProperties = { type };
 	const handleSubmit = async () => {
 		status = null;
 		loading = true;
 		try {
-			const response = await fetch('/api/resetpassword', {
+			const response = await fetch(`/api/resetpassword/${uniqueCode}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -74,18 +69,18 @@
 			<div>
 				<label
 					for="Password"
-					class={`mb-2 block text-sm font-medium ${reset.password === '' && form?.errors?.find((error) => error.field === 'password') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'password') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 					>New Password</label
 				>
 				<input
-					{...inputProperties}
+					type="password"
 					name="Password"
 					id="Password"
 					placeholder="•••••••••"
 					bind:value={reset.password}
-					class={`block w-full rounded-lg border p-2.5 text-sm ${reset.password === '' && form?.errors?.find((error) => error.field === 'password') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'password') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 				/>
-				{#if reset.password === '' && form?.errors?.find((error) => error.field === 'password')}
+				{#if form?.errors?.find((error) => error.field === 'password')}
 					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 						{form?.errors?.find((error) => error.field === 'password').message}
 					</p>
@@ -98,7 +93,7 @@
 					>Confirm Password</label
 				>
 				<input
-					{...inputProperties}
+					type="password"
 					name="confirmPassword"
 					id="confirmPassword"
 					placeholder="•••••••••"
@@ -111,19 +106,6 @@
 					</p>
 				{/if}
 			</div>
-			<!-- <div class="mb-5 flex items-start">
-				<div class="flex h-5 items-center">
-					<input
-						id="showPassword"
-						bind:checked={showPassword}
-						type="checkbox"
-						class="focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800"
-					/>
-				</div>
-				<label for="showPassword" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-					>Show password</label
-				>
-			</div> -->
 			<Button type="submit">Reset Password</Button>
 		</form>
 	</Card>

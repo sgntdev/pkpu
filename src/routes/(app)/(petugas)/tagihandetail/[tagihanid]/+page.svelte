@@ -92,6 +92,9 @@
 			console.error('Error downloading the file:', error);
 		}
 	}
+	const showModal = () => {
+		verifyModal = true
+	}
 </script>
 
 <div class="space-y-4">
@@ -451,7 +454,7 @@
 		</div>
 		{#if (roleId === 1 || roleId === 2) && !hasVoted && hasAccess}
 			<div class="flex justify-end">
-				<Button on:click={() => (verifyModal = true)}>Verify</Button>
+				<Button on:click={showModal}>Verify</Button>
 			</div>
 		{/if}
 	</div>
