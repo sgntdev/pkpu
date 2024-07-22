@@ -107,6 +107,8 @@
 	}
 
 	let menu = getMenuItemsForRole(user.roleId);
+
+	const roleDescription = user.roleId === 1 ? 'Admin' : user.roleId === 2 ? 'Pengurus' : 'Assisten';
 </script>
 
 <svelte:head>
@@ -188,7 +190,7 @@
 								>{user.email}</span
 							>
 							<span class="block truncate text-sm text-gray-900 dark:text-white"
-								>{user.roleId === 1 ? 'Pengurus' : 'Assisten'}</span
+								>{roleDescription}</span
 							>
 						</div>
 						<DropdownItem on:click={handleLogout}>Log out</DropdownItem>

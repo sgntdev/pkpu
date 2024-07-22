@@ -14,11 +14,6 @@ export async function GET({ request, params }) {
 		});
 	}
 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
-	// if (decoded.user.roleId !== 1) {
-	// 	return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
-	// 		status: 403
-	// 	});
-	// }
 	if (!decoded) {
 		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 			status: 403
