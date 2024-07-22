@@ -28,6 +28,7 @@
 	let editModal = false;
 	let editTargetId;
 	let loading = false;
+	let loadingModal = false;
 	let submitted = false;
 	let form;
 	let selectedKreditor = '';
@@ -83,7 +84,7 @@
 		alamat: ''
 	};
 	const handleAddKreditor = async () => {
-		loading = true;
+		loadingModal = true;
 		try {
 			const response = await fetch('/api/kreditor', {
 				method: 'POST',
@@ -120,11 +121,11 @@
 		} catch (error) {
 			console.log(error);
 		} finally {
-			loading = false;
+			loadingModal = false;
 		}
 	};
 	const handleEditKreditor = async () => {
-		loading = true;
+		loadingModal = true;
 		try {
 			const response = await fetch(`/api/kreditor/${editTargetId}`, {
 				method: 'PUT',
@@ -161,7 +162,7 @@
 		} catch (error) {
 			console.log(error);
 		} finally {
-			loading = false;
+			loadingModal = false;
 		}
 	};
 	const openAddModal = () => {
@@ -824,7 +825,7 @@
 			{/if}
 		</label>
 		<Button type="submit">
-			{#if loading}
+			{#if loadingModal}
 				<Spinner class="me-2" size="4" color="white" />
 			{:else}
 				Tambah Kreditor
@@ -916,7 +917,7 @@
 			{/if}
 		</label>
 		<Button type="submit">
-			{#if loading}
+			{#if loadingModal}
 				<Spinner class="me-2" size="4" color="white" />
 			{:else}
 				Ubah Kreditor

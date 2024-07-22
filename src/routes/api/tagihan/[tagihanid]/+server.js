@@ -218,7 +218,7 @@ export async function PUT({ params, request }) {
 				const dokumen = dokumens[index];
 				const fileName = dokumen.name.split('.')[0];
 				const formattedfileName = fileName.replace(/\s/g, '_').toLowerCase();
-				const uniqueFilename = `${Date.now()}_${debitorId}_${userId}_${formattedfileName}_${tagihanId}_${tipeDokumenId}.pdf`;
+				const uniqueFilename = `${Date.now()}_${formattedfileName}.pdf`;
 				const { url } = await put(uniqueFilename, dokumen, {
 					access: 'public',
 					token: BLOB_READ_WRITE_TOKEN,

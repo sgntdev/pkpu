@@ -14,7 +14,7 @@ export async function GET({ params, request }) {
 		});
 	}
 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
-	if (decoded.user.roleId !== 1) {
+	if (decoded.user.roleId !== 1 && decoded.user.roleId !== 2) {
 		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 			status: 403
 		});
@@ -55,7 +55,7 @@ export async function PUT({ params, request }) {
 	};
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		if (decoded.user.roleId !== 1) {
+		if (decoded.user.roleId !== 1 && decoded.user.roleId !== 2) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
@@ -126,7 +126,7 @@ export async function DELETE({ params, request }) {
 	}
 	try {
 		let decoded = jwt.verify(token, SECRET_INGREDIENT);
-		if (decoded.user.roleId !== 1) {
+		if (decoded.user.roleId !== 1 && decoded.user.roleId !== 2) {
 			return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
 				status: 403
 			});
