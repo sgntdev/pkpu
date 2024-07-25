@@ -69,6 +69,7 @@
 	let jumlahTagihan = {
 		pertanggal: tagihan.pertanggal,
 		hutangPokok: formatPrice(tagihan.hutangPokok),
+		keterangan : tagihan.keterangan,
 		bunga: formatPrice(tagihan.bunga),
 		denda: formatPrice(tagihan.denda),
 		totalTagihan: ''
@@ -359,7 +360,6 @@
 	<div class="space-y-4">
 		<Card size="none" padding="lg">
 			<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Identitas Kreditor</h3>
-
 			<div class="relative flex flex-col gap-2 md:flex-row">
 				<div class="relative w-full">
 					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
@@ -482,7 +482,6 @@
 						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'pertanggal') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Pertanggal</label
 					>
-
 					<div class="relative">
 						<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
 							<svg
@@ -505,38 +504,6 @@
 					{#if form?.errors?.find((error) => error.field === 'pertanggal')}
 						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 							{form?.errors?.find((error) => error.field === 'pertanggal').message}
-						</p>
-					{/if}
-				</div>
-				<div>
-					<label
-						for="hutangPokok"
-						class={`mb-2 block text-sm font-medium ${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-						>Hutang Pokok</label
-					>
-					<div class="relative">
-						<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
-							<p
-								class={`${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
-							>
-								Rp.
-							</p>
-						</div>
-						<input
-							type="text"
-							name="hutangPokok"
-							placeholder="Hutang Pokok"
-							id="hutangPokok"
-							bind:value={jumlahTagihan.hutangPokok}
-							on:input={() => {
-								jumlahTagihan.hutangPokok = formatPrice(jumlahTagihan.hutangPokok);
-							}}
-							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-						/>
-					</div>
-					{#if jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok')}
-						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-							{form?.errors?.find((error) => error.field === 'hutangPokok').message}
 						</p>
 					{/if}
 				</div>
@@ -574,6 +541,38 @@
 				</div>
 				<div>
 					<label
+						for="hutangPokok"
+						class={`mb-2 block text-sm font-medium ${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						>Hutang Pokok</label
+					>
+					<div class="relative">
+						<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
+							<p
+								class={`${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
+							>
+								Rp.
+							</p>
+						</div>
+						<input
+							type="text"
+							name="hutangPokok"
+							placeholder="Hutang Pokok"
+							id="hutangPokok"
+							bind:value={jumlahTagihan.hutangPokok}
+							on:input={() => {
+								jumlahTagihan.hutangPokok = formatPrice(jumlahTagihan.hutangPokok);
+							}}
+							class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+						/>
+					</div>
+					{#if jumlahTagihan.hutangPokok === '' && form?.errors?.find((error) => error.field === 'hutangPokok')}
+						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+							{form?.errors?.find((error) => error.field === 'hutangPokok').message}
+						</p>
+					{/if}
+				</div>
+				<div>
+					<label
 						for="denda"
 						class={`mb-2 block text-sm font-medium ${jumlahTagihan.denda === '' && form?.errors?.find((error) => error.field === 'denda') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
 						>Denda</label
@@ -604,26 +603,46 @@
 						</p>
 					{/if}
 				</div>
-			</div>
-			<div>
-				<label
-					for="totalTagihan"
-					class="mb-2 block text-sm font-medium text-gray-400 dark:text-white">Total</label
-				>
-				<div class="relative">
-					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
-						<p class="text-gray-500">Rp.</p>
-					</div>
+				<div>
+					<label
+						for="keterangan"
+						class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'keterangan') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+						>Keterangan</label
+					>
 					<input
-						id="totalTagihan"
 						type="text"
-						name="totalTagihan"
-						placeholder="Total"
-						bind:value={jumlahTagihan.totalTagihan}
-						class="block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 p-2.5 ps-10 text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder-gray-400"
-						disabled
-						readonly
+						id="keterangan"
+						name="keterangan"
+						placeholder="Keterangan"
+						bind:value={jumlahTagihan.keterangan}
+						class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'keterangan') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 					/>
+					{#if form?.errors?.find((error) => error.field === 'keterangan')}
+						<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+							{form?.errors?.find((error) => error.field === 'keterangan').message}
+						</p>
+					{/if}
+				</div>
+				<div>
+					<label
+						for="totalTagihan"
+						class="mb-2 block text-sm font-medium text-gray-400 dark:text-white">Total</label
+					>
+					<div class="relative">
+						<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
+							<p class="text-gray-500">Rp.</p>
+						</div>
+						<input
+							id="totalTagihan"
+							type="text"
+							name="totalTagihan"
+							placeholder="Total"
+							bind:value={jumlahTagihan.totalTagihan}
+							class="block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 p-2.5 ps-10 text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder-gray-400"
+							disabled
+							readonly
+						/>
+					</div>
 				</div>
 			</div>
 		</Card>
@@ -831,7 +850,7 @@
 			{/if}
 		</Card>
 	</div>
-	<div class="my-4 flex justify-end gap-2">
+	<div class="my-4 flex justify-start gap-2">
 		<Button type="submit">Ubah tagihan</Button>
 		<Button href="../" color="red">Batal</Button>
 	</div>

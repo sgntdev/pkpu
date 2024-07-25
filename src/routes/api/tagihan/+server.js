@@ -23,21 +23,21 @@ export async function GET({ request }) {
 		orderBy: {
 			id: 'asc'
 		},
-		include:{
-			Kreditor:{
-				select:{
-					nama:true
+		include: {
+			Kreditor: {
+				select: {
+					nama: true
 				}
 			},
-			SifatTagihan : {
-				select:{
-					sifat:true
+			SifatTagihan: {
+				select: {
+					sifat: true
 				}
-			},
+			}
 		}
-	}
+	};
 
-	if (decoded.user.roleId === 1) {
+	if (decoded.user.roleId === 1 || decoded.user.roleId === 2) {
 		tagihanQuery.include.TagihanItem = {
 			include: {
 				SifatTagihan: true
@@ -81,12 +81,13 @@ export async function POST({ request }) {
 		kreditorId,
 		pertanggal,
 		hutangPokok,
+		keterangan,
 		bunga,
 		denda,
 		sifatTagihanId,
 		jumlahTagihan,
 		mulaiTertunggak,
-		jumlahHari, 
+		jumlahHari,
 		totalVoters
 	} = Object.fromEntries(formData);
 	const allowedFileTypes = ['application/pdf'];
@@ -118,6 +119,9 @@ export async function POST({ request }) {
 			validation.errors.push({ field: 'hutangPokok', message: 'Hutang pokok tidak boleh kosong!' });
 		} else if (isNaN(parseFloat(hutangPokok))) {
 			validation.errors.push({ field: 'hutangPokok', message: 'Hutang pokok harus berupa angka!' });
+		}
+		if (keterangan.length > 25) {
+			validation.errors.push({ field: 'keterangan', message: 'Keterangan maksimal 25 karakter!' });
 		}
 		if (!denda) {
 			validation.errors.push({ field: 'denda', message: 'Denda tidak boleh kosong!' });
@@ -173,13 +177,14 @@ export async function POST({ request }) {
 				kreditorId: parseInt(kreditorId),
 				pertanggal,
 				hutangPokok: unformatPrice(hutangPokok),
+				keterangan,
 				bunga: unformatPrice(bunga),
 				denda: unformatPrice(denda),
 				sifatTagihanId: parseInt(sifatTagihanId),
 				jumlahTagihan,
 				mulaiTertunggak,
 				jumlahHari,
-				totalVoters: parseInt(totalVoters),
+				totalVoters: parseInt(totalVoters)
 			}
 		});
 

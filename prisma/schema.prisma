@@ -9,21 +9,24 @@ datasource db {
 }
 
 model User {
-  id          Int           @id @default(autoincrement())
-  email       String        @unique
-  roleId      Int           @default(4)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  Role        Role          @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  Kreditor    Kreditor[]
-  Tagihan     Tagihan[]
-  TagihanVote TagihanVote[]
+  id               Int                @id @default(autoincrement())
+  email            String             @unique
+  roleId           Int                @default(4)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime?          @updatedAt
+  Role             Role               @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Kreditor         Kreditor[]
+  Tagihan          Tagihan[]
+  TagihanVote      TagihanVote[]
+  VerifiedPassword VerifiedPassword[]
 }
 
 model UserVerify {
   email          String   @id @unique
   uniqueCode     String   @unique @db.VarChar(25)
   expirationDate DateTime
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
 }
 
 model Role {
@@ -38,19 +41,23 @@ model Debitor {
   tglSidang      String
   tempatSidang   String
   uid            String    @unique @db.VarChar(5)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
   pengurusAccess Int[]
   Tagihan        Tagihan[]
 }
 
 model Kreditor {
-  id      Int       @id @default(autoincrement())
-  userId  Int
-  nama    String
-  email   String
-  alamat  String    @db.Text
-  noTelp  String    @db.VarChar(13)
-  User    User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  Tagihan Tagihan[]
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  nama      String
+  email     String
+  alamat    String    @db.Text
+  noTelp    String    @db.VarChar(13)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+  User      User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Tagihan   Tagihan[]
 }
 
 model Tagihan {
@@ -62,6 +69,7 @@ model Tagihan {
   hutangPokok     String
   bunga           String
   denda           String
+  keterangan      String?          @db.VarChar(25)
   sifatTagihanId  Int
   jumlahTagihan   String
   mulaiTertunggak String
@@ -70,6 +78,8 @@ model Tagihan {
   verifiedVote    Int              @default(0)
   objectionVote   Int              @default(0)
   status          Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime?        @updatedAt
   DokumenTagihan  DokumenTagihan[]
   Debitor         Debitor          @relation(fields: [debitorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   User            User             @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
@@ -101,17 +111,21 @@ model DokumenTagihan {
   tagihanId     Int
   nama_dokumen  String
   dokumen_url   String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime?   @updatedAt
   Tagihan       Tagihan     @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   TipeDokumen   TipeDokumen @relation(fields: [tipeDokumenId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
-model Verified {
+model VerifiedPassword {
   id             Int       @id @default(autoincrement())
+  userId         Int       @unique
   password       String
   uniqueCode     String?   @unique @db.VarChar(25)
   expirationDate DateTime?
   createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  updatedAt      DateTime? @updatedAt
+  User           User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
 model TagihanVote {
@@ -121,7 +135,8 @@ model TagihanVote {
   vote      Int
   User      User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   Tagihan   Tagihan  @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  createdAt DateTime @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
 
   @@unique([userId, tagihanId])
 }
@@ -132,8 +147,8 @@ model TagihanItem {
   sifatTagihanId Int
   tipe           String
   amount         String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
   SifatTagihan   SifatTagihan @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   Tagihan        Tagihan      @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }

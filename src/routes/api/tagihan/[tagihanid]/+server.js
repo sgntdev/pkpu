@@ -96,6 +96,7 @@ export async function PUT({ params, request }) {
 		kreditorId,
 		pertanggal,
 		hutangPokok,
+		keterangan,
 		bunga,
 		denda,
 		sifatTagihanId,
@@ -132,6 +133,9 @@ export async function PUT({ params, request }) {
 			validation.errors.push({ field: 'hutangPokok', message: 'Hutang pokok tidak boleh kosong!' });
 		} else if (isNaN(parseFloat(hutangPokok))) {
 			validation.errors.push({ field: 'hutangPokok', message: 'Hutang pokok harus berupa angka!' });
+		}
+		if (keterangan.length > 25) {
+			validation.errors.push({ field: 'keterangan', message: 'Keterangan maksimal 25 karakter!' });
 		}
 		if (!denda) {
 			validation.errors.push({ field: 'denda', message: 'Denda tidak boleh kosong!' });
@@ -195,6 +199,7 @@ export async function PUT({ params, request }) {
 				kreditorId: parseInt(kreditorId),
 				pertanggal,
 				hutangPokok: unformatPrice(hutangPokok),
+				keterangan,
 				bunga: unformatPrice(bunga),
 				denda: unformatPrice(denda),
 				sifatTagihanId: parseInt(sifatTagihanId),
