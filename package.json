@@ -43,7 +43,8 @@
 		"jsonwebtoken": "^9.0.2",
 		"nodemailer": "^6.9.8",
 		"svelte-multiselect": "^10.3.0",
-		"tailwind-merge": "^2.2.1"
+		"tailwind-merge": "^2.2.1",
+		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
 	},
 	"prisma": {
 		"seed": "node prisma/seed.js"
