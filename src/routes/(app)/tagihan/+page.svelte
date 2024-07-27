@@ -1,21 +1,17 @@
 <script>
 	import {
-		Table,
-		TableBody,
-		TableBodyCell,
-		TableBodyRow,
-		TableHead,
-		TableHeadCell,
 		Modal,
 		Breadcrumb,
 		BreadcrumbItem,
 		Badge,
 		Indicator,
 		Spinner,
-		Button
+		Button,
+		Dropdown,
+		DropdownItem
 	} from 'flowbite-svelte';
 	export let data;
-	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
+	import { ExclamationCircleOutline, ChevronDownOutline } from 'flowbite-svelte-icons';
 	import { showToast } from '$lib/toastStore';
 	const { user, debitor, token } = data?.body;
 	$: tagihan = data.body.tagihan;
@@ -27,6 +23,7 @@
 		deleteModal = true;
 	};
 	const handleDeleteTagihan = async () => {
+		loading = true
 		try {
 			const response = await fetch(`/api/tagihan/${deleteTargetId}`, {
 				method: 'DELETE',
@@ -38,18 +35,14 @@
 			const result = await response.json();
 			if (result.success) {
 				showToast(result.message, 'success');
-				const updateDataRes = await fetch(
-					`/api/debitor/${debitor.id}/tagihan?userId=${user.id}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-							Authorization: `Bearer ${token}`
-						}
+				const updateDataRes = await fetch(`/api/debitor/${debitor.id}/tagihan?userId=${user.id}`, {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`
 					}
-				);
+				});
 				const updatedData = await updateDataRes.json();
-				console.log(updatedData);
 				tagihan = updatedData.data;
 			} else {
 				showToast(result.message, 'error');
@@ -59,6 +52,7 @@
 		} finally {
 			deleteTargetId = null;
 			deleteModal = false;
+			loading = false
 		}
 	};
 	const formatPrice = (price) => {
@@ -69,70 +63,269 @@
 		const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 		return formatted;
 	};
+	let toggleDropdown = false; // dropdown toggle
+	let currentPage = 1; // default posisi halaman saat ini
+	let totalPages = 1; // default total halaman
+	$: itemsPerPage = 10; // total item yang akan ditampilkan
+	let searchKeyword = ''; // keyword untuk searching
+	let filterStatus = [0, 1, 2];
+	let paginatedData = [];
+	let filteredData = [];
+	let searchColumns = ['namaKreditor'];
+	function toggleFilterStatus(status) {
+		if (status === 'all') {
+			filterStatus = [0, 1, 2];
+		} else if (filterStatus.includes(status)) {
+			filterStatus = filterStatus.filter((s) => s === status);
+		} else {
+			filterStatus = [status];
+		}
+	}
+	$: {
+		filteredData = tagihan.filter((data) => {
+			const searchKeywordLower = searchKeyword.toLowerCase();
+			return (
+				searchColumns.some((column) => {
+					const value = data[column];
+					if (typeof value === 'string') {
+						return value.toLowerCase().includes(searchKeywordLower);
+					} else {
+						return false;
+					}
+				}) && filterStatus.includes(data.status)
+			);
+		});
+
+		totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+		paginatedData = filteredData.slice(
+			(currentPage - 1) * itemsPerPage,
+			currentPage * itemsPerPage
+		);
+	}
+	// Fungsi untuk mengubah halaman
+	function goToPage(page) {
+		currentPage = page;
+	}
+
+	function getPagination(currentPage, totalPages) {
+		let range = [];
+		let dots = '...';
+
+		if (totalPages <= 5) {
+			range = Array.from({ length: totalPages }, (_, i) => i + 1);
+		} else {
+			if (currentPage <= 3) {
+				range = [1, 2, 3, dots, totalPages];
+			} else if (currentPage >= totalPages - 2) {
+				range = [1, dots, totalPages - 2, totalPages - 1, totalPages];
+			} else {
+				range = [1, dots, currentPage, dots, totalPages];
+			}
+		}
+
+		return range;
+	}
+
+	let itemActiveClass = 'bg-primary-600 hover:bg-primary-800 text-white';
+
+	function changeTotalItems(items) {
+		itemsPerPage = items;
+		currentPage = 1;
+		toggleDropdown = false;
+	}
 </script>
 
 <Breadcrumb aria-label="Default breadcrumb example" class="mb-4">
 	<BreadcrumbItem href="/" home>List Tagihan</BreadcrumbItem>
 </Breadcrumb>
-<div class="space-y-4">
-	<div class="min-h-max overflow-hidden rounded-lg border border-gray-200 p-8 dark:border-gray-700">
-		<div class="mb-4 flex flex-col items-start justify-between sm:mb-0 md:flex-row">
-			<div class="mb-2 md:mb-5">
-				<p class="text-left text-lg font-semibold text-gray-900 dark:bg-gray-800 dark:text-white">
-					List Tagihan {debitor.nama}
-				</p>
-				<p class="mt-1 text-sm font-light text-gray-500 dark:text-gray-400">
-					Kelola semua tagihan anda yang ada atau tambahkan tagihan baru.
-				</p>
+
+<div
+	class="border-1 relative overflow-hidden border border-gray-200 bg-white dark:bg-gray-800 sm:rounded-lg"
+>
+	<div class="border-b-[1px] border-gray-200 p-4">
+		<h5 class="mb-2 text-left text-lg font-medium text-gray-900 dark:bg-gray-800 dark:text-white">
+			List Tagihan <span class="font-semibold">{debitor.nama}</span>
+		</h5>
+		<div
+			class="flex flex-col items-center justify-between space-y-3 md:flex-row md:space-x-4 md:space-y-0"
+		>
+			<div class="w-full md:w-1/2">
+				<div class="flex flex-row space-x-3">
+					<div>
+						<div
+							id="items"
+							class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-center text-sm font-medium text-gray-900 focus-within:outline-none focus-within:ring-4 focus-within:ring-gray-200 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus-within:ring-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+						>
+							<p>{itemsPerPage}</p>
+							<ChevronDownOutline class="ms-1 h-5 w-5" />
+						</div>
+						<Dropdown triggeredBy="#items" bind:open={toggleDropdown}>
+							<DropdownItem
+								on:click={() => changeTotalItems(10)}
+								class={itemsPerPage === 10 && itemActiveClass}>10</DropdownItem
+							>
+							<DropdownItem
+								on:click={() => changeTotalItems(25)}
+								class={itemsPerPage === 25 && itemActiveClass}>25</DropdownItem
+							>
+							<DropdownItem
+								on:click={() => changeTotalItems(50)}
+								class={itemsPerPage === 50 && itemActiveClass}>50</DropdownItem
+							>
+						</Dropdown>
+					</div>
+					<form class="flex w-full items-center">
+						<label for="simple-search" class="sr-only">Search</label>
+						<div class="relative w-full">
+							<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+								<svg
+									aria-hidden="true"
+									class="h-5 w-5 text-gray-500 dark:text-gray-400"
+									fill="currentColor"
+									viewbox="0 0 20 20"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<path
+										fill-rule="evenodd"
+										d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+										clip-rule="evenodd"
+									/>
+								</svg>
+							</div>
+							<input
+								type="text"
+								id="search"
+								class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+								placeholder="Search"
+								bind:value={searchKeyword}
+							/>
+						</div>
+					</form>
+				</div>
 			</div>
-			<a
-				href="tagihan/create"
-				class="flex h-fit w-full items-center justify-center rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 sm:w-fit"
-			>
-				Tambah tagihan
-			</a>
-		</div>
-		{#if loading}
-			<Spinner color="blue" size={8} />
-		{/if}
-		{#if !tagihan.length > 0}
 			<div
-				class="border-1 flex w-full items-center justify-center rounded-md border border-gray-300 py-40"
+				class="flex w-full flex-shrink-0 flex-col items-stretch justify-end space-y-2 md:w-auto md:flex-row md:items-center md:space-x-3 md:space-y-0"
 			>
-				<h1 class="text-md font-medium text-gray-400 dark:text-white">
-					List tagihan masih kosong.
-				</h1>
+				<Button href="tagihan/create">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="mr-2 h-3.5 w-3.5"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+					</svg>
+
+					Tambah tagihan</Button
+				>
 			</div>
-		{:else}
-			<Table striped divClass="mt-2 overflow-auto">
-				<TableHead>
-					<TableHeadCell>No</TableHeadCell>
-					<TableHeadCell>Kreditor</TableHeadCell>
-					<TableHeadCell>Pertanggal</TableHeadCell>
-					<TableHeadCell>Total Tagihan</TableHeadCell>
-					<TableHeadCell>Sifat/Golongan Tagihan</TableHeadCell>
-					<TableHeadCell>Jumlah Tagihan Seluruhnya</TableHeadCell>
-					<TableHeadCell>Mulai Tertunggak</TableHeadCell>
-					<TableHeadCell>Status</TableHeadCell>
-					<TableHeadCell>Tagihan</TableHeadCell>
-					<TableHeadCell>Aksi</TableHeadCell>
-				</TableHead>
-				<TableBody>
-					{#each tagihan as data, index (data)}
-						<TableBodyRow>
-							<TableBodyCell>{index + 1}</TableBodyCell>
-							<TableBodyCell>{data.Kreditor.nama}</TableBodyCell>
-							<TableBodyCell>{data.pertanggal}</TableBodyCell>
-							<TableBodyCell
+		</div>
+	</div>
+	<div class="flex w-full p-4">
+		<label for="inline-radio" class="me-4 text-sm font-medium text-gray-900 dark:text-gray-300"
+			>Show only:</label
+		>
+		<div class="me-4 flex items-center">
+			<input
+				checked
+				id="inline-radio"
+				type="radio"
+				name="inline-radio-group"
+				on:change={() => toggleFilterStatus('all')}
+				class="h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+			/>
+			<label for="inline-radio" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+				>All</label
+			>
+		</div>
+		<div class="me-4 flex items-center">
+			<input
+				id="inline-2-radio"
+				type="radio"
+				name="inline-radio-group"
+				on:change={() => toggleFilterStatus(1)}
+				class="h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+			/>
+			<label for="inline-2-radio" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+				>Verified</label
+			>
+		</div>
+		<div class="me-4 flex items-center">
+			<input
+				id="inline-checked-radio"
+				type="radio"
+				name="inline-radio-group"
+				on:change={() => toggleFilterStatus(2)}
+				class="h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+			/>
+			<label
+				for="inline-checked-radio"
+				class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Objection</label
+			>
+		</div>
+		<div class="me-4 flex items-center">
+			<input
+				id="inline-checked-radio"
+				type="radio"
+				name="inline-radio-group"
+				on:change={() => toggleFilterStatus(0)}
+				class="h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+			/>
+			<label
+				for="inline-checked-radio"
+				class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Pending</label
+			>
+		</div>
+	</div>
+	<div class="overflow-x-auto">
+		<table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+			<thead class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
+				<tr>
+					<th scope="col" class="w-10 px-4 py-3">No</th>
+					<th scope="col" class="min-w-48 px-4 py-3">Kreditor</th>
+					<th scope="col" class="px-4 py-3">Pertanggal</th>
+					<th scope="col" class="px-4 py-3">Total Tagihan</th>
+					<th scope="col" class="px-4 py-3">Golongan</th>
+					<th scope="col" class="w-10 px-4 py-3">Jumlah Tagihan Seluruhnya</th>
+					<th scope="col" class="px-4 py-3">Mulai Terunggak</th>
+					<th scope="col" class="px-4 py-3">Status</th>
+					<th scope="col" class="px-4 py-3">Aksi</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#if loading}
+					<tr class="border-b dark:border-gray-700">
+						<td class="px-4 py-3 text-center" colspan="9"> <Spinner color="blue" size={8} /></td>
+					</tr>
+				{:else if paginatedData.length === 0}
+					<tr class="border-b dark:border-gray-700">
+						<td class="px-4 py-3 text-center" colspan="9">No data found.</td>
+					</tr>
+				{:else}
+					{#each paginatedData as data, index (data)}
+						<tr
+							class="border-b bg-white dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-600"
+						>
+							<td class="px-4 py-3">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+							<th
+								scope="row"
+								class="whitespace-nowrap text-wrap px-4 py-3 font-medium text-gray-900 dark:text-white"
+								>{data.namaKreditor}</th
+							>
+							<td class="px-4 py-3">{data.pertanggal}</td>
+							<td class="max-w-36 px-4 py-3"
 								>Rp. {formatPrice(
 									parseFloat(data.denda) + parseFloat(data.hutangPokok) + parseFloat(data.bunga)
-								)}</TableBodyCell
+								)}</td
 							>
-							<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
-							<TableBodyCell>{data.jumlahTagihan}</TableBodyCell>
-							<TableBodyCell>{data.mulaiTertunggak}</TableBodyCell>
-							<TableBodyCell>
-								{#if data.status === 0}
+							<td class="px-4 py-3">{data.sifatTagihan}</td>
+							<td class="px-4 py-3">{data.jumlahTagihan}</td>
+							<td class="px-4 py-3">{data.mulaiTertunggak}</td>
+							<td class="px-4 py-3"
+								>{#if data.status === 0}
 									<Badge color="gray" rounded class="px-2.5 py-0.5">
 										<Indicator color="dark" size="xs" class="me-1" />Pending
 									</Badge>
@@ -144,20 +337,38 @@
 									<Badge color="red" rounded class="px-2.5 py-0.5">
 										<Indicator color="red" size="xs" class="me-1" />Objection
 									</Badge>
-								{/if}
-							</TableBodyCell>
-							<TableBodyCell>
-								<a
-									href={`/tagihan/${data.id}`}
-									class="font-medium text-primary-600 hover:underline dark:text-primary-500"
-									>Lihat Dokumen</a
-								>
-							</TableBodyCell>
-							<TableBodyCell>
+								{/if}</td
+							>
+							<td class="px-4 py-3">
 								<div class="inline-flex rounded-md shadow-sm" role="group">
 									<a
-										href={`/tagihan/edit/${data.id}`}
+										href={`/tagihan/${data.id}`}
 										class="inline-flex items-center rounded-s-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white dark:focus:text-white dark:focus:ring-blue-500"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke-width="1.5"
+											stroke="currentColor"
+											class="me-2 h-3 w-3"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+											/>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+											/>
+										</svg>
+										Preview
+									</a>
+									<a
+										href={`/tagihan/edit/${data.id}`}
+										class="inline-flex items-center border-b border-t border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:text-blue-700 focus:ring-2 focus:ring-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white dark:focus:text-white dark:focus:ring-blue-500"
 									>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
@@ -194,13 +405,99 @@
 										Hapus
 									</button>
 								</div>
-							</TableBodyCell>
-						</TableBodyRow>
+							</td>
+						</tr>
 					{/each}
-				</TableBody>
-			</Table>
-		{/if}
+				{/if}
+			</tbody>
+		</table>
 	</div>
+	<nav
+		class="flex flex-col items-center justify-center space-y-3 p-4 md:flex-row md:justify-between md:space-y-0"
+		aria-label="Table navigation"
+	>
+		<span class="text-sm font-normal text-gray-500 dark:text-gray-400">
+			Showing
+			<span class="font-semibold text-gray-900 dark:text-white">
+				{#if filteredData.length === 0}
+					0-0
+				{:else}
+					{(currentPage - 1) * itemsPerPage + 1}-{Math.min(
+						currentPage * itemsPerPage,
+						filteredData.length
+					)}
+				{/if}
+			</span>
+			of
+			<span class="font-semibold text-gray-900 dark:text-white">{filteredData.length}</span>
+		</span>
+		<ul class="inline-flex items-stretch -space-x-px">
+			<li>
+				<button
+					on:click={() => goToPage(currentPage - 1)}
+					disabled={currentPage === 1 || paginatedData.length === 0}
+					class={`ml-0 flex h-full items-center justify-center rounded-l-lg border border-gray-300 bg-white px-3 py-1.5 leading-tight ${currentPage === 1 || paginatedData.length === 0 ? 'cursor-not-allowed text-gray-300 hover:bg-white hover:text-gray-300' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+				>
+					<span class="sr-only">Previous</span>
+					<svg
+						class="h-5 w-5"
+						aria-hidden="true"
+						fill="currentColor"
+						viewbox="0 0 20 20"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
+			</li>
+			{#each getPagination(currentPage, totalPages) as page}
+				<li>
+					{#if page === '...'}
+						<span
+							class="flex items-center justify-center border border-gray-300 bg-white px-3 py-2 text-sm leading-tight text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+							>...</span
+						>
+					{:else}
+						<button
+							on:click={() => goToPage(page)}
+							class="flex items-center justify-center border px-3 py-2 text-sm leading-tight {currentPage ===
+							page
+								? 'border-primary-300 bg-primary-50 text-primary-600 hover:bg-primary-100 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white'
+								: 'border-gray-300 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}"
+						>
+							{page}
+						</button>
+					{/if}
+				</li>
+			{/each}
+			<li>
+				<button
+					on:click={() => goToPage(currentPage + 1)}
+					disabled={currentPage === totalPages || paginatedData.length === 0}
+					class={`ml-0 flex h-full items-center justify-center rounded-r-lg border border-gray-300 bg-white px-3 py-1.5 leading-tight ${currentPage === totalPages || paginatedData.length === 0 ? 'cursor-not-allowed text-gray-300 hover:bg-white hover:text-gray-300' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+				>
+					<span class="sr-only">Next</span>
+					<svg
+						class="h-5 w-5"
+						aria-hidden="true"
+						fill="currentColor"
+						viewbox="0 0 20 20"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a 1 1 0 010 1.414l-4 4a 1 1 0 01-1.414 0z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
+			</li>
+		</ul>
+	</nav>
 </div>
 <!-- delete modal -->
 <Modal bind:open={deleteModal} size="xs" autoclose>

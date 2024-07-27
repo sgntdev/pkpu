@@ -2,7 +2,6 @@ import { error } from '@sveltejs/kit';
 
 export async function load({ fetch, locals }) {
 	const { user, token } = locals;
-	const kreditorId = parseInt(1);
 	if (!user) {
 		redirect(303, '/');
 	} else {
@@ -16,16 +15,6 @@ export async function load({ fetch, locals }) {
 			});
 			const tagihan = await res.json();
 
-			const resDetail = await fetch(`/api/tagihandetail/1`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			});
-			const tagihandetail = await resDetail.json();
-			// console.log(tagihan.data[0]);
-
 			const sifatTagihanResponse = await fetch('/api/sifattagihan', {
 				method: 'GET',
 				headers: {
@@ -34,13 +23,17 @@ export async function load({ fetch, locals }) {
 				}
 			});
 			const sifatTagihanResult = await sifatTagihanResponse.json();
+
+			const debitorRes = await fetch('/api/debitor')
+			const debitorResult = await debitorRes.json()
 			return {
 				status: 200,
 				body: {
 					tagihan: tagihan.data,
-					tagihanDetail: tagihandetail.data,
+					debitorData : debitorResult.data,
 					sifatTagihanData: sifatTagihanResult.data,
-					token
+					token,
+					roleId : user.roleId
 				}
 			};
 		} else {

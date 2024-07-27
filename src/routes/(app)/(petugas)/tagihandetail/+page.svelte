@@ -1,11 +1,5 @@
 <script>
 	import {
-		Table,
-		TableBody,
-		TableBodyCell,
-		TableBodyRow,
-		TableHead,
-		TableHeadCell,
 		Breadcrumb,
 		BreadcrumbItem,
 		Button,
@@ -13,21 +7,22 @@
 		Modal,
 		Dropdown,
 		DropdownItem,
+		Badge,
+		Indicator,
+		Radio,
+		Search
 	} from 'flowbite-svelte';
 	import { showToast } from '$lib/toastStore';
-	import { slide } from 'svelte/transition';
 	import { writable, derived } from 'svelte/store';
 	import { getContext } from 'svelte';
 	import {
-		EditSolid,
 		ExclamationCircleOutline,
-		MinusSolid,
-		DotsHorizontalOutline
+		ChevronDownOutline,
+		FilterOutline
 	} from 'flowbite-svelte-icons';
 
 	export let data;
-	const { token } = data.body;
-	const { sifatTagihanData } = data.body;
+	const { sifatTagihanData, debitorData, token, roleId } = data.body;
 	// let tagihan;
 	const chooseDebitor = getContext('Choose');
 	const tagihan = writable([]);
@@ -115,7 +110,7 @@
 				if (result.success) {
 					// Mengubah tagihanInputsByRow[rowIndex] menjadi array kosong
 					tagihanInputsByRow[index] = [];
-					showToast(result.message, 'success')
+					showToast(result.message, 'success');
 					const updatedDataResponse = await fetch('/api/tagihan', {
 						method: 'GET',
 						headers: {
@@ -126,7 +121,7 @@
 					const updatedData = await updatedDataResponse.json();
 					tagihan.set(updatedData.data);
 				} else {
-					showToast(result.message, 'error')
+					showToast(result.message, 'error');
 				}
 			} catch (err) {
 				console.error('client', err);
@@ -158,7 +153,7 @@
 			});
 			const result = await response.json();
 			if (result.success) {
-				showToast(result.message, 'success')
+				showToast(result.message, 'success');
 				const updatedDataResponse = await fetch('/api/tagihan', {
 					method: 'GET',
 					headers: {
@@ -169,7 +164,7 @@
 				const updatedData = await updatedDataResponse.json();
 				tagihan.set(updatedData.data);
 			} else {
-				showToast(result.message, 'error')
+				showToast(result.message, 'error');
 			}
 		} catch (error) {
 			console.error(error);
@@ -194,12 +189,13 @@
 			});
 			const result = await response.json();
 			if (result.success) {
+				editModal = false;
 				dataEdit = {
 					sifatTagihanId: '',
 					tipe: '',
 					amount: ''
 				};
-				showToast(result.message, 'success')
+				showToast(result.message, 'success');
 				const updatedDataResponse = await fetch('/api/tagihan', {
 					method: 'GET',
 					headers: {
@@ -210,7 +206,7 @@
 				const updatedData = await updatedDataResponse.json();
 				tagihan.set(updatedData.data);
 			} else {
-				showToast(result.message, 'error')
+				showToast(result.message, 'error');
 			}
 		} catch (err) {
 			console.error('client', err);
@@ -227,7 +223,6 @@
 			tipe: data.tipe,
 			amount: data.amount
 		};
-		console.log(dataEdit);
 		editModal = true;
 	};
 
@@ -237,6 +232,90 @@
 		deleteTargetTagihanId = idTagihan;
 	};
 
+	//Dropdown total item show
+	let dropdownOpen = false;
+	//pagination
+	let currentPage = 1;
+	let totalPages = 1;
+	$: itemsPerPage = 10;
+	let searchText = '';
+	let filterStatus = [0, 1, 2];
+	let paginatedTagihan = [];
+	let filteredTagihan = [];
+	let selectedDebitor = '';
+	let searchDebitor = '';
+
+	let debitorResult = [];
+	$: debitorResult = debitorData.filter((data) =>
+		data.nama.toLowerCase().includes(searchDebitor.toLowerCase())
+	);
+	function toggleselectedDebitor(debitorId) {
+		selectedDebitor = debitorId;
+	}
+
+	let namaDebitor = '';
+
+	$: namaDebitor = selectedDebitor
+		? debitorData.find((debitor) => debitor.id === selectedDebitor)?.nama
+		: 'Filter';
+
+	function toggleFilterStatus(status) {
+		if (status === 'all') {
+			filterStatus = [0, 1, 2];
+		} else if (filterStatus.includes(status)) {
+			filterStatus = filterStatus.filter((s) => s === status);
+		} else {
+			filterStatus = [status];
+		}
+	}
+	// Menghitung data yang dipaginate
+	$: {
+		filteredTagihan = $tagihanByDebitor.filter(
+			(data) =>
+				data.Kreditor.nama.toLowerCase().includes(searchText.toLowerCase()) &&
+				filterStatus.includes(data.status) &&
+				(selectedDebitor === '' || selectedDebitor === data.debitorId)
+		);
+
+		totalPages = Math.ceil(filteredTagihan.length / itemsPerPage);
+
+		paginatedTagihan = filteredTagihan.slice(
+			(currentPage - 1) * itemsPerPage,
+			currentPage * itemsPerPage
+		);
+	}
+
+	// Fungsi untuk mengubah halaman
+	function goToPage(page) {
+		currentPage = page;
+	}
+
+	function getPagination(currentPage, totalPages) {
+		let range = [];
+		let dots = '...';
+
+		if (totalPages <= 5) {
+			range = Array.from({ length: totalPages }, (_, i) => i + 1);
+		} else {
+			if (currentPage <= 3) {
+				range = [1, 2, 3, dots, totalPages];
+			} else if (currentPage >= totalPages - 2) {
+				range = [1, dots, totalPages - 2, totalPages - 1, totalPages];
+			} else {
+				range = [1, dots, currentPage, dots, totalPages];
+			}
+		}
+
+		return range;
+	}
+
+	let itemActiveClass = 'bg-primary-600 hover:bg-primary-800 text-white';
+
+	function changeTotalItems(items) {
+		itemsPerPage = items;
+		currentPage = 1;
+		dropdownOpen = false;
+	}
 </script>
 
 <div class="space-y-4">
@@ -244,326 +323,607 @@
 		<BreadcrumbItem href="/dashboard" home>Dashboard</BreadcrumbItem>
 		<BreadcrumbItem>List Tagihan</BreadcrumbItem>
 	</Breadcrumb>
-	<div class="min-h-max overflow-hidden rounded-lg border border-gray-200 p-8 dark:border-gray-700">
-		<div class="mb-4 flex flex-col items-start justify-between sm:mb-0 md:flex-row">
-			<caption
-				class="mb-2 bg-white text-left text-lg font-semibold text-gray-900 dark:bg-gray-800 dark:text-white md:mb-5"
-			>
-				List Tagihan
-				<p class="mt-1 text-sm font-light text-gray-500 dark:text-gray-400">
-					Kelola semua tagihan.
-				</p>
-			</caption>
-		</div>
 
-		{#if tagihan.length === 0}
-			<div
-				class="border-1 flex w-full items-center justify-center rounded-md border border-gray-300 py-40"
-			>
-				<h1 class="text-md font-medium text-gray-400 dark:text-white">
-					List tagihan masih kosong.
-				</h1>
+	<div
+		class="border-1 relative overflow-hidden border border-gray-200 bg-white dark:bg-gray-800 sm:rounded-lg"
+	>
+		<div
+			class="mx-4 flex flex-col items-center justify-between space-y-3 border-b-[1px] border-gray-200 py-4 md:flex-row md:space-x-4 md:space-y-0"
+		>
+			<div class="w-full md:w-1/2">
+				<div class="flex flex-row space-x-3">
+					<div>
+						<div
+							id="items"
+							class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-center text-sm font-medium text-gray-900 focus-within:outline-none focus-within:ring-4 focus-within:ring-gray-200 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus-within:ring-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+						>
+							<p>{itemsPerPage}</p>
+							<ChevronDownOutline class="ms-1 h-5 w-5" />
+						</div>
+						<Dropdown triggeredBy="#items" bind:open={dropdownOpen}>
+							<DropdownItem
+								on:click={() => changeTotalItems(10)}
+								class={itemsPerPage === 10 && itemActiveClass}>10</DropdownItem
+							>
+							<DropdownItem
+								on:click={() => changeTotalItems(25)}
+								class={itemsPerPage === 25 && itemActiveClass}>25</DropdownItem
+							>
+							<DropdownItem
+								on:click={() => changeTotalItems(50)}
+								class={itemsPerPage === 50 && itemActiveClass}>50</DropdownItem
+							>
+						</Dropdown>
+					</div>
+					<form class="flex w-full items-center">
+						<label for="simple-search" class="sr-only">Search</label>
+						<div class="relative w-full">
+							<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+								<svg
+									aria-hidden="true"
+									class="h-5 w-5 text-gray-500 dark:text-gray-400"
+									fill="currentColor"
+									viewbox="0 0 20 20"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<path
+										fill-rule="evenodd"
+										d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+										clip-rule="evenodd"
+									/>
+								</svg>
+							</div>
+							<input
+								type="text"
+								id="search"
+								class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+								placeholder="Search"
+								bind:value={searchText}
+							/>
+						</div>
+					</form>
+				</div>
 			</div>
-		{:else}
-			<Table>
-				<TableHead>
-					<TableHeadCell>No</TableHeadCell>
-					<TableHeadCell>Nama Kreditur</TableHeadCell>
-					<TableHeadCell>Sifat/Golongan Tagihan</TableHeadCell>
-					<TableHeadCell>Hutang Pokok</TableHeadCell>
-					<TableHeadCell>Bunga</TableHeadCell>
-					<TableHeadCell>Denda</TableHeadCell>
-					<!-- <TableHeadCell>Jumlah Tagihan Seluruhnya</TableHeadCell> -->
-					<TableHeadCell>Status</TableHeadCell>
-					<TableHeadCell>Tagihan</TableHeadCell>
-					<!-- <TableBodyCell>Action</TableBodyCell> -->
-				</TableHead>
-				<TableBody tableBodyClass="divide-y">
-					{#each $tagihanByDebitor as data, index (data)}
-						<TableBodyRow>
-							<TableBodyCell style="display: flex; padding-top: 24px; gap: 4px;"
-								>{index + 1}
-							</TableBodyCell>
-							<TableBodyCell>{data.Kreditor.nama}</TableBodyCell>
-							<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
-							<TableBodyCell>Rp. {formatPrice(parseFloat(data.hutangPokok))}</TableBodyCell>
-							<TableBodyCell>Rp. {formatPrice(parseFloat(data.bunga))}</TableBodyCell>
-							<TableBodyCell>Rp. {formatPrice(parseFloat(data.denda))}</TableBodyCell>
-							<TableBodyCell>
-								{#if data.status === 1}
-									<span
-										class="inline-flex h-max items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+			{#if roleId === 1}
+				<div
+					class="flex w-full flex-shrink-0 flex-col items-stretch justify-end space-y-2 md:w-auto md:flex-row md:items-center md:space-x-3 md:space-y-0"
+				>
+					<div>
+						<Button color="light" class="w-full">
+							{namaDebitor}
+							<FilterOutline class="ml-2 h-4 w-4" /></Button
+						>
+						<Dropdown placement="bottom" class="max-h-44 min-h-5 overflow-y-auto px-3 pb-3 text-sm">
+							<div slot="header" class="p-3">
+								<Search size="md" bind:value={searchDebitor} />
+							</div>
+							{#each debitorResult as { id, nama }}
+								<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
+									<Radio
+										bind:group={selectedDebitor}
+										value={id}
+										on:change={() => toggleselectedDebitor(id)}
+										name="debitor">{nama}</Radio
 									>
-										<span class="me-1 h-2 w-2 rounded-full bg-green-500"></span>
-										Verified
-									</span>
-								{:else if data.status === 2}
-									<span
-										class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
-									>
-										<span class="me-1 h-2 w-2 rounded-full bg-red-500"></span>
-										Objection
-									</span>
-								{:else if data.verifiedVote > data.objectionVote}
-									<span
-										class="inline-flex h-max items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
-									>
-										<span class="me-1 h-2 w-2 rounded-full bg-green-500"></span>
-										Pending {data.verifiedVote} / {data.totalVoters}
-									</span>
-								{:else if data.objectionVote > data.verifiedVote}
-									<span
-										class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
-									>
-										<span class="me-1 h-2 w-2 rounded-full bg-red-500"></span>
-										Pending {data.objectionVote} / {data.totalVoters}
-									</span>
-								{:else}
-									<span
-										class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-900 dark:text-gray-300"
-									>
-										<span class="me-1 h-2 w-2 rounded-full bg-gray-900"></span>
-										Pending
-									</span>
-								{/if}
-							</TableBodyCell>
-							<TableBodyCell>
-								<div class="acs{index} cursor-pointer text-cyan-600">
-									<!-- <Button size="xs" outline color="dark"> -->
-									<DotsHorizontalOutline class="dots-menu dark:text-white" />
-									<!-- </Button> -->
-								</div>
-								<Dropdown triggeredBy=".acs{index}">
-									<div slot="header" class="px-4 py-2">
-										<span class="block truncate text-sm font-medium">{data.Kreditor.nama}</span>
-									</div>
-									<DropdownItem>
+								</li>
+							{/each}
+							<div slot="footer" class="px-3 py-1">
+								<Button size="xs" color="light" on:click={() => (selectedDebitor = '')}
+									>Reset</Button
+								>
+							</div>
+						</Dropdown>
+					</div>
+				</div>
+			{/if}
+		</div>
+		<div class="flex w-full p-4">
+			<label for="inline-radio" class="me-4 text-sm font-medium text-gray-900 dark:text-gray-300"
+				>Show only:</label
+			>
+			<div class="me-4 flex items-center">
+				<input
+					checked
+					id="inline-radio"
+					type="radio"
+					name="inline-radio-group"
+					on:change={() => toggleFilterStatus('all')}
+					class="h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+				/>
+				<label for="inline-radio" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+					>All</label
+				>
+			</div>
+			<div class="me-4 flex items-center">
+				<input
+					id="inline-2-radio"
+					type="radio"
+					name="inline-radio-group"
+					on:change={() => toggleFilterStatus(1)}
+					class="h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+				/>
+				<label
+					for="inline-2-radio"
+					class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Verified</label
+				>
+			</div>
+			<div class="me-4 flex items-center">
+				<input
+					id="inline-checked-radio"
+					type="radio"
+					name="inline-radio-group"
+					on:change={() => toggleFilterStatus(2)}
+					class="h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+				/>
+				<label
+					for="inline-checked-radio"
+					class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Objection</label
+				>
+			</div>
+			<div class="me-4 flex items-center">
+				<input
+					id="inline-checked-radio"
+					type="radio"
+					name="inline-radio-group"
+					on:change={() => toggleFilterStatus(0)}
+					class="h-4 w-4 border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+				/>
+				<label
+					for="inline-checked-radio"
+					class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Pending</label
+				>
+			</div>
+		</div>
+		<div class="overflow-x-auto">
+			<table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+				<thead
+					class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400"
+				>
+					<tr>
+						<th scope="col" class="px-4 py-3">No</th>
+						<th></th>
+						<th scope="col" class="px-4 py-3">Nama Kreditor</th>
+						<th scope="col" class="max-w-20 px-4 py-3">Golongan</th>
+						<th scope="col" class="px-4 py-3">Hutang Pokok</th>
+						<th scope="col" class="px-4 py-3">Bunga</th>
+						<th scope="col" class="px-4 py-3">Denda</th>
+						<th scope="col" class="px-4 py-3">Status</th>
+						<th scope="col" class="px-4 py-3">
+							<span class="sr-only">Aksi</span>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#if paginatedTagihan.length === 0}
+						<tr class="border-b dark:border-gray-700">
+							<td class="px-4 py-3 text-center" colspan="9">No data found.</td>
+						</tr>
+					{:else}
+						{#each paginatedTagihan as data, index (data)}
+							<tr
+								class={` border-b hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-600 ${openRow === index ? 'bg-gray-50' : 'bg-white'}`}
+								on:dblclick={() => toggleRow(index)}
+							>
+								<td class="px-4 py-3">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+								<td>
+									{#if openRow === index}
+										<button on:click={() => toggleRow(index)} type="button">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke-width="3"
+												stroke="currentColor"
+												class="h-4 w-4 stroke-gray-800"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="m4.5 15.75 7.5-7.5 7.5 7.5"
+												/>
+											</svg>
+										</button>
+									{:else}
+										<button on:click={() => toggleRow(index)} type="button">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke-width="3"
+												stroke="currentColor"
+												class="h-4 w-4 stroke-gray-800"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="m19.5 8.25-7.5 7.5-7.5-7.5"
+												/>
+											</svg>
+										</button>
+									{/if}
+								</td>
+								<th
+									scope="row"
+									class="w-72 whitespace-nowrap text-wrap px-4 py-3 font-medium text-gray-900 dark:text-white"
+									>{data.Kreditor.nama}</th
+								>
+								<td class="max-w-20 px-4 py-3">{data.SifatTagihan.sifat}</td>
+								<td class="px-4 py-3">Rp. {formatPrice(parseFloat(data.hutangPokok))}</td>
+								<td class="px-4 py-3">Rp. {formatPrice(parseFloat(data.bunga))}</td>
+								<td class="px-4 py-3">Rp. {formatPrice(parseFloat(data.denda))}</td>
+								<td class="px-4 py-3">
+									{#if data.status === 0}
+										<Badge color="gray" rounded class="px-2.5 py-0.5">
+											<Indicator color="dark" size="xs" class="me-1" />Pending
+										</Badge>
+									{:else if data.status === 1}
+										<Badge color="green" rounded class="px-2.5 py-0.5">
+											<Indicator color="green" size="xs" class="me-1" />Verified
+										</Badge>
+									{:else}
+										<Badge color="red" rounded class="px-2.5 py-0.5">
+											<Indicator color="red" size="xs" class="me-1" />Objection
+										</Badge>
+									{/if}
+								</td>
+								<td class="px-4 py-3">
+									<div class="inline-flex rounded-md shadow-sm" role="group">
 										<a
 											href={`/tagihandetail/${data.id}`}
-											class="font-medium text-primary-600 hover:underline dark:text-primary-500"
-											>Lihat Dokumen</a
+											class={`inline-flex items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white dark:focus:text-white dark:focus:ring-blue-500`}
 										>
-									</DropdownItem>
-									<DropdownItem on:click={() => toggleRow(index)}>Revisi</DropdownItem>
-								</Dropdown>
-							</TableBodyCell>
-						</TableBodyRow>
-						{#if openRow === index}
-							{#if tagihanInputsByRow[index].length > 0}
-								<TableBodyRow>
-									<TableBodyCell colspan="11">
-										{#each tagihanInputsByRow as tagihanInputs, index}
-											{#each tagihanInputs as tagihanDetail, TagihanDetailIndex (tagihanDetail)}
-												<div
-													class="grid gap-4 sm:gap-6 md:grid-cols-10"
-													style="margin-bottom: 10px; width: 80%; margin-inline: auto;"
-												>
-													<div class="md:col-span-3">
-														<label
-															for="sifatTagihan"
-															class={`mb-2 block text-sm font-medium ${tagihanDetail.showValidation && tagihanDetail.sifatTagihanId === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-															>Sifat/Golongan Tagihan</label
-														>
-														<select
-															id="sifatTagihan"
-															name="sifatTagihanId"
-															bind:value={tagihanDetail.sifatTagihanId}
-															class={`block w-full rounded-lg border p-2.5 text-sm ${tagihanDetail.showValidation && tagihanDetail.sifatTagihanId === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-														>
-															<option value="" selected disabled>Pilih Sifat Tagihan</option>
-															{#each sifatTagihanData as { id, sifat }}
-																<option value={id}>{sifat}</option>
-															{/each}
-														</select>
-														{#if tagihanDetail.showValidation && tagihanDetail.sifatTagihanId === ''}
-															<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-																Sifat Tagihan harus dipilih
-															</p>
-														{/if}
-													</div>
-													<div class="md:col-span-3">
-														<label
-															for="tipeTagihan"
-															class={`mb-2 block text-sm font-medium ${tagihanDetail.showValidation && tagihanDetail.tipe === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-															>Tipe Detail Tagihan</label
-														>
-														<select
-															id="tipeTagihan"
-															name="tipeTagihan"
-															bind:value={tagihanDetail.tipe}
-															class={`block w-full rounded-lg border p-2.5 text-sm ${tagihanDetail.showValidation && tagihanDetail.tipe === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-														>
-															<option value="" selected disabled>Pilih Tipe Tagihan</option>
-															<option value="bunga">Bunga</option>
-															<option value="denda">Denda</option>
-															<option value="tagihan">Tagihan</option>
-														</select>
-														{#if tagihanDetail.showValidation && tagihanDetail.tipe === ''}
-															<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-																Tipe Tagihan harus dipilih
-															</p>
-														{/if}
-													</div>
-													<div class="md:col-span-3">
-														<label
-															for="amountTagihan"
-															class={`mb-2 block text-sm font-medium ${tagihanDetail.showValidation && tagihanDetail.amount === '' ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-															>Amount</label
-														>
-														<div class="relative">
-															<div
-																class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5"
-															>
-																<p
-																	class={`${tagihanDetail.showValidation && tagihanDetail.amount === '' ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
-																>
-																	Rp.
-																</p>
-															</div>
-															<input
-																type="text"
-																name="Amount Tagihan"
-																placeholder="Amount Tagihan"
-																id="amountTagihan"
-																bind:value={tagihanDetail.amount}
-																on:input={(event) => updateAmount(index, TagihanDetailIndex, event)}
-																class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${tagihanDetail.showValidation && tagihanDetail.amount === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-															/>
-														</div>
-														{#if tagihanDetail.showValidation && tagihanDetail.amount === ''}
-															<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-																Amount Tagihan tidak boleh kosong
-															</p>
-														{/if}
-													</div>
-													<div style="position: relative;">
-														<Button
-															style="padding: 5px 10px; position: absolute; top: 45%;"
-															color="red"
-															on:click={() => hapusInput(index, TagihanDetailIndex)}
-															><MinusSolid style="outline: none;" /></Button
-														>
-													</div>
-												</div>
-											{/each}
-										{/each}
-										<div
-											style="display: flex;
-										justify-content: space-between;
-										padding: 20px 40px 0px 40px"
-										>
-											<Button size="xs" on:click={() => submitForm(index)}>
-												{#if loading}
-													<Spinner color="white" size={4} />
-												{:else}
-													SUBMIT
-												{/if}
-											</Button>
-											<Button size="xs" color="green" on:click={() => tambahInput(index, data.id)}
-												>TAMBAH INPUT</Button
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke-width="1.5"
+												stroke="currentColor"
+												class="me-2 h-3 w-3"
 											>
-										</div>
-									</TableBodyCell>
-								</TableBodyRow>
-							{/if}
-							<TableBodyRow>
-								<TableBodyCell colspan="11">
-									{#if tagihanInputsByRow[index].length === 0}
-										<div class="mb-6 mr-8 mt-3 flex justify-end">
-											{#if data.status !== 1}
-												<Button size="xs" on:click={() => tambahInput(index, data.id)}
-													><EditSolid class="me-2 h-5 w-5" />REVISI</Button
-												>
-											{/if}
-										</div>
-									{/if}
-									<div
-										transition:slide={{ duration: 300, axis: 'y' }}
-										style="width: 80%; margin-inline: auto;"
-									>
-										<Table shadow>
-											<TableHead>
-												<TableHeadCell>No</TableHeadCell>
-												<TableHeadCell>Sifat/Golongan Tagihan</TableHeadCell>
-												<TableHeadCell>Tipe Detail Tagihan</TableHeadCell>
-												<TableHeadCell>Amount</TableHeadCell>
-												<TableBodyCell>Action</TableBodyCell>
-											</TableHead>
-											<TableBody>
-												{#each data.tagihanItem as data, index (data)}
-													<TableBodyRow>
-														<TableBodyCell>{index + 1}</TableBodyCell>
-														<TableBodyCell>{data.SifatTagihan.sifat}</TableBodyCell>
-														<TableBodyCell style="text-transform: capitalize;"
-															>{data.tipe}</TableBodyCell
-														>
-														<TableBodyCell>Rp. {formatPrice(parseFloat(data.amount))}</TableBodyCell
-														>
-														<TableBodyCell>
-															<Button on:click={() => openEditModal(data)}>
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	fill="currentColor"
-																	class="h-5 w-5 shrink-0"
-																	role="img"
-																	aria-label="edit solid"
-																	viewBox="0 0 24 24"
-																	><path
-																		fill="currentColor"
-																		fill-rule="evenodd"
-																		d="M11.3 6.2H5a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h11c1.1 0 2-1 2-2.1V11l-4 4.2c-.3.3-.7.6-1.2.7l-2.7.6c-1.7.3-3.3-1.3-3-3.1l.6-2.9c.1-.5.4-1 .7-1.3l3-3.1Z"
-																		clip-rule="evenodd"
-																	></path><path
-																		fill="currentColor"
-																		fill-rule="evenodd"
-																		d="M19.8 4.3a2.1 2.1 0 0 0-1-1.1 2 2 0 0 0-2.2.4l-.6.6 2.9 3 .5-.6a2.1 2.1 0 0 0 .6-1.5c0-.2 0-.5-.2-.8Zm-2.4 4.4-2.8-3-4.8 5-.1.3-.7 3c0 .3.3.7.6.6l2.7-.6.3-.1 4.7-5Z"
-																		clip-rule="evenodd"
-																	></path></svg
-																>
-															</Button>
-															<Button
-																color="red"
-																on:click={() => openDeleteModal(data.id, data.tagihanId)}
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+												/>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+												/>
+											</svg>
+
+											Preview
+										</a>
+									</div>
+								</td>
+							</tr>
+
+							{#if openRow === index}
+								<tr>
+									<td colspan="9" class="px-4 py-3">
+										<table
+											class="w-full table-auto text-left text-sm text-gray-500 dark:text-gray-400 rtl:text-right"
+										>
+											<thead class="text-xs uppercase text-gray-700">
+												<tr>
+													<th scope="col" class="w-3/12 px-6 py-3">Golongan</th>
+													<th scope="col" class="w-4/12 px-6 py-3">Tipe</th>
+													<th scope="col" class="w-4/12 px-6 py-3 dark:bg-gray-800">Amount</th>
+													<th scope="col" class="w-1/12 px-6 py-3">Action</th>
+												</tr>
+											</thead>
+											<tbody>
+												{#if data.TagihanItem.length > 0}
+													{#each data.TagihanItem as data, index (data)}
+														<tr class="border-b bg-white dark:border-gray-700 dark:bg-gray-800">
+															<th
+																scope="row"
+																class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 dark:text-white"
 															>
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	fill="currentColor"
-																	class="h-5 w-5 shrink-0"
-																	role="img"
-																	aria-label="trash bin solid"
-																	viewBox="0 0 24 24"
-																	><path
-																		fill="currentColor"
-																		fill-rule="evenodd"
-																		d="M8.6 2.6A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4c0-.5.2-1 .6-1.4ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z"
-																		clip-rule="evenodd"
-																	></path></svg
-																></Button
-															>
-														</TableBodyCell>
-													</TableBodyRow>
-												{/each}
-											</TableBody>
-											<tfoot style="border-top-width: 1px !important;">
-												<tr class="font-semibold text-gray-900 dark:text-white">
-													<td class="px-6 py-3"></td>
-													<th scope="row" class="px-6 py-3 text-base" colspan="2">TOTAL:</th>
-													<td class="px-6 py-3"
+																{data.SifatTagihan.sifat}
+															</th>
+															<td class="px-6 py-4 capitalize">
+																{data.tipe}
+															</td>
+															<td class="px-6 py-4 dark:bg-gray-800">
+																Rp. {formatPrice(parseFloat(data.amount))}
+															</td>
+															<td class="px-6 py-4">
+																<div class="flex flex-row space-x-3">
+																	<button type="button" on:click={() => openEditModal(data)}>
+																		<svg
+																			xmlns="http://www.w3.org/2000/svg"
+																			fill="none"
+																			viewBox="0 0 24 24"
+																			stroke-width="1.5"
+																			stroke="currentColor"
+																			class="h-5 w-5 stroke-gray-400 stroke-2 hover:stroke-gray-700"
+																		>
+																			<path
+																				stroke-linecap="round"
+																				stroke-linejoin="round"
+																				d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+																			/>
+																		</svg>
+																	</button>
+																	<button
+																		type="button"
+																		on:click={() => openDeleteModal(data.id, data.tagihanId)}
+																	>
+																		<svg
+																			xmlns="http://www.w3.org/2000/svg"
+																			fill="none"
+																			viewBox="0 0 24 24"
+																			stroke-width="1.5"
+																			stroke="currentColor"
+																			class="h-5 w-5 stroke-gray-400 stroke-2 hover:stroke-gray-700"
+																		>
+																			<path
+																				stroke-linecap="round"
+																				stroke-linejoin="round"
+																				d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+																			/>
+																		</svg>
+																	</button>
+																</div>
+															</td>
+														</tr>
+													{/each}
+												{/if}
+												{#if tagihanInputsByRow[index].length > 0}
+													{#each tagihanInputsByRow as tagihanInputs, index}
+														{#each tagihanInputs as tagihanDetail, TagihanDetailIndex (tagihanDetail)}
+															<tr class="border-b bg-white dark:border-gray-700 dark:bg-gray-800">
+																<td class="px-6 py-4">
+																	<select
+																		id="sifatTagihan"
+																		name="sifatTagihanId"
+																		bind:value={tagihanDetail.sifatTagihanId}
+																		class={`block w-full rounded-lg border p-2.5 text-sm ${tagihanDetail.showValidation && tagihanDetail.sifatTagihanId === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+																	>
+																		<option value="" selected disabled>Pilih Sifat Tagihan</option>
+																		{#each sifatTagihanData as { id, sifat }}
+																			<option value={id}>{sifat}</option>
+																		{/each}
+																	</select>
+																	{#if tagihanDetail.showValidation && tagihanDetail.sifatTagihanId === ''}
+																		<p
+																			class="mt-2 text-xs font-normal text-red-700 dark:text-red-500"
+																		>
+																			Sifat Tagihan harus dipilih
+																		</p>
+																	{/if}
+																</td>
+																<td class="px-6 py-4">
+																	<select
+																		id="tipeTagihan"
+																		name="tipeTagihan"
+																		bind:value={tagihanDetail.tipe}
+																		class={`block w-full rounded-lg border p-2.5 text-sm ${tagihanDetail.showValidation && tagihanDetail.tipe === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+																	>
+																		<option value="" selected disabled>Pilih Tipe Tagihan</option>
+																		<option value="bunga">Bunga</option>
+																		<option value="denda">Denda</option>
+																		<option value="tagihan">Tagihan</option>
+																	</select>
+																	{#if tagihanDetail.showValidation && tagihanDetail.tipe === ''}
+																		<p
+																			class="mt-2 text-xs font-normal text-red-700 dark:text-red-500"
+																		>
+																			Tipe Tagihan harus dipilih
+																		</p>
+																	{/if}
+																</td>
+																<td class="px-6 py-4">
+																	<div class="relative">
+																		<div
+																			class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5"
+																		>
+																			<p
+																				class={`${tagihanDetail.showValidation && tagihanDetail.amount === '' ? 'text-red-900 dark:text-red-500' : 'text-gray-500'}`}
+																			>
+																				Rp.
+																			</p>
+																		</div>
+																		<input
+																			type="text"
+																			name="Amount Tagihan"
+																			placeholder="Amount Tagihan"
+																			id="amountTagihan"
+																			bind:value={tagihanDetail.amount}
+																			on:input={(event) =>
+																				updateAmount(index, TagihanDetailIndex, event)}
+																			class={`block w-full rounded-lg border p-2.5 ps-10 text-sm ${tagihanDetail.showValidation && tagihanDetail.amount === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+																		/>
+																	</div>
+																	{#if tagihanDetail.showValidation && tagihanDetail.amount === ''}
+																		<p
+																			class="mt-2 text-xs font-normal text-red-700 dark:text-red-500"
+																		>
+																			Amount Tagihan tidak boleh kosong
+																		</p>
+																	{/if}
+																</td>
+																<td class="px-6 py-4">
+																	<div class="flex flex-row space-x-3">
+																		<button type="button" on:click={() => submitForm(index)}>
+																			<svg
+																				xmlns="http://www.w3.org/2000/svg"
+																				fill="none"
+																				viewBox="0 0 24 24"
+																				stroke-width="1.5"
+																				stroke="currentColor"
+																				class="h-5 w-5 stroke-gray-400 stroke-2 hover:stroke-gray-700"
+																			>
+																				<path
+																					stroke-linecap="round"
+																					stroke-linejoin="round"
+																					d="m4.5 12.75 6 6 9-13.5"
+																				/>
+																			</svg>
+																		</button>
+																		<button
+																			type="button"
+																			on:click={() => hapusInput(index, TagihanDetailIndex)}
+																		>
+																			<svg
+																				xmlns="http://www.w3.org/2000/svg"
+																				fill="none"
+																				viewBox="0 0 24 24"
+																				stroke-width="1.5"
+																				stroke="currentColor"
+																				class="h-5 w-5 stroke-gray-400 stroke-2 hover:stroke-gray-700"
+																			>
+																				<path
+																					stroke-linecap="round"
+																					stroke-linejoin="round"
+																					d="M6 18 18 6M6 6l12 12"
+																				/>
+																			</svg>
+																		</button>
+																	</div>
+																</td>
+															</tr>
+														{/each}
+													{/each}
+												{/if}
+												<tr>
+													<th
+														scope="row"
+														class="whitespace-nowrap px-6 py-4 text-center font-bold uppercase text-gray-900"
+														colspan="2"
+													>
+														Total
+													</th>
+													<td class="px-6 py-4 font-semibold text-gray-900"
 														>Rp. {formatPrice(
-															data.tagihanItem.reduce((sum, item) => sum + parseInt(item.amount), 0)
+															data.TagihanItem.reduce((sum, item) => sum + parseInt(item.amount), 0)
 														)}</td
 													>
+													<td class="px-6 py-4">
+														{#if roleId === 1 || roleId === 2}
+															{#if tagihanInputsByRow[index].length === 0 && data.status !== 1}
+																<button
+																	type="button"
+																	on:click={() => tambahInput(index, data.id)}
+																	class="flex flex-row space-x-1 hover:text-gray-700"
+																>
+																	<svg
+																		xmlns="http://www.w3.org/2000/svg"
+																		fill="none"
+																		viewBox="0 0 24 24"
+																		stroke-width="1.5"
+																		stroke="currentColor"
+																		class="h-5 w-5"
+																	>
+																		<path
+																			stroke-linecap="round"
+																			stroke-linejoin="round"
+																			d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+																		/>
+																	</svg>
+																	<p>Revisi</p>
+																</button>
+															{/if}
+														{/if}
+													</td>
 												</tr>
-											</tfoot>
-										</Table>
-									</div>
-								</TableBodyCell>
-							</TableBodyRow>
+											</tbody>
+										</table>
+									</td>
+								</tr>
+							{/if}
+						{/each}
+					{/if}
+				</tbody>
+			</table>
+		</div>
+		<nav
+			class="flex flex-col items-center justify-center space-y-3 p-4 md:flex-row md:justify-between md:space-y-0"
+			aria-label="Table navigation"
+		>
+			<span class="text-sm font-normal text-gray-500 dark:text-gray-400">
+				Showing
+				<span class="font-semibold text-gray-900 dark:text-white">
+					{#if filteredTagihan.length === 0}
+						0-0
+					{:else}
+						{(currentPage - 1) * itemsPerPage + 1}-{Math.min(
+							currentPage * itemsPerPage,
+							filteredTagihan.length
+						)}
+					{/if}
+				</span>
+				of
+				<span class="font-semibold text-gray-900 dark:text-white">{filteredTagihan.length}</span>
+			</span>
+			<ul class="inline-flex items-stretch -space-x-px">
+				<li>
+					<button
+						on:click={() => goToPage(currentPage - 1)}
+						disabled={currentPage === 1 || paginatedTagihan.length === 0}
+						class={`ml-0 flex h-full items-center justify-center rounded-l-lg border border-gray-300 bg-white px-3 py-1.5 leading-tight ${currentPage === 1 || paginatedTagihan.length === 0 ? 'cursor-not-allowed text-gray-300 hover:bg-white hover:text-gray-300' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+					>
+						<span class="sr-only">Previous</span>
+						<svg
+							class="h-5 w-5"
+							aria-hidden="true"
+							fill="currentColor"
+							viewbox="0 0 20 20"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</button>
+				</li>
+				{#each getPagination(currentPage, totalPages) as page}
+					<li>
+						{#if page === '...'}
+							<span
+								class="flex items-center justify-center border border-gray-300 bg-white px-3 py-2 text-sm leading-tight text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+								>...</span
+							>
+						{:else}
+							<button
+								on:click={() => goToPage(page)}
+								class="flex items-center justify-center border px-3 py-2 text-sm leading-tight {currentPage ===
+								page
+									? 'border-primary-300 bg-primary-50 text-primary-600 hover:bg-primary-100 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white'
+									: 'border-gray-300 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'}"
+							>
+								{page}
+							</button>
 						{/if}
-					{/each}
-				</TableBody>
-			</Table>
-		{/if}
+					</li>
+				{/each}
+				<li>
+					<button
+						on:click={() => goToPage(currentPage + 1)}
+						disabled={currentPage === totalPages || paginatedTagihan.length === 0}
+						class={`ml-0 flex h-full items-center justify-center rounded-r-lg border border-gray-300 bg-white px-3 py-1.5 leading-tight ${currentPage === totalPages || paginatedTagihan.length === 0 ? 'cursor-not-allowed text-gray-300 hover:bg-white hover:text-gray-300' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-white'}`}
+					>
+						<span class="sr-only">Next</span>
+						<svg
+							class="h-5 w-5"
+							aria-hidden="true"
+							fill="currentColor"
+							viewbox="0 0 20 20"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a 1 1 0 010 1.414l-4 4a 1 1 0 01-1.414 0z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</button>
+				</li>
+			</ul>
+		</nav>
 	</div>
 </div>
 <!-- delete modal -->
@@ -578,71 +938,81 @@
 	</div>
 </Modal>
 
-<Modal bind:open={editModal} size="xs" autoclose>
-	<div class="text-center">
-		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">Edit Detail Tagihan</h3>
-		<div class="grid sm:gap-3 md:grid-cols-1" style="margin-bottom: 30px;">
-			<div>
-				<label
-					for="sifatTagihan"
-					class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
-				>
-					Sifat/Golongan Tagihan
-				</label>
-				<select
-					id="sifatTagihan"
-					name="sifatTagihanId"
-					bind:value={dataEdit.sifatTagihanId}
-					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-left text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-				>
-					<option value="" selected disabled>Pilih Sifat Tagihan</option>
-					{#each sifatTagihanData as { id, sifat }}
-						<option value={id}>{sifat}</option>
-					{/each}
-				</select>
-			</div>
-			<div>
-				<label
-					for="tipeTagihan"
-					class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
-				>
-					Tipe Detail Tagihan
-				</label>
-				<select
-					id="tipeTagihan"
-					name="tipeTagihan"
-					bind:value={dataEdit.tipe}
-					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-				>
-					<option value="" selected disabled>Pilih Tipe Tagihan</option>
-					<option value="bunga">Bunga</option>
-					<option value="denda">Denda</option>
-					<option value="tagihan">Tagihan</option>
-				</select>
-			</div>
-			<div>
-				<label
-					for="amountTagihan"
-					class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
-				>
-					Amount
-				</label>
-				<div class="relative">
-					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
-						<p class="text-gray-500">Rp.</p>
-					</div>
-					<input
-						type="text"
-						name="Amount Tagihan"
-						placeholder="Amount Tagihan"
-						id="amountTagihan"
-						bind:value={dataEdit.amount}
-						class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 ps-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-					/>
-				</div>
-			</div>
-			<Button color="blue" class="me-2" on:click={handleEdit}>Edit</Button>
-			<Button color="alternative">Tidak, batal</Button>
+<Modal
+	bind:open={editModal}
+	size="xs"
+	autoclose={false}
+	class="w-full"
+	backdropClass="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 dark:bg-opacity-80"
+	bodyClass="p-6 space-y-6 flex-1 overflow-y-visible overscroll-contain"
+>
+	<form method="PUT" class="flex flex-col space-y-4" on:submit|preventDefault={handleEdit}>
+		<h3 class="text-xl font-medium text-gray-900 dark:text-white">Edit detail tagihan</h3>
+		<div>
+			<label
+				for="sifatTagihan"
+				class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
+			>
+				Sifat/Golongan Tagihan
+			</label>
+			<select
+				id="sifatTagihan"
+				name="sifatTagihanId"
+				bind:value={dataEdit.sifatTagihanId}
+				class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-left text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+			>
+				<option value="" selected disabled>Pilih Sifat Tagihan</option>
+				{#each sifatTagihanData as { id, sifat }}
+					<option value={id}>{sifat}</option>
+				{/each}
+			</select>
 		</div>
-	</div></Modal
+		<div>
+			<label
+				for="tipeTagihan"
+				class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
+			>
+				Tipe Detail Tagihan
+			</label>
+			<select
+				id="tipeTagihan"
+				name="tipeTagihan"
+				bind:value={dataEdit.tipe}
+				class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+			>
+				<option value="" selected disabled>Pilih Tipe Tagihan</option>
+				<option value="bunga">Bunga</option>
+				<option value="denda">Denda</option>
+				<option value="tagihan">Tagihan</option>
+			</select>
+		</div>
+		<div>
+			<label
+				for="amountTagihan"
+				class="mb-2 block text-left text-sm font-medium text-gray-900 dark:text-white"
+			>
+				Amount
+			</label>
+			<div class="relative">
+				<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-2.5">
+					<p class="text-gray-500">Rp.</p>
+				</div>
+				<input
+					type="text"
+					name="Amount Tagihan"
+					placeholder="Amount Tagihan"
+					id="amountTagihan"
+					bind:value={dataEdit.amount}
+					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 ps-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+				/>
+			</div>
+		</div>
+		<Button type="submit">
+			{#if loading}
+				<Spinner color="white" size={4} />
+			{:else}
+				Ubah detail tagihan
+			{/if}
+		</Button>
+	</form></Modal
 >

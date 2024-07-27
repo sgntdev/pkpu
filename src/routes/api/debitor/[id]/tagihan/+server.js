@@ -20,30 +20,46 @@ export async function GET({ params, request }) {
 		});
 	}
 	let tagihanQuery = {
-        where: { debitorId },
-        orderBy: {
-            id: 'asc'
-        },
-        include: {
-            Kreditor: {
-                select: {
-                    nama: true
-                }
-            },
-            SifatTagihan: {
-                select: {
-                    sifat: true
-                }
-            }
-        }
-    };
+		where: { debitorId },
+		orderBy: {
+			id: 'asc'
+		},
+		include: {
+			Kreditor: {
+				select: {
+					nama: true
+				}
+			},
+			SifatTagihan: {
+				select: {
+					sifat: true
+				}
+			}
+		}
+	};
 
-    if (userId) {
-        tagihanQuery.where.userId = parseInt(userId);
-    }
+	if (userId) {
+		tagihanQuery.where.userId = parseInt(userId);
+	}
 
-    const tagihan = await prisma.tagihan.findMany(tagihanQuery);
-	
+	const tagihan = await prisma.tagihan.findMany(tagihanQuery);
+	const formattedData = tagihan.map((data) => {
+		return {
+			id: data.id,
+			debitorId: data.debitorId,
+			userId: data.userId,
+			pertanggal: data.pertanggal,
+			hutangPokok: data.hutangPokok,
+			bunga: data.bunga,
+			denda: data.denda,
+			jumlahTagihan: data.jumlahTagihan,
+			mulaiTertunggak: data.mulaiTertunggak,
+			jumlahHari: data.jumlahHari,
+			status: data.status,
+			namaKreditor: data.Kreditor.nama,
+			sifatTagihan: data.SifatTagihan.sifat
+		};
+	});
 	if (!tagihan) {
 		return new Response(
 			JSON.stringify({ success: false, code: 404, message: 'Tagihan tidak ditemukan!' }),
@@ -52,7 +68,7 @@ export async function GET({ params, request }) {
 			}
 		);
 	}
-	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: tagihan }), {
+	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: formattedData }), {
 		status: 200
 	});
 }

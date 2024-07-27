@@ -18,7 +18,7 @@
 	$: formattedStartDate = formatDate(startDate);
 </script>
 
-<DatePicker bind:isOpen bind:startDate>
+<DatePicker bind:isOpen bind:startDate enableFutureDates enablePastDates theme="custom-datepicker">
 	<input
 		type="text"
 		class="datepicker {invalid ? 'invalid' : ''}"
@@ -49,4 +49,30 @@
 	.datepicker.invalid::placeholder {
 		color: rgb(119 29 29);
 	}
+
+	:global(.datepicker[data-picker-theme="custom-datepicker"]) {
+    /* --datepicker-container-background: #5f0730;
+    --datepicker-container-border: 1px solid #ff1683; */
+
+    /* --datepicker-calendar-header-text-color: #fff;
+    --datepicker-calendar-dow-color: #fff;
+    --datepicker-calendar-day-color: #fff; */
+    /* --datepicker-calendar-day-color-disabled: pink; */
+    --datepicker-calendar-range-selected-background: rgb(26 86 219);
+
+    /* --datepicker-calendar-header-month-nav-background-hover: #ff1683;
+    --datepicker-calendar-header-month-nav-icon-next-filter: invert(100);
+    --datepicker-calendar-header-month-nav-icon-prev-filter: invert(100);
+    --datepicker-calendar-header-year-nav-icon-next-filter: invert(100);
+    --datepicker-calendar-header-year-nav-icon-prev-filter: invert(100); */
+
+    /* --datepicker-calendar-split-border: 1px solid pink;
+
+    --datepicker-presets-border: 1px solid pink;
+    --datepicker-presets-button-background-active: #ff1683;
+    --datepicker-presets-button-color: #fff;
+    --datepicker-presets-button-color-active: #fff;
+    --datepicker-presets-button-color-hover: #333;
+    --datepicker-presets-button-color-focus: #333; */
+  }
 </style>
