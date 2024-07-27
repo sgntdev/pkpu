@@ -1,50 +1,16 @@
 import { SITE_URL } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
-import { SECRET_INGREDIENT } from '$env/static/private';
-import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
 
-// export async function GET({ request }) {
-// 	let token = request.headers.get('authorization');
-// 	const url = new URL(request.url);
-// 	const roleId = url.searchParams.get('roleId');
-// 	if (token && token.startsWith('Bearer ')) {
-// 		token = token.slice(7, token.length);
-// 	}
-// 	if (!token) {
-// 		return new Response(JSON.stringify({ success: false, code: 401, message: 'Unauthorized' }), {
-// 			status: 401
-// 		});
-// 	}
-// 	let decoded = jwt.verify(token, SECRET_INGREDIENT);
-// 	if (decoded.user.roleId !== 1) {
-// 		return new Response(JSON.stringify({ success: false, code: 403, message: 'Forbidden' }), {
-// 			status: 403
-// 		});
-// 	}
-// 	let userQuery = {
-// 		orderBy: { id: 'asc' },
-// 		include: {
-// 			Role: true
-// 		}
-// 	};
-
-// 	if (roleId) {
-// 		userQuery.where = {roleId : parseInt(roleId)};
-// 	}
-// 	const users = await prisma.user.findMany(userQuery);
-// 	if (!users) {
-// 		return new Response(
-// 			JSON.stringify({ success: false, code: 404, message: 'Users tidak ditemukan!' }),
-// 			{
-// 				status: 404
-// 			}
-// 		);
-// 	}
-// 	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: users }), {
-// 		status: 200
-// 	});
-// }
+async function readTemplate(filePath, replacements) {
+	let template = fs.readFileSync(filePath, 'utf8');
+	for (const [key, value] of Object.entries(replacements)) {
+		template = template.replace(`{{${key}}}`, value);
+	}
+	return template;
+}
 
 async function generateUniqueCode(length) {
 	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -99,18 +65,18 @@ export async function POST({ request }) {
 		} else if (!emailRegex.test(email)) {
 			validation.errors.push({ field: 'email', message: 'Format email tidak valid!' });
 		}
-        const validAdmin = await prisma.User.findUnique({
-            where: {email},
-            select: {
-                roleId:true
-            }
-        })
+		const validAdmin = await prisma.User.findUnique({
+			where: { email },
+			select: {
+				roleId: true
+			}
+		});
 
-        if (!validAdmin) {
-            validation.errors.push({ field: 'email', message: 'Email tidak ditemukan!' });
-        }else if(validAdmin.roleId !== 1){
-            validation.errors.push({ field: 'email', message: 'Email tidak ditemukan!' });
-        }
+		if (!validAdmin) {
+			validation.errors.push({ field: 'email', message: 'Email tidak ditemukan!' });
+		} else if (validAdmin.roleId !== 1) {
+			validation.errors.push({ field: 'email', message: 'Email tidak ditemukan!' });
+		}
 
 		if (validation?.errors.length > 0) {
 			return new Response(JSON.stringify(validation), { status: 400 });
@@ -144,15 +110,19 @@ export async function POST({ request }) {
 			}
 		}
 
+		let nama = email.slice(0, email.indexOf('@'));
 		const link = `${SITE_URL}/verify/${uniqueCode}`;
-		let html = `<h2>Hi!</h2><p>Click the following link to access the form: <a href="${link}">${link}</a></p>`;
+		const replacements = {
+			nama,
+			link
+		};
+		const templatePath = path.resolve('static/admin-verified.html');
+		const html = await readTemplate(templatePath, replacements);
 
 		const message = {
-			from: '"pkpu.co.id" <fotoarchive8@gmail.com>',
+			from: '"PKPU" <fotoarchive8@gmail.com>',
 			to: email,
-			bcc: 'www.pkpu.co.id',
-			subject: 'Link to access PKPU',
-			text: 'INI BODY',
+			subject: 'Link akses halaman admin',
 			html: html
 		};
 		await sendEmail(message);
@@ -164,7 +134,7 @@ export async function POST({ request }) {
 			{ status: 200 }
 		);
 	} catch (error) {
-        console.log(error);
+		console.log(error);
 		return new Response(
 			JSON.stringify({
 				success: false,

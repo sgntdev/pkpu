@@ -3,6 +3,17 @@ import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
 import { SECRET_INGREDIENT } from '$env/static/private';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+
+async function readTemplate(filePath, replacements) {
+	let template = fs.readFileSync(filePath, 'utf8');
+	for (const [key, value] of Object.entries(replacements)) {
+	  template = template.replace(`{{${key}}}`, value);
+	}
+	return template;
+  }
+  
 
 export async function GET({ request }) {
 	let token = request.headers.get('authorization');
@@ -86,6 +97,7 @@ const sendEmail = async (message) => {
 		throw error;
 	}
 };
+
 export async function POST({ request }) {
 	const { debitorUid, email } = await request.json();
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -143,16 +155,20 @@ export async function POST({ request }) {
 				uniqueCode = existingUser.uniqueCode;
 			}
 		}
-
+		let nama = email.slice(0, email.indexOf('@'))
 		const link = `${SITE_URL}/verify/${debitorUid}/${uniqueCode}`;
-		let html = `<h2>Hi!</h2><p>Click the following link to access the form: <a href="${link}">${link}</a></p>`;
+		const replacements = {
+			nama,
+			namaDebitor : debitor.nama,
+			link 
+		  };
+		const templatePath = !existingUser ? path.resolve('static/verify-email.html') : path.resolve('static/email-verified.html');
+        const html = await readTemplate(templatePath, replacements);
 
 		const message = {
-			from: '"pkpu.co.id" <fotoarchive8@gmail.com>',
+			from: '"PKPU" <fotoarchive8@gmail.com>',
 			to: email,
-			bcc: 'www.pkpu.co.id',
-			subject: 'Link to access Form Tagihan',
-			text: 'INI BODY',
+			subject: !existingUser ? 'Verifikasi email anda' : 'Link akses halaman tagihan',
 			html: html
 		};
 		await sendEmail(message);

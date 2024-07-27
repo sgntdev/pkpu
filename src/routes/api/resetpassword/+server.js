@@ -2,6 +2,16 @@ import { SITE_URL, SECRET_INGREDIENT } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+
+async function readTemplate(filePath, replacements) {
+	let template = fs.readFileSync(filePath, 'utf8');
+	for (const [key, value] of Object.entries(replacements)) {
+		template = template.replace(`{{${key}}}`, value);
+	}
+	return template;
+}
 
 const sendEmail = async (message) => {
 	try {
@@ -92,14 +102,13 @@ export async function POST({ request }) {
 		}
 
 		const link = `${SITE_URL}/resetpassword/${uniqueCode}`;
-		let html = `<h2>Hi!</h2><p>Click the following link to access reset the verify password: <a href="${link}">${link}</a></p>`;
+		const templatePath = path.resolve('static/password-reset.html');
+		const html = await readTemplate(templatePath, { link });
 
 		const message = {
-			from: '"pkpu.co.id" <fotoarchive8@gmail.com>',
+			from: '"PKPU" <fotoarchive8@gmail.com>',
 			to: existingPassword.User.email,
-			bcc: 'www.pkpu.co.id',
-			subject: 'Link to reset password verify Tagihan',
-			text: 'INI BODY',
+			subject: 'Atur ulang kata sandi verifikasi tagihan',
 			html: html
 		};
 		await sendEmail(message);
