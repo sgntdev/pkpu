@@ -56,7 +56,6 @@ export async function load({ params, cookies, fetch }) {
 			});
 		}
 
-		await cookies.delete('AuthorizationToken', { path: '/' });
 		cookies.set('AuthorizationToken', result.authToken, {
 			path: '/',
 			httpOnly: true,
@@ -64,8 +63,8 @@ export async function load({ params, cookies, fetch }) {
 			sameSite: 'strict',
 			maxAge: 60 * 60 * 24 // one day
 		});
-
-		console.log('set cookie');
+		let getCookie = cookies.get('AuthorizationToken')
+		console.log('set cookie', getCookie);
 		return { success: true, user: userverif.email, roleId: user?.roleId };
 	} catch (err) {
 		console.error('Error in load function:', err);
