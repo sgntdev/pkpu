@@ -3,10 +3,10 @@ import { error, redirect } from '@sveltejs/kit';
 export async function load({ locals, params, fetch }) {
 	const { user } = locals;
 	const { slug } = params;
-	if (user?.roleId === 1 || user?.roleId === 2) {
+	if (user?.roleId === 1 || user?.roleId === 2 || user?.roleId === 3) {
 		redirect(303, `/dashboard`);
 	} 
-	if (user?.roleId === 3) {
+	if (user?.roleId === 4) {
 		redirect(303, `/tagihan`);
 	} 
 	if (slug) {

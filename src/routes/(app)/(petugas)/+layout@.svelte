@@ -4,6 +4,7 @@
 	import '../../../app.pcss';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { formatDate } from '$lib/formatDate.js';
 	import { Button, Dropdown, DropdownItem, Radio, Search } from 'flowbite-svelte';
 	import {
 		UserSolid,
@@ -14,7 +15,6 @@
 		UsersGroupOutline,
 		PieChartSolid,
 		ChartOutline,
-		FilterOutline,
 		BadgeCheckSolid,
 		BadgeCheckOutline,
 		InboxFullOutline,
@@ -33,7 +33,6 @@
 	}
 	export let data;
 	const user = data.body.user;
-
 	// Filter Debitor
 	let debitorData = data.body.debitorData;
 	// Debitor default value from login
@@ -52,12 +51,18 @@
 	// End checked
 	let checkedDebitor = idDebitorLogin;
 	let searchDebitor = '';
+	let tglSidang = '';
 	$: filterDebitors = debitorData.filter((debitor) =>
 		debitor.nama.toLowerCase().includes(searchDebitor.toLowerCase())
 	);
-	function namaDebitor(id) {
-		let obj = debitorData.filter((debitor) => debitor.id === id);
-		return obj[0].nama;
+	function checkNama(id) {
+		let debitor = debitorData.filter((debitor) => debitor.id === id);
+		let nama = debitor[0].nama;
+		tglSidang = debitor[0].tglSidang;
+		if (nama.length > 20) {
+			return nama.slice(0, 20) + '...';
+		}
+		return nama;
 	}
 	// ------- End Filter Debitor -------------
 	const handleLogout = () => {
@@ -154,35 +159,6 @@
 			</div>
 			<div class="flex items-center lg:order-2">
 				{#if user}
-					{#if user.debitorUid}
-						<Button color="light" class="mr-2 h-fit w-full md:w-fit"
-							>{$chooseDebitor == null
-								? 'Pilih Debitor'
-								: namaDebitor($chooseDebitor)}<FilterOutline
-								class="ms-2 h-4 w-4 text-gray-900"
-							/></Button
-						>
-						<Dropdown placement="bottom" class="max-h-44 min-h-5 overflow-y-auto px-3 pb-3 text-sm">
-							<div slot="header" class="p-3">
-								<Search size="md" bind:value={searchDebitor} />
-							</div>
-							{#each filterDebitors as { id, nama }}
-								<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
-									<Radio
-										value={id}
-										bind:group={checkedDebitor}
-										on:change={() => RadioPilihDebitor(id)}
-										name="debitor">{nama}</Radio
-									>
-								</li>
-							{/each}
-							<div slot="footer" class="px-3 py-1">
-								<Button size="xs" color="light" on:click={() => ($chooseDebitor = null)}
-									>Reset</Button
-								>
-							</div>
-						</Dropdown>
-					{/if}
 					<Button color="light"><p>{user.email.slice(0, user.email.indexOf('@'))}</p></Button>
 					<Dropdown>
 						<div class="px-4 py-3">
@@ -205,15 +181,61 @@
 
 <aside
 	id="logo-sidebar"
-	class={`${showSidebar ? 'transform-none' : '-translate-x-full'} fixed left-0 top-0 z-30 h-screen w-64 border-r border-gray-200 bg-white pt-20 transition-transform dark:border-gray-700 dark:bg-gray-800 sm:translate-x-0`}
+	class={`${showSidebar ? 'transform-none' : '-translate-x-full'} fixed left-0 top-0 z-30 h-screen w-64 border-r border-gray-200 bg-white transition-transform dark:border-gray-700 dark:bg-gray-800 sm:translate-x-0`}
 	aria-label="Sidebar"
 	aria-modal="true"
 	tabindex="-1"
 	role="dialog"
 	aria-hidden={!showSidebar}
 >
-	<div class="h-full overflow-y-auto bg-white px-3 pb-4 dark:bg-gray-800">
+	<div class="mt-2 h-full overflow-y-auto bg-white px-3 py-[70px] dark:bg-gray-800">
 		<ul class="space-y-2 font-medium">
+			<li>
+				{#if user.debitorUid}
+					<Button
+						color="light"
+						class="m-0 flex w-full justify-between border-0 bg-gray-50 px-3 focus:ring-2"
+					>
+						<div class="flex flex-col text-left">
+							<p class="text-base font-medium">
+								{$chooseDebitor == null ? 'Pilih Debitor' : checkNama($chooseDebitor)}
+							</p>
+							<p class="text-xs font-extralight text-gray-500">
+								Tanggal sidang : {$chooseDebitor == null ? '' : formatDate(tglSidang)}
+							</p>
+						</div>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke-width="1.5"
+							stroke="currentColor"
+							class="h-4 w-4 text-gray-900"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M8.25 15 12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"
+							/>
+						</svg>
+					</Button>
+					<Dropdown placement="bottom" class="max-h-44 min-h-5 overflow-y-auto px-3 pb-3 text-sm">
+						<div slot="header" class="p-3">
+							<Search size="md" bind:value={searchDebitor} />
+						</div>
+						{#each filterDebitors as { id, nama }}
+							<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
+								<Radio
+									value={id}
+									bind:group={checkedDebitor}
+									on:change={() => RadioPilihDebitor(id)}
+									name="debitor">{nama}</Radio
+								>
+							</li>
+						{/each}
+					</Dropdown>
+				{/if}
+			</li>
 			{#each menu as item}
 				<li>
 					<a
@@ -233,7 +255,12 @@
 	</div>
 </aside>
 {#if showSidebar}
-	<div drawer-backdrop="" class="fixed inset-0 z-20 bg-gray-900/50 dark:bg-gray-900/80" />
+	<button
+		on:click={handleSidebar}
+		type="button"
+		class="fixed inset-0 z-20 bg-gray-900/50 dark:bg-gray-900/80"
+	/>
+	<!-- <div drawer-backdrop="" class="fixed inset-0 z-20 bg-gray-900/50 dark:bg-gray-900/80" /> -->
 {/if}
 <main class="p-4 sm:ml-64">
 	<div class="mt-16">

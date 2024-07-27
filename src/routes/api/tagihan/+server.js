@@ -37,7 +37,7 @@ export async function GET({ request }) {
 		}
 	};
 
-	if (decoded.user.roleId === 1 || decoded.user.roleId === 2) {
+	if (decoded.user.roleId === 1 || decoded.user.roleId === 2 || decoded.user.roleId === 3) {
 		tagihanQuery.include.TagihanItem = {
 			include: {
 				SifatTagihan: true
