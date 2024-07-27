@@ -318,11 +318,11 @@
 					class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400"
 				>
 					<tr>
-						<th scope="col" class="w-10 px-4 py-3">No</th>
-						<th scope="col" class="px-4 py-3">Nama Debitor</th>
-						<th scope="col" class="px-4 py-3">Uid</th>
-						<th scope="col" class="px-4 py-3">Tanggal Sidang</th>
-						<th scope="col" class="px-4 py-3">Tempat Sidang</th>
+						<th scope="col" class="px-3 py-3">No</th>
+						<th scope="col" class="px-3 py-3">Nama Debitor</th>
+						<th scope="col" class="px-3 py-3">ID Debitor</th>
+						<th scope="col" class="px-3 py-3">Tanggal Sidang</th>
+						<th scope="col" class="px-3 py-3">Tempat Sidang</th>
 						{#if roleId === 1 || roleId === 2}
 							<th scope="col" class="px-4 py-3">Aksi</th>
 						{/if}

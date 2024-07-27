@@ -501,7 +501,7 @@
 					{:else}
 						{#each paginatedTagihan as data, index (data)}
 							<tr
-								class={` border-b hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-600 ${openRow === index ? 'bg-gray-50' : 'bg-white'}`}
+								class={` border-b hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-600 ${openRow === index ? 'bg-gray-50 border-t-4' : 'bg-white'}`}
 								on:dblclick={() => toggleRow(index)}
 							>
 								<td class="px-4 py-3">{(currentPage - 1) * itemsPerPage + index + 1}</td>
@@ -600,9 +600,9 @@
 
 							{#if openRow === index}
 								<tr>
-									<td colspan="9" class="px-4 py-3">
+									<td colspan="9" class="p-0">
 										<table
-											class="w-full table-auto text-left text-sm text-gray-500 dark:text-gray-400 rtl:text-right"
+											class="w-full table-auto text-left text-sm text-gray-500 border-b-4 bg-gray-50 dark:text-gray-400 rtl:text-right"
 										>
 											<thead class="text-xs uppercase text-gray-700">
 												<tr>

@@ -84,36 +84,16 @@
 // 			name: 'kreditor'
 // 		}
 // 	});
-// 	// const debitor1 = await prisma.debitor.upsert({
-// 	// 	where:{id: 1},
-// 	// 	update : {},
-// 	// 	create : {
-// 	// 		nama : 'GlobalTech Solutions',
-// 	// 		tglSidang : '20 April 2024',
-// 	// 		tempatSidang : 'Bandung, Indonesia',
-// 	// 		uid: 'X8JK9'
-// 	// 	}
-// 	// })
-// 	// const debitor2 = await prisma.debitor.upsert({
-// 	// 	where:{id: 2},
-// 	// 	update : {},
-// 	// 	create : {
-// 	// 		nama : 'MegaTrade Holdings',
-// 	// 		tglSidang : '25 Mei 2024',
-// 	// 		tempatSidang : 'Medan, Indonesia',
-// 	// 		uid:'KLSO8'
-// 	// 	}
-// 	// })
-// 	// const debitor3 = await prisma.debitor.upsert({
-// 	// 	where:{id: 3},
-// 	// 	update : {},
-// 	// 	create : {
-// 	// 		nama : 'Infinite Innovations',
-// 	// 		tglSidang : '30 Juni 2024',
-// 	// 		tempatSidang : 'Yogyakarta, Indonesia',
-// 	// 		uid:'Y7K2E'
-// 	// 	}
-// 	// })
+// 	const debitor1 = await prisma.debitor.upsert({
+// 		where:{id: 1},
+// 		update : {},
+// 		create : {
+// 			nama : 'PT Prikast Metal Indonesia (Dalam PKPU)',
+// 			tglSidang : '02 July 2024',
+// 			tempatSidang : 'Bandung, Indonesia',
+// 			uid: '28V3Y'
+// 		}
+// 	})
 // 	console.log({ konkuren, preferent, separatis, admin, asisten, pengurus, kreditor });
 // }
 // main()
