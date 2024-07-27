@@ -46,6 +46,9 @@ export async function load({ locals, fetch, params }) {
 				}
 			});
 			const tagihanResult = await tagihanRes.json();
+			if(tagihanResult?.data?.status === 1 || tagihanResult?.data?.status === 2){
+				error(404, 'Page Not Found');
+			}
 			return {
 				status: 200,
 				body: {

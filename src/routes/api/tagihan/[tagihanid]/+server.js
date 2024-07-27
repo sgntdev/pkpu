@@ -59,10 +59,10 @@ export async function GET({ params, request }) {
 		return new Response(
 			JSON.stringify({
 				success: false,
-				code: 500,
+				code: 404,
 				message: 'Tagihan tidak ditemukan!'
 			}),
-			{ status: 500 }
+			{ status: 404 }
 		);
 	}
 	return new Response(JSON.stringify({ success: true, message: 'Berhasil', data: tagihanJoin }));
