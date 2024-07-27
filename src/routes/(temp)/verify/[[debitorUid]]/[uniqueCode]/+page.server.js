@@ -63,6 +63,12 @@ export async function load({ params, cookies, fetch }) {
 			sameSite: 'strict',
 			maxAge: 60 * 60 * 24 // one day
 		});
+		cookies.set('authToken', result.authToken, {
+			path: '/',
+			httpOnly: true,
+			secure: true,
+			maxAge: 60 * 60 * 24 // one day
+		});
 		let getCookie = cookies.get('AuthorizationToken')
 		console.log('set cookie', getCookie);
 		return { success: true, user: userverif.email, roleId: user?.roleId };

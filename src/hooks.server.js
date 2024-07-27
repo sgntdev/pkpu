@@ -1,5 +1,5 @@
 import { SECRET_INGREDIENT } from '$env/static/private';
-import { redirect, error } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 
 export async function handle({ event, resolve }) {
@@ -22,14 +22,14 @@ export async function handle({ event, resolve }) {
 					};
 				}
 			} catch (error) {
-				// error = error.name;
-				error(404, { message: result.message, description: '' });
+				error = error.name;
 			}
 		}
 	}
-	// if (error) {
-	// 	redirect(303, '/');
-	// }
+	
+	if (error) {
+		redirect(303, '/');
+	}
 	const response = await resolve(event);
 
 	return response;
