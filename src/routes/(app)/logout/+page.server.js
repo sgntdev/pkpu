@@ -5,10 +5,15 @@ export async function load({ cookies }) {
 	const session = cookies.get('AuthorizationToken');
 	if (session !== '') {
 		cookies.set('AuthorizationToken', '', {
-			path: '/'
+			path: '/',
+			httpOnly: true,
+			secure: true,
+			sameSite: 'strict',
+			maxAge: 60 * 60 * 24
 		});
-		console.log('clear cookie');
+		console.log('set empty cookie');
 	} else {
+        console.log('cookie empty and logout');
 		await cookies.delete('AuthorizationToken', { path: '/' });
 	}
 	redirect(302, '/');
