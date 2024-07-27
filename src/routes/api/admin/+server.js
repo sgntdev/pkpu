@@ -1,11 +1,11 @@
 import { SITE_URL } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
-import fs from 'fs';
-import path from 'path';
 
-async function readTemplate(filePath, replacements) {
-	let template = fs.readFileSync(filePath, 'utf8');
+async function readTemplate(templateName, replacements) {
+	const response = await fetch(`${SITE_URL}/email-templates/${templateName}`);
+	let template = await response.text();
+
 	for (const [key, value] of Object.entries(replacements)) {
 		template = template.replace(`{{${key}}}`, value);
 	}
@@ -116,7 +116,7 @@ export async function POST({ request }) {
 			nama,
 			link
 		};
-		const templatePath = path.resolve('static/admin-verified.html');
+		const templatePath = 'admin-verified.html';
 		const html = await readTemplate(templatePath, replacements);
 
 		const message = {

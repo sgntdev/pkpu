@@ -3,17 +3,16 @@ import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
 import { SECRET_INGREDIENT } from '$env/static/private';
 import jwt from 'jsonwebtoken';
-import fs from 'fs';
-import path from 'path';
 
-async function readTemplate(filePath, replacements) {
-	let template = fs.readFileSync(filePath, 'utf8');
+async function readTemplate(templateName, replacements) {
+	const response = await fetch(`${SITE_URL}/email-templates/${templateName}`);
+	let template = await response.text();
+
 	for (const [key, value] of Object.entries(replacements)) {
-	  template = template.replace(`{{${key}}}`, value);
+		template = template.replace(`{{${key}}}`, value);
 	}
 	return template;
-  }
-  
+}
 
 export async function GET({ request }) {
 	let token = request.headers.get('authorization');
@@ -42,10 +41,10 @@ export async function GET({ request }) {
 
 	if (roleIds.length > 0) {
 		userQuery.where = {
-            roleId: {
-                in: roleIds.map(roleId => parseInt(roleId))
-            }
-        };
+			roleId: {
+				in: roleIds.map((roleId) => parseInt(roleId))
+			}
+		};
 	}
 	const users = await prisma.user.findMany(userQuery);
 	if (!users) {
@@ -155,15 +154,15 @@ export async function POST({ request }) {
 				uniqueCode = existingUser.uniqueCode;
 			}
 		}
-		let nama = email.slice(0, email.indexOf('@'))
+		let nama = email.slice(0, email.indexOf('@'));
 		const link = `${SITE_URL}/verify/${debitorUid}/${uniqueCode}`;
 		const replacements = {
 			nama,
-			namaDebitor : debitor.nama,
-			link 
-		  };
-		const templatePath = !existingUser ? path.resolve('static/verify-email.html') : path.resolve('static/email-verified.html');
-        const html = await readTemplate(templatePath, replacements);
+			namaDebitor: debitor.nama,
+			link
+		};
+		const templatePath = !existingUser ? 'verify-email.html' : 'email-verified.html';
+		const html = await readTemplate(templatePath, replacements);
 
 		const message = {
 			from: '"PKPU" <fotoarchive8@gmail.com>',

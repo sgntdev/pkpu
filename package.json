@@ -40,7 +40,6 @@
 		"date-fns": "^3.6.0",
 		"flowbite": "^2.3.0",
 		"flowbite-svelte": "^0.44.23",
-		"fs": "^0.0.1-security",
 		"jsonwebtoken": "^9.0.2",
 		"nodemailer": "^6.9.8",
 		"svelte-multiselect": "^10.3.0",
