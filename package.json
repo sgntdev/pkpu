@@ -38,13 +38,13 @@
 		"@svelte-plugins/datepicker": "^1.0.9",
 		"@vercel/blob": "^0.22.1",
 		"date-fns": "^3.6.0",
+		"exceljs": "^4.4.0",
+		"file-saver": "^2.0.5",
 		"flowbite": "^2.3.0",
 		"flowbite-svelte": "^0.44.23",
 		"jsonwebtoken": "^9.0.2",
 		"nodemailer": "^6.9.8",
-		"svelte-multiselect": "^10.3.0",
-		"tailwind-merge": "^2.2.1",
-		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+		"tailwind-merge": "^2.2.1"
 	},
 	"prisma": {
 		"seed": "node prisma/seed.js"

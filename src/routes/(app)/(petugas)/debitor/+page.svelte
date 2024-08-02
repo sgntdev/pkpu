@@ -1,7 +1,9 @@
 <script>
 	import DatePicker from '$lib/components/DatePicker.svelte';
+	import MultiSelect from '$lib/components/MultiSelect.svelte';
+	import ReadModal from '$lib/components/ReadModal.svelte';
+	import { timestampToISO } from '$lib/formatDate.js';
 	import { showToast } from '$lib/toastStore';
-	import { PUBLIC_SITE_URL } from '$env/static/public';
 	import {
 		Breadcrumb,
 		BreadcrumbItem,
@@ -9,15 +11,16 @@
 		Modal,
 		Spinner,
 		Dropdown,
-		DropdownItem
+		DropdownItem,
+		Select
 	} from 'flowbite-svelte';
-	import { format } from 'date-fns';
-	import MultiSelect from 'svelte-multiselect';
 	import { ExclamationCircleOutline, ChevronDownOutline } from 'flowbite-svelte-icons';
 	export let data;
 	const { token, roleId, pengurus } = data.body;
 	let debitor = data.body.debitor;
 	let selectedPengurus;
+	let infoModal = false;
+	let dataInfo;
 	let createModal = false;
 	let editModal = false;
 	let deleteModal = false;
@@ -32,30 +35,62 @@
 			label: item.email,
 			value: item.id
 		}));
+
 	let dataDebitor = {
 		nama: '',
+		noPerkara: '',
+		tglVerifikasi: '',
+		batasAkhir: '',
+		kurs: '',
 		tglSidang: '',
 		tempatSidang: '',
-		pengurus: []
+		pengurusAccess: []
 	};
 
-	const formatDate = (date) => (date ? format(new Date(date), 'dd MMMM yyyy') : '');
-
-	$: dataDebitor.tglSidang = formatDate(dataDebitor.tglSidang);
+	const openInfoModal = (data) => {
+		infoModal = true;
+		dataInfo = data;
+	};
 
 	const openCreateModal = () => {
 		createModal = true;
+		form = null;
+		dataDebitor = {
+			nama: '',
+			noPerkara: '',
+			tglVerifikasi: '',
+			batasAkhir: '',
+			kurs: '',
+			tglSidang: '',
+			tempatSidang: '',
+			pengurusAccess: []
+		};
 	};
 
-	const openEditModal = (id, nama, tglSidang, tempatSidang, pengurusAccess) => {
-		selectedPengurus = listPengurus.filter((pengurus) => pengurusAccess.includes(pengurus.value));
-		editTargetId = id;
+	const openEditModal = (data) => {
+		editTargetId = data.id;
+		form = null;
 		editModal = true;
-		dataDebitor = {
+		const {
 			nama,
+			noPerkara,
+			tglVerifikasi,
+			batasAkhir,
+			kurs,
 			tglSidang,
 			tempatSidang,
-			pengurus: pengurusAccess
+			pengurusAccess
+		} = data;
+		selectedPengurus = pengurusAccess;
+		dataDebitor = {
+			nama,
+			noPerkara,
+			tglVerifikasi,
+			batasAkhir,
+			kurs,
+			tglSidang,
+			tempatSidang,
+			pengurusAccess
 		};
 	};
 
@@ -66,6 +101,11 @@
 
 	const handleAddDebitor = async () => {
 		loading = true;
+		dataDebitor.batasAkhir = dataDebitor.batasAkhir ? timestampToISO(dataDebitor.batasAkhir) : '';
+		dataDebitor.tglVerifikasi = dataDebitor.tglVerifikasi
+			? timestampToISO(dataDebitor.tglVerifikasi)
+			: '';
+		dataDebitor.tglSidang = dataDebitor.tglSidang ? timestampToISO(dataDebitor.tglSidang) : '';
 		try {
 			const response = await fetch('/api/debitor', {
 				method: 'POST',
@@ -76,7 +116,6 @@
 				body: JSON.stringify(dataDebitor)
 			});
 			const result = await response.json();
-			form = result;
 			if (result.success) {
 				createModal = false;
 				showToast(result.message, 'success');
@@ -84,12 +123,20 @@
 				debitor = [...debitor, newDebitor];
 				dataDebitor = {
 					nama: '',
+					noPerkara: '',
+					tglVerifikasi: '',
+					batasAkhir: '',
+					kurs: '',
 					tglSidang: '',
 					tempatSidang: '',
-					pengurus: []
+					pengurusAccess: []
 				};
 			} else {
-				showToast(result.message, 'error');
+				if (result.errors.length === 0) {
+					showToast(result.message, 'error');
+				} else {
+					form = result;
+				}
 			}
 		} catch (error) {
 			console.error(error);
@@ -100,6 +147,9 @@
 
 	const handleEditDebitor = async () => {
 		loading = true;
+		dataDebitor.batasAkhir = timestampToISO(dataDebitor.batasAkhir);
+		dataDebitor.tglVerifikasi = timestampToISO(dataDebitor.tglVerifikasi);
+		dataDebitor.tglSidang = timestampToISO(dataDebitor.tglSidang);
 		try {
 			const response = await fetch(`/api/debitor/${editTargetId}`, {
 				method: 'PUT',
@@ -110,7 +160,6 @@
 				body: JSON.stringify(dataDebitor)
 			});
 			const result = await response.json();
-			form = result;
 			if (result.success) {
 				editModal = false;
 				showToast(result.message, 'success');
@@ -118,19 +167,26 @@
 				debitor = updatedDebitor;
 				dataDebitor = {
 					nama: '',
+					noPerkara: '',
+					tglVerifikasi: '',
+					batasAkhir: '',
+					kurs: '',
 					tglSidang: '',
 					tempatSidang: '',
-					pengurus: []
+					pengurusAccess: []
 				};
 			} else {
-				showToast(result.message, 'error');
+				if (result.errors.length === 0) {
+					showToast(result.message, 'error');
+				} else {
+					form = result;
+				}
 			}
 		} catch (error) {
 			console.error(error);
 		} finally {
 			loading = false;
 			editTargetId = null;
-			editModal = false;
 		}
 	};
 
@@ -159,12 +215,6 @@
 		}
 	};
 
-	async function copyText(name) {
-		const link = name.replace(/\s/g, '-').toLowerCase();
-		await navigator.clipboard.writeText(`${PUBLIC_SITE_URL}/${link}`);
-		showToast(`Link ${name} berhasil disalin!`, 'success');
-	}
-
 	let toggleDropdown = false; // dropdown toggle
 	let currentPage = 1; // default posisi halaman saat ini
 	let totalPages = 1; // default total halaman
@@ -172,7 +222,7 @@
 	let searchKeyword = ''; // keyword untuk searching
 	let paginatedData = [];
 	let filteredData = [];
-	let searchColumns = ['nama', 'uid'];
+	let searchColumns = ['nama', 'uid', 'noPerkara'];
 
 	$: {
 		filteredData = debitor.filter((data) => {
@@ -226,6 +276,13 @@
 		currentPage = 1;
 		toggleDropdown = false;
 	}
+	const listPengadilan = [
+		'Pengadilan Negeri Jakarta Pusat',
+		'Pengadilan Negeri Surabaya',
+		'Pengadilan Negeri Semarang',
+		'Pengadilan Negeri Medan',
+		'Pengadilan Negeri Makassar'
+	];
 </script>
 
 <div class="space-y-4">
@@ -293,7 +350,9 @@
 					</form>
 				</div>
 			</div>
-			<div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
+			<div
+				class="flex w-full flex-shrink-0 flex-col items-stretch justify-end space-y-2 md:w-auto md:flex-row md:items-center md:space-x-3 md:space-y-0"
+			>
 				{#if roleId === 1}
 					<Button on:click={openCreateModal}>
 						<svg
@@ -321,8 +380,7 @@
 						<th scope="col" class="px-3 py-3">No</th>
 						<th scope="col" class="px-3 py-3">Nama Debitor</th>
 						<th scope="col" class="px-3 py-3">ID Debitor</th>
-						<th scope="col" class="px-3 py-3">Tanggal Sidang</th>
-						<th scope="col" class="px-3 py-3">Tempat Sidang</th>
+						<th scope="col" class="px-3 py-3">No.Perkara</th>
 						{#if roleId === 1 || roleId === 2}
 							<th scope="col" class="px-4 py-3">Aksi</th>
 						{/if}
@@ -331,8 +389,10 @@
 				<tbody>
 					{#if paginatedData.length === 0}
 						<tr class="border-b dark:border-gray-700">
-							<td class="px-4 py-3 text-center" colspan={roleId === 1 || roleId === 2 ? 6 : 5 }>No data found.</td>
-						</tr> 
+							<td class="px-4 py-3 text-center" colspan={roleId === 1 || roleId === 2 ? 6 : 5}
+								>No data found.</td
+							>
+						</tr>
 					{:else}
 						{#each paginatedData as data, index (data)}
 							<tr
@@ -346,44 +406,39 @@
 								>
 								<th
 									scope="row"
-									class="w-10 whitespace-nowrap text-wrap px-4 py-3 font-medium text-gray-900 dark:text-white"
+									class="whitespace-nowrap text-wrap px-4 py-3 font-medium text-gray-900 dark:text-white"
 									>{data.uid}</th
 								>
-								<td class="px-4 py-3 capitalize">{data.tglSidang}</td>
-								<td class="px-4 py-3 capitalize">{data.tempatSidang}</td>
+								<td class="px-4 py-3 capitalize">{data.noPerkara}</td>
 								{#if roleId === 1 || roleId === 2}
 									<td class="px-4 py-3">
 										<div class="inline-flex rounded-md shadow-sm" role="group">
 											<button
 												type="button"
-												on:click={() => copyText(data.nama)}
+												on:click={openInfoModal(data)}
 												class={`inline-flex items-center ${roleId === 1 ? 'rounded-s-lg' : 'rounded-lg'} border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white dark:focus:text-white dark:focus:ring-blue-500`}
 											>
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
+													fill="none"
 													viewBox="0 0 24 24"
-													fill="currentColor"
+													stroke-width="1.5"
+													stroke="currentColor"
 													class="me-2 h-3 w-3"
 												>
 													<path
-														fill-rule="evenodd"
-														d="M19.902 4.098a3.75 3.75 0 0 0-5.304 0l-4.5 4.5a3.75 3.75 0 0 0 1.035 6.037.75.75 0 0 1-.646 1.353 5.25 5.25 0 0 1-1.449-8.45l4.5-4.5a5.25 5.25 0 1 1 7.424 7.424l-1.757 1.757a.75.75 0 1 1-1.06-1.06l1.757-1.757a3.75 3.75 0 0 0 0-5.304Zm-7.389 4.267a.75.75 0 0 1 1-.353 5.25 5.25 0 0 1 1.449 8.45l-4.5 4.5a5.25 5.25 0 1 1-7.424-7.424l1.757-1.757a.75.75 0 1 1 1.06 1.06l-1.757 1.757a3.75 3.75 0 1 0 5.304 5.304l4.5-4.5a3.75 3.75 0 0 0-1.035-6.037.75.75 0 0 1-.354-1Z"
-														clip-rule="evenodd"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z"
 													/>
 												</svg>
 
-												Copy
+												Detail
 											</button>
 											{#if roleId === 1}
 												<button
 													type="button"
-													on:click={openEditModal(
-														data.id,
-														data.nama,
-														data.tglSidang,
-														data.tempatSidang,
-														data.pengurusAccess
-													)}
+													on:click={openEditModal(data)}
 													class="inline-flex items-center border-b border-t border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:text-blue-700 focus:ring-2 focus:ring-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white dark:focus:text-white dark:focus:ring-blue-500"
 												>
 													<svg
@@ -518,10 +573,12 @@
 		</nav>
 	</div>
 </div>
+
+<ReadModal bind:open={infoModal} data={dataInfo} />
 <!-- Create Modal  -->
 <Modal
 	bind:open={createModal}
-	size="sm"
+	size="md"
 	autoclose={false}
 	class="w-full"
 	backdropClass="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 dark:bg-opacity-80"
@@ -529,108 +586,215 @@
 >
 	<form method="POST" class="flex flex-col space-y-4" on:submit|preventDefault={handleAddDebitor}>
 		<h3 class="text-xl font-medium text-gray-900 dark:text-white">Tambah debitor</h3>
-		<div>
-			<label
-				for="Nama"
-				class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'nama') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-				>Nama</label
-			>
-			<input
-				type="text"
-				name="nama"
-				id="Nama"
-				placeholder="Nama"
-				bind:value={dataDebitor.nama}
-				class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'nama') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-			/>
-			{#if form?.errors?.find((error) => error.field === 'nama')}
-				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-					{form?.errors?.find((error) => error.field === 'nama').message}
-				</p>
-			{/if}
-		</div>
-		<div>
-			<label
-				for="tglSidang"
-				class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'tglSidang') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-				>Tanggal Sidang</label
-			>
-			<div class="relative">
-				<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-					<svg
-						class={`${form?.errors?.find((error) => error.field === 'tglSidang') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4 `}
-						aria-hidden="true"
-						xmlns="http://www.w3.org/2000/svg"
-						fill="currentColor"
-						viewBox="0 0 20 20"
-					>
-						<path
-							d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"
-						/>
-					</svg>
-				</div>
-				<DatePicker
-					bind:startDate={dataDebitor.tglSidang}
-					invalid={form?.errors?.find((error) => error.field === 'tglSidang')}
+		<div class="grid gap-4 sm:grid-cols-2">
+			<!-- Nama -->
+			<div>
+				<label
+					for="Nama"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'nama') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Nama</label
+				>
+				<input
+					type="text"
+					name="nama"
+					id="Nama"
+					placeholder="Nama"
+					bind:value={dataDebitor.nama}
+					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'nama') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 				/>
+				{#if form?.errors?.find((error) => error.field === 'nama')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'nama').message}
+					</p>
+				{/if}
 			</div>
-			{#if form?.errors?.find((error) => error.field === 'tglSidang')}
-				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-					{form?.errors?.find((error) => error.field === 'tglSidang').message}
-				</p>
-			{/if}
+			<!-- Nomor Perkara -->
+			<div>
+				<label
+					for="NomorPerkara"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'noPerkara') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Nomor Perkara</label
+				>
+				<input
+					type="text"
+					name="noPerkara"
+					id="NomorPerkara"
+					placeholder="Nomor Perkara"
+					bind:value={dataDebitor.noPerkara}
+					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'noPerkara') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+				/>
+				{#if form?.errors?.find((error) => error.field === 'noPerkara')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'noPerkara').message}
+					</p>
+				{/if}
+			</div>
 		</div>
-		<div>
-			<label
-				for="tempatSidang"
-				class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'tempatSidang') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-			>
-				<span>Alamat</span>
-				<textarea
-					id="textarea-id"
-					placeholder="Tempat Sidang"
-					rows="2"
+		<div class="grid gap-4 sm:grid-cols-3">
+			<!-- Tanggal Verifikasi -->
+			<div>
+				<label
+					for="tglVerifikasi"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'tglVerifikasi') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Tanggal Verifikasi</label
+				>
+				<div class="relative">
+					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+						<svg
+							class={`${form?.errors?.find((error) => error.field === 'tglVerifikasi') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4 `}
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"
+							/>
+						</svg>
+					</div>
+					<DatePicker
+						bind:startDate={dataDebitor.tglVerifikasi}
+						invalid={form?.errors?.find((error) => error.field === 'tglVerifikasi')}
+					/>
+				</div>
+				{#if form?.errors?.find((error) => error.field === 'tglVerifikasi')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'tglVerifikasi').message}
+					</p>
+				{/if}
+			</div>
+			<!-- Batas Akhir -->
+			<div>
+				<label
+					for="batasAkhir"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'batasAkhir') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Batas Akhir Pengajuan</label
+				>
+				<div class="relative">
+					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+						<svg
+							class={`${form?.errors?.find((error) => error.field === 'batasAkhir') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4 `}
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"
+							/>
+						</svg>
+					</div>
+					<DatePicker
+						bind:startDate={dataDebitor.batasAkhir}
+						invalid={form?.errors?.find((error) => error.field === 'batasAkhir')}
+					/>
+				</div>
+				{#if form?.errors?.find((error) => error.field === 'batasAkhir')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'batasAkhir').message}
+					</p>
+				{/if}
+			</div>
+			<!-- Tanggal Sidang -->
+			<div>
+				<label
+					for="tglSidang"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'tglSidang') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Tanggal Sidang</label
+				>
+				<div class="relative">
+					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+						<svg
+							class={`${form?.errors?.find((error) => error.field === 'tglSidang') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4 `}
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"
+							/>
+						</svg>
+					</div>
+					<DatePicker
+						bind:startDate={dataDebitor.tglSidang}
+						invalid={form?.errors?.find((error) => error.field === 'tglSidang')}
+					/>
+				</div>
+				{#if form?.errors?.find((error) => error.field === 'tglSidang')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'tglSidang').message}
+					</p>
+				{/if}
+			</div>
+		</div>
+
+		<div class="grid gap-4 sm:grid-cols-2">
+			<!-- Pengadilan -->
+			<div>
+				<label
+					for="tempatSidang"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'tempatSidang') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Tempat Sidang</label
+				>
+				<Select
+					id="tempatSidang"
+					class={`${form?.errors?.find((error) => error.field === 'tempatSidang') ? 'border-red-500 bg-red-50 text-red-700 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500'} mt-2 rounded-lg border capitalize `}
 					name="tempatSidang"
 					bind:value={dataDebitor.tempatSidang}
-					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'tempatSidang') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-				></textarea>
+					placeholder="Pilih Pengadilan"
+				>
+					{#each listPengadilan as pengadilan}
+						<option value={pengadilan}>{pengadilan}</option>
+					{/each}
+				</Select>
 				{#if form?.errors?.find((error) => error.field === 'tempatSidang')}
 					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 						{form?.errors?.find((error) => error.field === 'tempatSidang').message}
 					</p>
 				{/if}
-			</label>
+			</div>
+			<!-- Kurs -->
+			<div>
+				<label
+					for="Kurs"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'kurs') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Kurs Tengah BI</label
+				>
+				<input
+					type="text"
+					name="kurs"
+					id="Kurs"
+					placeholder="Kurs"
+					bind:value={dataDebitor.kurs}
+					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'kurs') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+				/>
+				{#if form?.errors?.find((error) => error.field === 'kurs')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'kurs').message}
+					</p>
+				{/if}
+			</div>
 		</div>
+		<!-- Pengurus -->
 		<div>
 			<label
 				for="Pengurus"
-				class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'pengurus') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-			>
-				<span>Pengurus</span>
-				<MultiSelect
-					--sms-border-radius="0.5rem"
-					--sms-border={` 1px solid ${form?.errors?.find((error) => error.field === 'pengurus') ? '#ef4444' : '#d1d5db'}`}
-					--sms-focus-border={` 2px solid ${form?.errors?.find((error) => error.field === 'pengurus') ? '#ef4444' : '#3b82f6'}`}
-					--sms-padding="0.625rem"
-					--sms-bg={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#fef2f2' : '#f9fafb'}`}
-					--sms-text-color={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#7f1d1d' : '#111827'}`}
-					--sms-placeholder-color={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#b91c1c' : '#9ca3af'}`}
-					--sms-font-size="0.875rem"
-					--sms-margin="8px 0"
-					options={listPengurus}
-					placeholder="Pilih pengurus"
-					name="pengurus"
-					bind:value={dataDebitor.pengurus}
-					let:option
-				>
-					<span>{option.label}</span>
-				</MultiSelect>
-				{#if form?.errors?.find((error) => error.field === 'pengurus')}
-					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-						{form?.errors?.find((error) => error.field === 'pengurus').message}
-					</p>
-				{/if}
+				class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'pengurusAccess') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+				>Pengurus
 			</label>
+
+			<MultiSelect
+				options={listPengurus}
+				bind:value={dataDebitor.pengurusAccess}
+				invalid={form?.errors?.find((error) => error.field === 'pengurusAccess')}
+			/>
+
+			{#if form?.errors?.find((error) => error.field === 'pengurusAccess')}
+				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+					{form?.errors?.find((error) => error.field === 'pengurusAccess').message}
+				</p>
+			{/if}
 		</div>
 		<Button type="submit">
 			{#if loading}
@@ -645,7 +809,7 @@
 <!-- Edit Modal  -->
 <Modal
 	bind:open={editModal}
-	size="sm"
+	size="md"
 	autoclose={false}
 	class="w-full"
 	backdropClass="fixed inset-0 z-50 bg-gray-900 bg-opacity-50 dark:bg-opacity-80"
@@ -653,109 +817,216 @@
 >
 	<form method="PUT" class="flex flex-col space-y-4" on:submit|preventDefault={handleEditDebitor}>
 		<h3 class="text-xl font-medium text-gray-900 dark:text-white">Edit debitor</h3>
-		<div>
-			<label
-				for="Nama"
-				class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'nama') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-				>Nama</label
-			>
-			<input
-				type="text"
-				name="nama"
-				id="Nama"
-				placeholder="Nama"
-				bind:value={dataDebitor.nama}
-				class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'nama') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-			/>
-			{#if form?.errors?.find((error) => error.field === 'nama')}
-				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-					{form?.errors?.find((error) => error.field === 'nama').message}
-				</p>
-			{/if}
-		</div>
-		<div>
-			<label
-				for="tglSidang"
-				class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'tglSidang') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-				>Tanggal Sidang</label
-			>
-			<div class="relative">
-				<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
-					<svg
-						class={`${form?.errors?.find((error) => error.field === 'tglSidang') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4 `}
-						aria-hidden="true"
-						xmlns="http://www.w3.org/2000/svg"
-						fill="currentColor"
-						viewBox="0 0 20 20"
-					>
-						<path
-							d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"
-						/>
-					</svg>
-				</div>
-				<DatePicker
-					bind:startDate={dataDebitor.tglSidang}
-					invalid={form?.errors?.find((error) => error.field === 'tglSidang')}
+		<div class="grid gap-4 sm:grid-cols-2">
+			<!-- Nama -->
+			<div>
+				<label
+					for="Nama"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'nama') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Nama</label
+				>
+				<input
+					type="text"
+					name="nama"
+					id="Nama"
+					placeholder="Nama"
+					bind:value={dataDebitor.nama}
+					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'nama') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 				/>
+				{#if form?.errors?.find((error) => error.field === 'nama')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'nama').message}
+					</p>
+				{/if}
 			</div>
-			{#if form?.errors?.find((error) => error.field === 'tglSidang')}
-				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-					{form?.errors?.find((error) => error.field === 'tglSidang').message}
-				</p>
-			{/if}
+			<!-- Nomor Perkara -->
+			<div>
+				<label
+					for="NomorPerkara"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'noPerkara') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Nomor Perkara</label
+				>
+				<input
+					type="text"
+					name="noPerkara"
+					id="NomorPerkara"
+					placeholder="Nomor Perkara"
+					bind:value={dataDebitor.noPerkara}
+					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'noPerkara') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+				/>
+				{#if form?.errors?.find((error) => error.field === 'noPerkara')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'noPerkara').message}
+					</p>
+				{/if}
+			</div>
 		</div>
-		<div>
-			<label
-				for="tempatSidang"
-				class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'tempatSidang') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-			>
-				<span>Alamat</span>
-				<textarea
-					id="textarea-id"
-					placeholder="Tempat Sidang"
-					rows="2"
+		<div class="grid gap-4 sm:grid-cols-3">
+			<!-- Tanggal Verifikasi -->
+			<div>
+				<label
+					for="tglVerifikasi"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'tglVerifikasi') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Tanggal Verifikasi</label
+				>
+				<div class="relative">
+					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+						<svg
+							class={`${form?.errors?.find((error) => error.field === 'tglVerifikasi') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4 `}
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"
+							/>
+						</svg>
+					</div>
+					<DatePicker
+						bind:startDate={dataDebitor.tglVerifikasi}
+						invalid={form?.errors?.find((error) => error.field === 'tglVerifikasi')}
+					/>
+				</div>
+				{#if form?.errors?.find((error) => error.field === 'tglVerifikasi')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'tglVerifikasi').message}
+					</p>
+				{/if}
+			</div>
+			<!-- Batas Akhir -->
+			<div>
+				<label
+					for="batasAkhir"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'batasAkhir') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Batas Akhir Pengajuan</label
+				>
+				<div class="relative">
+					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+						<svg
+							class={`${form?.errors?.find((error) => error.field === 'batasAkhir') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4 `}
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"
+							/>
+						</svg>
+					</div>
+					<DatePicker
+						bind:startDate={dataDebitor.batasAkhir}
+						invalid={form?.errors?.find((error) => error.field === 'batasAkhir')}
+					/>
+				</div>
+				{#if form?.errors?.find((error) => error.field === 'batasAkhir')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'batasAkhir').message}
+					</p>
+				{/if}
+			</div>
+			<!-- Tanggal Sidang -->
+			<div>
+				<label
+					for="tglSidang"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'tglSidang') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Tanggal Sidang</label
+				>
+				<div class="relative">
+					<div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+						<svg
+							class={`${form?.errors?.find((error) => error.field === 'tglSidang') ? 'text-red-900 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'} h-4 w-4 `}
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"
+							/>
+						</svg>
+					</div>
+					<DatePicker
+						bind:startDate={dataDebitor.tglSidang}
+						invalid={form?.errors?.find((error) => error.field === 'tglSidang')}
+					/>
+				</div>
+				{#if form?.errors?.find((error) => error.field === 'tglSidang')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'tglSidang').message}
+					</p>
+				{/if}
+			</div>
+		</div>
+
+		<div class="grid gap-4 sm:grid-cols-2">
+			<!-- Pengadilan -->
+			<div>
+				<label
+					for="tempatSidang"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'tempatSidang') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Tempat Sidang</label
+				>
+				<Select
+					id="tempatSidang"
+					class={`${form?.errors?.find((error) => error.field === 'tempatSidang') ? 'border-red-500 bg-red-50 text-red-700 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500'} mt-2 rounded-lg border capitalize `}
 					name="tempatSidang"
 					bind:value={dataDebitor.tempatSidang}
-					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'tempatSidang') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
-				></textarea>
+					placeholder="Pilih Pengadilan"
+				>
+					{#each listPengadilan as pengadilan}
+						<option value={pengadilan}>{pengadilan}</option>
+					{/each}
+				</Select>
 				{#if form?.errors?.find((error) => error.field === 'tempatSidang')}
 					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
 						{form?.errors?.find((error) => error.field === 'tempatSidang').message}
 					</p>
 				{/if}
-			</label>
+			</div>
+			<!-- Kurs -->
+			<div>
+				<label
+					for="Kurs"
+					class={`mb-2 block text-sm font-medium ${form?.errors?.find((error) => error.field === 'kurs') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+					>Kurs Tengah BI</label
+				>
+				<input
+					type="text"
+					name="kurs"
+					id="Kurs"
+					placeholder="Kurs"
+					bind:value={dataDebitor.kurs}
+					class={`block w-full rounded-lg border p-2.5 text-sm ${form?.errors?.find((error) => error.field === 'kurs') ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
+				/>
+				{#if form?.errors?.find((error) => error.field === 'kurs')}
+					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+						{form?.errors?.find((error) => error.field === 'kurs').message}
+					</p>
+				{/if}
+			</div>
 		</div>
+		<!-- Pengurus -->
 		<div>
 			<label
 				for="Pengurus"
-				class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'pengurus') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
-			>
-				<span>Pengurus</span>
-				<MultiSelect
-					--sms-border-radius="0.5rem"
-					--sms-border={` 1px solid ${form?.errors?.find((error) => error.field === 'pengurus') ? '#ef4444' : '#d1d5db'}`}
-					--sms-focus-border={` 2px solid ${form?.errors?.find((error) => error.field === 'pengurus') ? '#ef4444' : '#3b82f6'}`}
-					--sms-padding="0.625rem"
-					--sms-bg={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#fef2f2' : '#f9fafb'}`}
-					--sms-text-color={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#7f1d1d' : '#111827'}`}
-					--sms-placeholder-color={` ${form?.errors?.find((error) => error.field === 'pengurus') ? '#b91c1c' : '#9ca3af'}`}
-					--sms-font-size="0.875rem"
-					--sms-margin="8px 0"
-					options={listPengurus}
-					selected={selectedPengurus}
-					placeholder="Pilih pengurus"
-					name="pengurus"
-					bind:value={dataDebitor.pengurus}
-					let:option
-				>
-					<span>{option.label}</span>
-				</MultiSelect>
-				{#if form?.errors?.find((error) => error.field === 'pengurus')}
-					<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
-						{form?.errors?.find((error) => error.field === 'pengurus').message}
-					</p>
-				{/if}
+				class={`mb-2 block space-y-2 text-sm font-medium ${form?.errors?.find((error) => error.field === 'pengurusAccess') ? 'text-red-700 dark:text-red-500' : 'text-gray-900 dark:text-white'}`}
+				>Pengurus
 			</label>
+
+			<MultiSelect
+				options={listPengurus}
+				selected={selectedPengurus}
+				bind:value={dataDebitor.pengurusAccess}
+				invalid={form?.errors?.find((error) => error.field === 'pengurusAccess')}
+			/>
+
+			{#if form?.errors?.find((error) => error.field === 'pengurusAccess')}
+				<p class="mt-2 text-xs font-normal text-red-700 dark:text-red-500">
+					{form?.errors?.find((error) => error.field === 'pengurusAccess').message}
+				</p>
+			{/if}
 		</div>
 		<Button type="submit">
 			{#if loading}

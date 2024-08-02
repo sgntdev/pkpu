@@ -22,8 +22,8 @@ model User {
 }
 
 model UserVerify {
-  email          String   @id @unique
-  uniqueCode     String   @unique @db.VarChar(25)
+  email          String    @id @unique
+  uniqueCode     String    @unique @db.VarChar(25)
   expirationDate DateTime
   createdAt      DateTime  @default(now())
   updatedAt      DateTime? @updatedAt
@@ -38,7 +38,11 @@ model Role {
 model Debitor {
   id             Int       @id @default(autoincrement())
   nama           String
-  tglSidang      String
+  noPerkara      String
+  tglVerifikasi  DateTime?
+  batasAkhir     DateTime?
+  kurs           String
+  tglSidang      DateTime?
   tempatSidang   String
   uid            String    @unique @db.VarChar(5)
   createdAt      DateTime  @default(now())
@@ -129,14 +133,14 @@ model VerifiedPassword {
 }
 
 model TagihanVote {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   tagihanId Int
   userId    Int
   vote      Int
-  User      User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  Tagihan   Tagihan  @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime? @updatedAt
+  User      User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Tagihan   Tagihan   @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
 
   @@unique([userId, tagihanId])
 }
@@ -147,8 +151,8 @@ model TagihanItem {
   sifatTagihanId Int
   tipe           String
   amount         String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime? @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime?    @updatedAt
   SifatTagihan   SifatTagihan @relation(fields: [sifatTagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   Tagihan        Tagihan      @relation(fields: [tagihanId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }

@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Debitor" ALTER COLUMN "tglSidang" SET DATA TYPE TEXT,
+ALTER COLUMN "batasAkhir" SET DATA TYPE TEXT,
+ALTER COLUMN "tglVerifikasi" SET DATA TYPE TEXT;

@@ -45,8 +45,16 @@ export async function PUT({ request, params }) {
 		});
 	}
 	const data = await request.json();
-	const { nama, tglSidang, tempatSidang, pengurus } = data;
-	let pengurusAccess = pengurus.map((item) => item.value);
+	const {
+		nama,
+		noPerkara,
+		batasAkhir,
+		tglVerifikasi,
+		kurs,
+		tglSidang,
+		tempatSidang,
+		pengurusAccess
+	} = data;
 	const validation = {
 		success: false,
 		errors: []
@@ -61,6 +69,24 @@ export async function PUT({ request, params }) {
 		if (!nama) {
 			validation.errors.push({ field: 'nama', message: 'Nama tidak boleh kosong!' });
 		}
+		if (!noPerkara) {
+			validation.errors.push({ field: 'noPerkara', message: 'Nomor perkara tidak boleh kosong!' });
+		}
+		if (!batasAkhir) {
+			validation.errors.push({
+				field: 'batasAkhir',
+				message: 'Batas akhir pengajuan tidak boleh kosong!'
+			});
+		}
+		if (!tglVerifikasi) {
+			validation.errors.push({
+				field: 'tglVerifikasi',
+				message: 'Nomor perkara tidak boleh kosong!'
+			});
+		}
+		if (!kurs) {
+			validation.errors.push({ field: 'kurs', message: 'Kurs tidak boleh kosong!' });
+		}
 		if (!tglSidang) {
 			validation.errors.push({ field: 'tglSidang', message: 'Tanggal sidang tidak boleh kosong!' });
 		}
@@ -70,9 +96,9 @@ export async function PUT({ request, params }) {
 				message: 'Tempat sidang tidak boleh kosong!'
 			});
 		}
-		if (pengurus.length === 0) {
+		if (pengurusAccess.length === 0) {
 			validation.errors.push({
-				field: 'pengurus',
+				field: 'pengurusAccess',
 				message: 'Pengurus tidak boleh kosong!'
 			});
 		}
@@ -83,6 +109,10 @@ export async function PUT({ request, params }) {
 			where: { id },
 			data: {
 				nama,
+				noPerkara,
+				batasAkhir,
+				tglVerifikasi,
+				kurs,
 				tglSidang,
 				tempatSidang,
 				pengurusAccess
@@ -96,7 +126,6 @@ export async function PUT({ request, params }) {
 			{ status: 200 }
 		);
 	} catch (error) {
-		console.log(error);
 		return new Response(
 			JSON.stringify({ success: false, code: 500, message: 'Debitor gagal diubah!' }),
 			{ status: 500 }
@@ -141,7 +170,6 @@ export async function DELETE({ request, params }) {
 			status: 200
 		});
 	} catch (error) {
-		console.log(error);
 		return new Response(
 			JSON.stringify({ success: false, code: 500, message: 'Debitor gagal dihapus!' }),
 			{ status: 500 }

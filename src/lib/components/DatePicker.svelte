@@ -1,24 +1,46 @@
 <script>
+	import { formatDateLocale } from '$lib/formatDate.js';
 	import { DatePicker } from '@svelte-plugins/datepicker';
-	import { format } from 'date-fns';
 
 	export let startDate = null;
-	export let dateFormat = 'dd MMMM yyyy';
 	export let isOpen = false;
 	export let invalid = false;
 
 	const toggleDatePicker = () => (isOpen = !isOpen);
 
 	const formatDate = (dateString) => {
-		return (dateString && format(new Date(dateString), dateFormat)) || '';
+		return (dateString && formatDateLocale(dateString)) || '';
 	};
 
 	let formattedStartDate = formatDate(startDate);
 
 	$: formattedStartDate = formatDate(startDate);
+	let monthLabels = [
+		'Januari',
+		'Februari',
+		'Maret',
+		'April',
+		'Mei',
+		'Juni',
+		'Juli',
+		'Agustus',
+		'September',
+		'Oktober',
+		'November',
+		'Desemeber'
+	];
+	let dowLabels = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 </script>
 
-<DatePicker bind:isOpen bind:startDate enableFutureDates enablePastDates theme="custom-datepicker">
+<DatePicker
+	bind:isOpen
+	bind:startDate
+	enableFutureDates
+	enablePastDates
+	theme="custom-datepicker"
+	{monthLabels}
+	{dowLabels}
+>
 	<input
 		type="text"
 		class="datepicker {invalid ? 'invalid' : ''}"
@@ -42,31 +64,36 @@
 	.datepicker:focus {
 		border-color: rgb(63 131 248);
 	}
-	.datepicker.invalid{
+	.datepicker.invalid {
 		border-color: rgb(240 82 82);
 		background-color: rgb(253 242 242);
-	}
-	.datepicker.invalid::placeholder {
+		--tw-ring-color: rgb(240 82 82);
 		color: rgb(119 29 29);
 	}
+	.datepicker:focus.invalid {
+		border-color: rgb(240 82 82);
+	}
+	.datepicker.invalid::placeholder {
+		color: rgb(200 30 30);
+	}
 
-	:global(.datepicker[data-picker-theme="custom-datepicker"]) {
-    /* --datepicker-container-background: #5f0730;
+	:global(.datepicker[data-picker-theme='custom-datepicker']) {
+		/* --datepicker-container-background: #5f0730;
     --datepicker-container-border: 1px solid #ff1683; */
 
-    /* --datepicker-calendar-header-text-color: #fff;
+		/* --datepicker-calendar-header-text-color: #fff;
     --datepicker-calendar-dow-color: #fff;
     --datepicker-calendar-day-color: #fff; */
-    /* --datepicker-calendar-day-color-disabled: pink; */
-    --datepicker-calendar-range-selected-background: rgb(26 86 219);
+		/* --datepicker-calendar-day-color-disabled: pink; */
+		--datepicker-calendar-range-selected-background: rgb(26 86 219);
 
-    /* --datepicker-calendar-header-month-nav-background-hover: #ff1683;
+		/* --datepicker-calendar-header-month-nav-background-hover: #ff1683;
     --datepicker-calendar-header-month-nav-icon-next-filter: invert(100);
     --datepicker-calendar-header-month-nav-icon-prev-filter: invert(100);
     --datepicker-calendar-header-year-nav-icon-next-filter: invert(100);
     --datepicker-calendar-header-year-nav-icon-prev-filter: invert(100); */
 
-    /* --datepicker-calendar-split-border: 1px solid pink;
+		/* --datepicker-calendar-split-border: 1px solid pink;
 
     --datepicker-presets-border: 1px solid pink;
     --datepicker-presets-button-background-active: #ff1683;
@@ -74,5 +101,5 @@
     --datepicker-presets-button-color-active: #fff;
     --datepicker-presets-button-color-hover: #333;
     --datepicker-presets-button-color-focus: #333; */
-  }
+	}
 </style>

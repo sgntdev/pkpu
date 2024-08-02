@@ -49,8 +49,16 @@ export async function POST({ request }) {
 		});
 	}
 	const data = await request.json();
-	const { nama, tglSidang, tempatSidang, pengurus } = data;
-	let pengurusAccess = pengurus.map((item) => item.value);
+	const {
+		nama,
+		noPerkara,
+		batasAkhir,
+		tglVerifikasi,
+		kurs,
+		tglSidang,
+		tempatSidang,
+		pengurusAccess
+	} = data;
 	const validation = {
 		success: false,
 		errors: []
@@ -66,6 +74,24 @@ export async function POST({ request }) {
 		if (!nama) {
 			validation.errors.push({ field: 'nama', message: 'Nama tidak boleh kosong!' });
 		}
+		if (!noPerkara) {
+			validation.errors.push({ field: 'noPerkara', message: 'Nomor perkara tidak boleh kosong!' });
+		}
+		if (!batasAkhir) {
+			validation.errors.push({
+				field: 'batasAkhir',
+				message: 'Batas akhir pengajuan tidak boleh kosong!'
+			});
+		}
+		if (!tglVerifikasi) {
+			validation.errors.push({
+				field: 'tglVerifikasi',
+				message: 'Nomor perkara tidak boleh kosong!'
+			});
+		}
+		if (!kurs) {
+			validation.errors.push({ field: 'kurs', message: 'Kurs tidak boleh kosong!' });
+		}
 		if (!tglSidang) {
 			validation.errors.push({ field: 'tglSidang', message: 'Tanggal sidang tidak boleh kosong!' });
 		}
@@ -77,7 +103,7 @@ export async function POST({ request }) {
 		}
 		if (pengurusAccess.length === 0) {
 			validation.errors.push({
-				field: 'pengurus',
+				field: 'pengurusAccess',
 				message: 'Pengurus tidak boleh kosong!'
 			});
 		}
@@ -88,9 +114,13 @@ export async function POST({ request }) {
 		const debitor = await prisma.debitor.create({
 			data: {
 				nama,
+				uid: debitorUid,
+				noPerkara,
+				batasAkhir,
+				tglVerifikasi,
+				kurs,
 				tglSidang,
 				tempatSidang,
-				uid: debitorUid,
 				pengurusAccess
 			}
 		});
@@ -101,7 +131,6 @@ export async function POST({ request }) {
 			}
 		);
 	} catch (error) {
-		console.log(error);
 		return new Response(
 			JSON.stringify({ success: false, code: 500, message: 'Debitor gagal ditambahkan!' }),
 			{ status: 500 }
