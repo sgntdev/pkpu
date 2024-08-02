@@ -7,14 +7,19 @@
 	let loading = false;
 	let status = null;
 	let form;
-	let email = '';
+	let dataLogin = {
+		debitorUid :'',
+		email:''
+	}
+	export let data;
 	const handleSubmit = async () => {
 		status = null;
+		dataLogin.debitorUid = data.uid
 		loading = true;
 		try {
 			const response = await fetch('/api/admin', {
 				method: 'POST',
-				body: JSON.stringify(email)
+				body: JSON.stringify(dataLogin)
 			});
 
 			const result = await response.json();
@@ -74,7 +79,7 @@
 				<Input
 					type="text"
 					name="email"
-					bind:value={email}
+					bind:value={dataLogin.email}
 					placeholder="name@company.com"
 					color={form?.errors?.find((error) => error.field === 'email') ? 'red' : undefined}
 				/>

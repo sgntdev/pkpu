@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '$lib/prisma.server.js';
 import { SECRET_INGREDIENT } from '$env/static/private';
 
-export async function POST({ request }) {
+export async function POST({ request}) {
 	const { debitorUid, uniqueCode } = await request.json();
 	const user = await prisma.UserVerify.findUnique({
 		where: { uniqueCode },
@@ -15,7 +15,7 @@ export async function POST({ request }) {
 		if (new Date(user.expirationDate) < new Date()) {
 			return new Response(JSON.stringify('Expired Unique Code'), { status: 400 });
 		} else {
-			let dataUser
+			let dataUser;
 			// Check if user already exists before creating a new one
 			const existingUser = await prisma.User.findUnique({
 				where: { email: user.email },
@@ -25,7 +25,7 @@ export async function POST({ request }) {
 					roleId: true
 				}
 			});
-			dataUser = existingUser
+			dataUser = existingUser;
 			try {
 				if (!existingUser) {
 					const newUser = await prisma.User.create({
@@ -33,14 +33,22 @@ export async function POST({ request }) {
 							email: user.email
 						}
 					});
-					dataUser = newUser
+					dataUser = newUser;
 				}
 			} catch (error) {
 				console.error('Error creating user:', error);
 			}
-			
-			let data = { ...dataUser, debitorUid, expirationDate: user.expirationDate };
-			const authToken = jwt.sign({ user:data }, SECRET_INGREDIENT, { expiresIn: '24h' });
+			let latestDebitor = debitorUid;
+			if (dataUser.roleId === 1 && !debitorUid) {
+				const firstDebitor = await prisma.Debitor.findFirst({
+					select: {
+						uid: true
+					}
+				});
+				latestDebitor = firstDebitor ? firstDebitor.uid : null;
+			}
+			let data = { ...dataUser, debitorUid:latestDebitor, expirationDate: user.expirationDate };
+			const authToken = jwt.sign({ user: data }, SECRET_INGREDIENT, { expiresIn: '24h' });
 			return new Response(JSON.stringify({ authToken }));
 		}
 	} else {

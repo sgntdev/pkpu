@@ -1,7 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
 
-export async function load({ locals, fetch }) {
+export async function load({ locals, fetch, cookies }) {
 	const { user } = locals;
+	const cookieDebitorUid = cookies.get('debitorUid')
 	if (!user) {
 		redirect(303, '/');
 	} else {
@@ -10,6 +11,7 @@ export async function load({ locals, fetch }) {
 			const debitorResult = await debitorResponse.json();
 			return {
 				body: {
+					cookieDebitorUid,
 					user: user,
 					debitorData: debitorResult.data,
 				}

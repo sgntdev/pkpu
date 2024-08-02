@@ -2,7 +2,9 @@ import { error } from '@sveltejs/kit';
 import { prisma } from '$lib/prisma.server.js';
 
 export async function load({ params, cookies, fetch }) {
-	const { uniqueCode } = params;
+	const { debitorUid, uniqueCode } = params;
+	const cookieDebitorUid = cookies.get('debitorUid')
+	let latestDebitor = cookieDebitorUid ?? debitorUid
 	const userverif = await prisma.UserVerify.findUnique({
 		where: { uniqueCode },
 		select: {
@@ -41,6 +43,13 @@ export async function load({ params, cookies, fetch }) {
 				httpOnly: true,
 				secure: true,
 				sameSite: 'strict',
+				maxAge: 60 * 60 * 24 // one day
+			});
+			cookies.set('debitorUid', latestDebitor, {
+				path: '/',
+				httpOnly: false,
+				secure: false,
+				sameSite: '',
 				maxAge: 60 * 60 * 24 // one day
 			});
 			return { success: true, user: userverif.email, roleId: user?.roleId };

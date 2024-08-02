@@ -50,7 +50,7 @@ const sendEmail = async (message) => {
 };
 
 export async function POST({ request }) {
-	const email = await request.json();
+	const { debitorUid, email } = await request.json();
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	const validation = {
 		success: false,
@@ -111,7 +111,7 @@ export async function POST({ request }) {
 		}
 
 		let nama = email.slice(0, email.indexOf('@'));
-		const link = `${SITE_URL}/verify/${uniqueCode}`;
+		const link = debitorUid ? `${SITE_URL}/verify/${debitorUid}/${uniqueCode}` : `${SITE_URL}/verify/${uniqueCode}`;
 		const replacements = {
 			nama,
 			link
@@ -120,7 +120,7 @@ export async function POST({ request }) {
 		const html = await readTemplate(templatePath, replacements);
 
 		const message = {
-			from: '"PKPU" <fotoarchive8@gmail.com>',
+			from: '"PKPU" <pkpu@kuantis.com>',
 			to: email,
 			subject: 'Link akses halaman admin',
 			html: html
@@ -134,7 +134,6 @@ export async function POST({ request }) {
 			{ status: 200 }
 		);
 	} catch (error) {
-		console.log(error);
 		return new Response(
 			JSON.stringify({
 				success: false,

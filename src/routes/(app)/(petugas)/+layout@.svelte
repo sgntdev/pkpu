@@ -1,6 +1,7 @@
 <script>
 	import { setContext } from 'svelte';
 	import { writable } from 'svelte/store';
+	import { setCookie } from '$lib/cookie.js';
 	import '../../../app.pcss';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -20,7 +21,8 @@
 		InboxFullOutline,
 		InboxFullSolid
 	} from 'flowbite-svelte-icons';
-	import Toast from '../../../lib/components/Toast.svelte';
+	import Toast from '$lib/components/Toast.svelte';
+
 	let showSidebar = false;
 	const handleSidebar = () => {
 		showSidebar = !showSidebar;
@@ -32,24 +34,31 @@
 		showSidebar = false;
 	}
 	export let data;
-	const user = data.body.user;
-	// Filter Debitor
-	let debitorData = data.body.debitorData;
-	// Debitor default value from login
-	let dataDebitorLogin =
-		user.debitorUid !== ''
-			? debitorData.filter((debitor) => debitor.uid.includes(user.debitorUid))
-			: null;
-	let idDebitorLogin = dataDebitorLogin ? dataDebitorLogin[0].id : '';
-	// --------------------------------
-	let chooseDebitor = writable(idDebitorLogin);
-	setContext('Choose', chooseDebitor);
-	const RadioPilihDebitor = (id) => {
-		$chooseDebitor = id;
+	const { cookieDebitorUid, user, debitorData } = data.body;
+	
+	// Cek apakah ada uid yang di cookie, kalau ada pakai yg di cookie, kalau di cookie kosong ambil dari login
+	let currentDebitorUid = cookieDebitorUid ?? user.debitorUid;
+	
+	// Cari data debitor berdasarkan currentDebitorUid
+	let currentDebitor = debitorData.find((debitor) => debitor.uid === currentDebitorUid);
+	
+	// Dapatkan id debitor
+	let currentDebitorId = currentDebitor ? currentDebitor.id : '';
+	
+	// Buat writable store untuk menyimpan id debitor yang dipilih
+	let selectedDebitorId = writable(currentDebitorId);
+	setContext('SelectedDebitor', selectedDebitorId);
+	
+	// Fungsi untuk memilih debitor dan memperbarui cookie
+	const handleDebitorSelection = (id) => {
+		selectedDebitorId.set(id);
+		let selectedUid = debitorData.find(debitor => debitor.id === id).uid
+		setCookie('debitorUid', selectedUid, 1);		
 	};
-	// for still checked radio in other page
-	// End checked
-	let checkedDebitor = idDebitorLogin;
+	
+	// Inisialisasi variabel untuk menyimpan debitor yang sedang dicentang
+	let checkedDebitor = currentDebitorId;
+
 	let searchDebitor = '';
 	let tglSidang = '';
 	$: filterDebitors = debitorData.filter((debitor) =>
@@ -191,50 +200,48 @@
 	<div class="mt-2 h-full overflow-y-auto bg-white px-3 py-[70px] dark:bg-gray-800">
 		<ul class="space-y-2 font-medium">
 			<li>
-				{#if user.debitorUid}
-					<Button
-						color="light"
-						class="m-0 flex w-full justify-between border-0 bg-gray-50 px-3 focus:ring-2"
+				<Button
+					color="light"
+					class="m-0 flex w-full justify-between border-0 bg-gray-50 px-3 focus:ring-2"
+				>
+					<div class="flex flex-col text-left">
+						<p class="text-base font-medium">
+							{$selectedDebitorId == null ? 'Pilih Debitor' : checkNama($selectedDebitorId)}
+						</p>
+						<p class="text-xs font-extralight text-gray-500">
+							Tanggal sidang : {$selectedDebitorId == null ? '' : formatDate(tglSidang)}
+						</p>
+					</div>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="h-4 w-4 text-gray-900"
 					>
-						<div class="flex flex-col text-left">
-							<p class="text-base font-medium">
-								{$chooseDebitor == null ? 'Pilih Debitor' : checkNama($chooseDebitor)}
-							</p>
-							<p class="text-xs font-extralight text-gray-500">
-								Tanggal sidang : {$chooseDebitor == null ? '' : formatDate(tglSidang)}
-							</p>
-						</div>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke-width="1.5"
-							stroke="currentColor"
-							class="h-4 w-4 text-gray-900"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M8.25 15 12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"
-							/>
-						</svg>
-					</Button>
-					<Dropdown placement="bottom" class="max-h-44 min-h-5 overflow-y-auto px-3 pb-3 text-sm">
-						<div slot="header" class="p-3">
-							<Search size="md" bind:value={searchDebitor} />
-						</div>
-						{#each filterDebitors as { id, nama }}
-							<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
-								<Radio
-									value={id}
-									bind:group={checkedDebitor}
-									on:change={() => RadioPilihDebitor(id)}
-									name="debitor">{nama}</Radio
-								>
-							</li>
-						{/each}
-					</Dropdown>
-				{/if}
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M8.25 15 12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"
+						/>
+					</svg>
+				</Button>
+				<Dropdown placement="bottom" class="max-h-44 min-h-5 w-full overflow-y-auto px-3 pb-3 text-sm">
+					<div slot="header" class="p-3">
+						<Search size="md" bind:value={searchDebitor} />
+					</div>
+					{#each filterDebitors as { id, nama }}
+						<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
+							<Radio
+								value={id}
+								bind:group={checkedDebitor}
+								on:change={() => handleDebitorSelection(id)}
+								name="debitor">{nama}</Radio
+							>
+						</li>
+					{/each}
+				</Dropdown>
 			</li>
 			{#each menu as item}
 				<li>

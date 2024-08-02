@@ -19,7 +19,6 @@
 	import {
 		ExclamationCircleOutline,
 		ChevronDownOutline,
-		FilterOutline
 	} from 'flowbite-svelte-icons';
 	import ExcelJS from 'exceljs';
 	import pkg from 'file-saver';
@@ -28,7 +27,7 @@
 	export let data;
 	const { sifatTagihanData, debitorData, token, roleId } = data.body;
 	// let tagihan;
-	const chooseDebitor = getContext('Choose');
+	const selectedDebitorId = getContext('SelectedDebitor');
 	const tagihan = writable([]);
 	tagihan.set(data.body.tagihan);
 	let tagihanInputsByRow = $tagihan.map(() => []);
@@ -40,8 +39,8 @@
 	let deleteTargetId;
 	let deleteTargetTagihanId;
 
-	const tagihanByDebitor = derived([chooseDebitor, tagihan], ([$chooseDebitor, $tagihan]) =>
-		$chooseDebitor === '' ? $tagihan : $tagihan.filter((item) => item.debitorId === $chooseDebitor)
+	const filteredTagihanData = derived([selectedDebitorId, tagihan], ([$selectedDebitorId, $tagihan]) =>
+		$selectedDebitorId === '' ? $tagihan : $tagihan.filter((item) => item.debitorId === $selectedDebitorId)
 	);
 	//Edit
 	let dataEdit = {
@@ -246,22 +245,6 @@
 	let filterStatus = [0, 1, 2];
 	let paginatedTagihan = [];
 	let filteredTagihan = [];
-	let selectedDebitor = '';
-	let searchDebitor = '';
-
-	let debitorResult = [];
-	$: debitorResult = debitorData.filter((data) =>
-		data.nama.toLowerCase().includes(searchDebitor.toLowerCase())
-	);
-	function toggleselectedDebitor(debitorId) {
-		selectedDebitor = debitorId;
-	}
-
-	let namaDebitor = '';
-
-	$: namaDebitor = selectedDebitor
-		? debitorData.find((debitor) => debitor.id === selectedDebitor)?.nama
-		: 'Filter';
 
 	function toggleFilterStatus(status) {
 		if (status === 'all') {
@@ -274,11 +257,10 @@
 	}
 	// Menghitung data yang dipaginate
 	$: {
-		filteredTagihan = $tagihanByDebitor.filter(
+		filteredTagihan = $filteredTagihanData.filter(
 			(data) =>
 				data.Kreditor.nama.toLowerCase().includes(searchText.toLowerCase()) &&
-				filterStatus.includes(data.status) &&
-				(selectedDebitor === '' || selectedDebitor === data.debitorId)
+				filterStatus.includes(data.status)
 		);
 
 		totalPages = Math.ceil(filteredTagihan.length / itemsPerPage);
@@ -321,7 +303,7 @@
 		dropdownOpen = false;
 	}
 
-	$: formattedData = $tagihanByDebitor
+	$: formattedData = $filteredTagihanData
 		.filter((data) => data.status === 1)
 		.map((data, index) => {
 			let total = parseFloat(data.denda) + parseFloat(data.hutangPokok) + parseFloat(data.bunga);
@@ -355,7 +337,7 @@
 		})
 		.flat();
 
-	$: debitorInfo = debitorData.find((data) => data.id === $chooseDebitor);
+	$: debitorInfo = debitorData.find((data) => data.id === $selectedDebitorId);
 
 	const exportFile = async () => {
 		// Create WorkBook
@@ -566,34 +548,6 @@
 						Export xlsx</Button
 					>
 				</div>
-				{#if roleId === 1}
-					<div>
-						<Button color="light" class="w-full">
-							{namaDebitor}
-							<FilterOutline class="ml-2 h-4 w-4" /></Button
-						>
-						<Dropdown placement="bottom" class="max-h-44 min-h-5 overflow-y-auto px-3 pb-3 text-sm">
-							<div slot="header" class="p-3">
-								<Search size="md" bind:value={searchDebitor} />
-							</div>
-							{#each debitorResult as { id, nama }}
-								<li class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600">
-									<Radio
-										bind:group={selectedDebitor}
-										value={id}
-										on:change={() => toggleselectedDebitor(id)}
-										name="debitor">{nama}</Radio
-									>
-								</li>
-							{/each}
-							<div slot="footer" class="px-3 py-1">
-								<Button size="xs" color="light" on:click={() => (selectedDebitor = '')}
-									>Reset</Button
-								>
-							</div>
-						</Dropdown>
-					</div>
-				{/if}
 			</div>
 		</div>
 		<div class="flex w-full p-4">

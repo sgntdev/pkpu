@@ -8,14 +8,14 @@
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
 	import { getContext } from 'svelte';
 
-	const chooseDebitor = getContext('Choose');
+	const selectedDebitorId = getContext('SelectedDebitor');
 	export let data;
 	let kreditorData = data.body.kreditorData;
 
-	$: tagihanByDebitor =
-		$chooseDebitor === ''
+	$: filteredKreditorData =
+		$selectedDebitorId === ''
 			? kreditorData
-			: kreditorData.filter((item) => item.debitorId === $chooseDebitor);
+			: kreditorData.filter((item) => item.debitorId === $selectedDebitorId);
 
 	let toggleDropdown = false; // dropdown toggle
 	let currentPage = 1; // default posisi halaman saat ini
@@ -27,7 +27,7 @@
 	let searchColumns = ['userEmail', 'nama', 'email', 'noTelp', 'alamat'];
 
 	$: {
-		filteredData = tagihanByDebitor.filter((data) => {
+		filteredData = filteredKreditorData.filter((data) => {
 			const searchKeywordLower = searchKeyword.toLowerCase();
 			return searchColumns.some((column) => {
 				const value = data[column];

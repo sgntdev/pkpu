@@ -389,7 +389,7 @@
 				<tbody>
 					{#if paginatedData.length === 0}
 						<tr class="border-b dark:border-gray-700">
-							<td class="px-4 py-3 text-center" colspan={roleId === 1 || roleId === 2 ? 6 : 5}
+							<td class="px-4 py-3 text-center" colspan={roleId === 1 || roleId === 2 ? 5 : 4}
 								>No data found.</td
 							>
 						</tr>

@@ -9,7 +9,6 @@ export async function handle({ event, resolve }) {
 	if (!event.url.pathname.startsWith('/api')) {
 		if (token) {
 			try {
-				// console.log('hooks server', event.url.pathname);
 				let decoded = jwt.verify(token, SECRET_INGREDIENT);
 				if (new Date(decoded.user.expirationDate) < new Date()) {
 					redirect(303, '/');
@@ -18,7 +17,7 @@ export async function handle({ event, resolve }) {
 						id: decoded.user.id,
 						email: decoded.user.email,
 						roleId: decoded.user.roleId,
-						debitorUid : decoded.user.debitorUid ?? ''
+						debitorUid : decoded.user.debitorUid
 					};
 				}
 			} catch (error) {
