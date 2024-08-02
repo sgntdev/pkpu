@@ -15,12 +15,15 @@
 	import { showToast } from '$lib/toastStore';
 	import { writable, derived } from 'svelte/store';
 	import { getContext } from 'svelte';
+	import { formatDate, formatDateDay, formatDateLocale } from '$lib/formatDate.js';
 	import {
 		ExclamationCircleOutline,
 		ChevronDownOutline,
 		FilterOutline
 	} from 'flowbite-svelte-icons';
-	import { utils, writeFileXLSX } from 'xlsx';
+	import ExcelJS from 'exceljs';
+	import pkg from 'file-saver';
+	const { saveAs } = pkg;
 
 	export let data;
 	const { sifatTagihanData, debitorData, token, roleId } = data.body;
@@ -317,12 +320,6 @@
 		currentPage = 1;
 		dropdownOpen = false;
 	}
-	function formatDate(date) {
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
-		const day = String(date.getDate()).padStart(2, '0');
-		return `${year}-${month}-${day}`;
-	}
 
 	$: formattedData = $tagihanByDebitor
 		.filter((data) => data.status === 1)
@@ -331,6 +328,7 @@
 			if (data.TagihanItem.length === 0) {
 				return [
 					{
+						tagihanId: data.id,
 						No: index + 1,
 						namaKreditor: data.Kreditor.nama,
 						totalTagihan: total,
@@ -342,12 +340,10 @@
 				];
 			} else {
 				const items = data.TagihanItem.map((item, itemIndex) => ({
+					tagihanId: item.tagihanId,
 					No: itemIndex === 0 ? index + 1 : '',
 					namaKreditor: itemIndex === 0 ? data.Kreditor.nama : '',
-					totalTagihan:
-						itemIndex === 0
-							? parseFloat(data.denda) + parseFloat(data.hutangPokok) + parseFloat(data.bunga)
-							: '',
+					totalTagihan: itemIndex === 0 ? total : '',
 					preferent: item.sifatTagihanId === 2 ? parseFloat(item.amount) : null,
 					separatis: item.sifatTagihanId === 3 ? parseFloat(item.amount) : null,
 					konkuren: item.sifatTagihanId === 1 ? parseFloat(item.amount) : null,
@@ -359,72 +355,127 @@
 		})
 		.flat();
 
-	function exportFile() {
-		// Create worksheet with headers and labels
-		const ws = utils.aoa_to_sheet([
-			['No', 'Nama & Alamat Kreditor', 'Total Tagihan Yang Diajukan (Rp)', 'DIAKUI KURATOR'],
-			['', '', '', 'PREFERENT', 'SEPARATIS', 'KONKUREN', 'KETERANGAN']
-		]);
+	$: debitorInfo = debitorData.find((data) => data.id === $chooseDebitor);
 
-		// Add data to worksheet
-		utils.sheet_add_json(ws, formattedData, { skipHeader: true, origin: -1 });
+	const exportFile = async () => {
+		// Create WorkBook
+		const date = new Date();
+		const formattedDate = formatDate(date, '-');
+		const wb = new ExcelJS.Workbook();
 
-		// Merge header cells
-		ws['!merges'] = [
-			{ s: { c: 0, r: 0 }, e: { c: 0, r: 1 } }, // A1:A2
-			{ s: { c: 1, r: 0 }, e: { c: 1, r: 1 } }, // B1:B2
-			{ s: { c: 2, r: 0 }, e: { c: 2, r: 1 } }, // C1:C2
-			{ s: { c: 3, r: 0 }, e: { c: 6, r: 0 } } // D1:G1
+		//properties excel
+		wb.creator = 'pkpu.co.id';
+		wb.lastModifiedBy = 'pkpu.co.id';
+		wb.created = new Date();
+
+		// Create Sheet
+		const ws = wb.addWorksheet();
+		ws.name = formattedDate;
+
+		// Set lebar Column menggunakan key bisa dengan huruf bisa dengan index angka
+		ws.columns = [
+			{ key: 'A', width: 4 },
+			{ key: 'B', width: 22.5 },
+			{ key: 'C', width: 22.5 },
+			{ key: 'D', width: 24.17 },
+			{ key: 'E', width: 24.17 },
+			{ key: 'F', width: 24.17 },
+			{ key: 'G', width: 24.17 }
 		];
-		// Set column widths
-		ws['!cols'] = [
-			{ wpx: 20 }, // Column A
-			{ wpx: 140 }, // Column B
-			{ wpx: 180 }, // Column C
-			{ wpx: 150 }, // Column D
-			{ wpx: 150 }, // Column E
-			{ wpx: 150 }, // Column F
-			{ wpx: 150 } // Column G
-		];
 
-		// Apply currency format to columns C, D, E, and F
-		const currencyColumns = [2, 3, 4, 5];
-		for (let col of currencyColumns) {
-			for (let row = 2; row <= formattedData.length + 1; row++) {
-				const cellRef = utils.encode_cell({ c: col, r: row });
-				if (!ws[cellRef]) ws[cellRef] = {};
-				ws[cellRef].z = 'Rp #,##0'; // Apply currency format
-			}
+		for (let i = 3; i <= 6; i++) {
+			ws.getColumn(i).numFmt = 'Rp #,##0';
 		}
+		// Set value cell untuk title
+		ws.getRow(1).getCell('A').value =
+			`DAFTAR TAGIHAN / PIUTANG TETAP DIAKUI\nPARA KREDITUR ${debitorInfo.nama}\nPerkara Nomor : ${debitorInfo.noPerkara}\n${formatDateDay(debitorInfo.tglSidang)}, Pengadilan Niaga pada ${debitorInfo.tempatSidang}\nBatas Akhir Pengajuan Tagihan hari ${formatDateDay(debitorInfo.batasAkhir)}\nKurs Tengah Bl per tgl ${formatDateLocale(debitorInfo.tglVerifikasi)} (1 US $ = Rp. ${debitorInfo.kurs},-)\nPERTANGGAL ${formatDateLocale(new Date()).toUpperCase()}`;
+		ws.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+		// Set font Style
+		ws.getRow(1).getCell('A').font = {
+			bold: true,
+			size: 16
+		};
 
-		// Determine row merges for columns No, namaKreditor, and totalTagihan
-		let rowIndex = 2; // Start from the third row in the Excel sheet (0-based index)
-		$tagihanByDebitor.filter((data) => data.status === 1).forEach((data, index) => {
-			const tagihanItemCount = data.TagihanItem.length;
-			console.log(data, tagihanItemCount, index);
-			if (tagihanItemCount > 0) {
-				const startRow = rowIndex;
-				const endRow = rowIndex + tagihanItemCount - 1;
-				console.log(startRow, endRow);
-				ws['!merges'] = ws['!merges'] || [];
-				ws['!merges'].push(
-					{ s: { c: 0, r: startRow }, e: { c: 0, r: endRow } }, // Merge No column
-					{ s: { c: 1, r: startRow }, e: { c: 1, r: endRow } }, // Merge namaKreditor column
-					{ s: { c: 2, r: startRow }, e: { c: 2, r: endRow } } // Merge totalTagihan column
-				);
-				rowIndex = endRow + 1;
-			} else {
-				rowIndex += 1;
+		ws.mergeCells('A1:G11'); //merge untuk title
+		ws.mergeCells('A12:A13'); //merge untuk header 'No'
+		ws.mergeCells('B12:B13'); //merge untuk header 'Nama & Alamat Kreditor'
+		ws.mergeCells('C12:C13'); //merge untuk header 'Total Tagihan Yang Diajukan (Rp)'
+		ws.mergeCells('D12:G12'); //merge untuk header 'DIAKUI KURATOR'
+
+		// inisiasi pada baris ke 3 jadi Header table
+		const rowHeader = ws.getRow(12);
+		const rowHeader2 = ws.getRow(13);
+
+		// Buat styling cell header menggunakan perulangan agar tidak per cell
+		const headerCells = [rowHeader, rowHeader2];
+		headerCells.forEach((row) => {
+			for (let i = 1; i <= 7; i++) {
+				row.getCell(i).border = {
+					top: { style: 'medium' },
+					left: { style: 'medium' },
+					bottom: { style: 'medium' },
+					right: { style: 'medium' }
+				};
+				row.getCell(i).alignment = {
+					vertical: 'middle',
+					horizontal: 'center',
+					wrapText: true
+				};
+				row.getCell(i).font = { bold: true, size: 12, color: { argb: '000' } };
 			}
 		});
+		// Isi data Header
+		rowHeader.getCell(1).value = 'No';
+		rowHeader.getCell(2).value = `Nama & Alamat Kreditor`;
+		rowHeader.getCell(3).value = `Total Tagihan Yang Diajukan (Rp)`;
+		rowHeader.getCell(4).value = `DIAKUI KURATOR`;
+		// Isi data Header 2
+		rowHeader2.getCell(4).value = `PREFERENT`;
+		rowHeader2.getCell(5).value = `SEPARATIS`;
+		rowHeader2.getCell(6).value = `KONKUREN`;
+		rowHeader2.getCell(7).value = `Keterangan`;
 
-		// Create and write workbook
-		const wb = utils.book_new();
-		const date = new Date();
-		const formattedDate = formatDate(date);
-		utils.book_append_sheet(wb, ws, 'Data');
-		writeFileXLSX(wb, `${formattedDate}-tagihan-pkpu.xlsx`);
-	}
+		// Buat datanya menggunakan perulangan
+		let currentRow = 14;
+		formattedData.forEach((data, index) => {
+			const row = ws.getRow(currentRow);
+			row.values = [
+				data.No,
+				data.namaKreditor,
+				data.totalTagihan,
+				data.preferent,
+				data.separatis,
+				data.konkuren,
+				data.keterangan
+			];
+			row.eachCell({ includeEmpty: true }, (cell) => {
+				cell.border = {
+					top: { style: 'medium' },
+					left: { style: 'medium' },
+					bottom: { style: 'medium' },
+					right: { style: 'medium' }
+				};
+				cell.alignment = {
+					wrapText: true,
+					vertical: 'middle'
+				};
+			});
+
+			// Check for merging cells
+			if (index > 0 && formattedData[index - 1].tagihanId === data.tagihanId) {
+				ws.mergeCells(`A${currentRow - 1}:A${currentRow}`);
+				ws.mergeCells(`B${currentRow - 1}:B${currentRow}`);
+				ws.mergeCells(`C${currentRow - 1}:C${currentRow}`);
+			} else {
+				currentRow++;
+			}
+		});
+		//membuat buffer file
+		const buf = await wb.xlsx.writeBuffer();
+
+		//download file dari browser dan menamai filenya
+		saveAs(new Blob([buf]), `${formattedDate}-DPT-${debitorInfo.nama}.xlsx`);
+	};
 </script>
 
 <div class="space-y-4">
@@ -497,10 +548,21 @@
 				class="flex w-full flex-shrink-0 flex-col items-stretch justify-end space-y-2 md:w-auto md:flex-row md:items-center md:space-x-3 md:space-y-0"
 			>
 				<div>
-					<Button color="green" on:click={exportFile} class="w-full">
-						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mr-2 h-3.5 w-3.5">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5" />
-						  </svg>
+					<Button color="green" on:click={exportFile} class="w-full" disabled={!formattedData.length > 0}>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke-width="1.5"
+							stroke="currentColor"
+							class="mr-2 h-3.5 w-3.5"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5"
+							/>
+						</svg>
 						Export xlsx</Button
 					>
 				</div>
@@ -823,9 +885,9 @@
 																		class={`block w-full rounded-lg border p-2.5 text-sm ${tagihanDetail.showValidation && tagihanDetail.tipe === '' ? 'border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500' : 'border-gray-300 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'}`}
 																	>
 																		<option value="" selected disabled>Pilih Tipe Tagihan</option>
-																		<option value="bunga">Bunga</option>
-																		<option value="denda">Denda</option>
-																		<option value="tagihan">Tagihan</option>
+																		<option value="Bunga">Bunga</option>
+																		<option value="Denda">Denda</option>
+																		<option value="Tagihan">Tagihan</option>
 																	</select>
 																	{#if tagihanDetail.showValidation && tagihanDetail.tipe === ''}
 																		<p
