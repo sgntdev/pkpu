@@ -165,7 +165,7 @@ export async function POST({ request }) {
 		const html = await readTemplate(templatePath, replacements);
 
 		const message = {
-			from: '"PKPU" <fotoarchive8@gmail.com>',
+			from: '"PKPU" <pkpu@kuantis.com>',
 			to: email,
 			subject: !existingUser ? 'Verifikasi email anda' : 'Link akses halaman tagihan',
 			html: html

@@ -1,14 +1,14 @@
 import nodemailer from "nodemailer";
-import { GOOGLE_EMAIL, GOOGLE_EMAIL_PASSWORD } from "$env/static/private";
+import { SMTP_PASSWORD, SMTP_EMAIL } from "$env/static/private";
 
 let transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  host: "mail.kuantis.com",
+  port: 465,
+  secure: true,
   auth: {
-    user: GOOGLE_EMAIL,
-    pass: GOOGLE_EMAIL_PASSWORD,
-  },
+    user: SMTP_EMAIL,
+    pass: SMTP_PASSWORD,
+  }
 });
 
 transporter.verify(function (error, success) {

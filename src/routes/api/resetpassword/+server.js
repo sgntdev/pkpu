@@ -106,7 +106,7 @@ export async function POST({ request }) {
 		const html = await readTemplate(templatePath, { link });
 
 		const message = {
-			from: '"PKPU" <fotoarchive8@gmail.com>',
+			from: '"PKPU" <pkpu@kuantis.com>',
 			to: existingPassword.User.email,
 			subject: 'Atur ulang kata sandi verifikasi tagihan',
 			html: html
