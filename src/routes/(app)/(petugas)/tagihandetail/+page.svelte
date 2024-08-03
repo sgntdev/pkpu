@@ -410,7 +410,7 @@
 		rowHeader.getCell(1).value = 'No';
 		rowHeader.getCell(2).value = `Nama & Alamat Kreditor`;
 		rowHeader.getCell(3).value = `Total Tagihan Yang Diajukan (Rp)`;
-		rowHeader.getCell(4).value = `DIAKUI KURATOR`;
+		rowHeader.getCell(4).value = `DIAKUI PENGURUS`;
 		// Isi data Header 2
 		rowHeader2.getCell(4).value = `PREFERENT`;
 		rowHeader2.getCell(5).value = `SEPARATIS`;
