@@ -1,4 +1,4 @@
-import { SITE_URL } from '$env/static/private';
+import { SITE_URL, SMTP_EMAIL } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
 
@@ -120,7 +120,7 @@ export async function POST({ request }) {
 		const html = await readTemplate(templatePath, replacements);
 
 		const message = {
-			from: '"PKPU" <pkpu@kuantis.com>',
+			from: `"PKPU" <${SMTP_EMAIL}>`,
 			to: email,
 			subject: 'Link akses halaman admin',
 			html: html

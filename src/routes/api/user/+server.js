@@ -1,7 +1,6 @@
-import { SITE_URL } from '$env/static/private';
+import { SITE_URL, SECRET_INGREDIENT, SMTP_EMAIL } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
-import { SECRET_INGREDIENT } from '$env/static/private';
 import jwt from 'jsonwebtoken';
 
 async function readTemplate(templateName, replacements) {
@@ -165,7 +164,7 @@ export async function POST({ request }) {
 		const html = await readTemplate(templatePath, replacements);
 
 		const message = {
-			from: '"PKPU" <pkpu@kuantis.com>',
+			from: `"PKPU" <${SMTP_EMAIL}>`,
 			to: email,
 			subject: !existingUser ? 'Verifikasi email anda' : 'Link akses halaman tagihan',
 			html: html

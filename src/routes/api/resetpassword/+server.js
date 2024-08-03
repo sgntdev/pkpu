@@ -1,4 +1,4 @@
-import { SITE_URL, SECRET_INGREDIENT } from '$env/static/private';
+import { SITE_URL, SECRET_INGREDIENT, SMTP_EMAIL } from '$env/static/private';
 import transporter from '$lib/emailSetup.server.js';
 import { prisma } from '$lib/prisma.server.js';
 import jwt from 'jsonwebtoken';
@@ -106,7 +106,7 @@ export async function POST({ request }) {
 		const html = await readTemplate(templatePath, { link });
 
 		const message = {
-			from: '"PKPU" <pkpu@kuantis.com>',
+			from: `"PKPU" <${SMTP_EMAIL}>`,
 			to: existingPassword.User.email,
 			subject: 'Atur ulang kata sandi verifikasi tagihan',
 			html: html
